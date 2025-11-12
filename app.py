@@ -36,6 +36,8 @@ from app.features.needs_list import needs_list_bp
 from app.features.fulfilment import fulfilment_bp
 from app.features.dispatch import dispatch_bp
 from app.features.receipt import receipt_bp
+from app.features.user_admin import user_admin_bp
+from app.features.donors import donors_bp
 from app.core.status import get_status_label, get_status_badge_class
 
 app.register_blueprint(events_bp)
@@ -50,6 +52,8 @@ app.register_blueprint(needs_list_bp, url_prefix='/needs_list')
 app.register_blueprint(fulfilment_bp, url_prefix='/fulfilment')
 app.register_blueprint(dispatch_bp, url_prefix='/dispatch')
 app.register_blueprint(receipt_bp, url_prefix='/receipt')
+app.register_blueprint(user_admin_bp, url_prefix='/users')
+app.register_blueprint(donors_bp, url_prefix='/donors')
 
 @app.template_filter('status_badge')
 def status_badge_filter(status_code, entity_type):

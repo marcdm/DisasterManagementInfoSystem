@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Donor Details - DRIMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-person-badge"></i> Donor Details</h2>
+    <div>
+        <a href="{{ url_for('donors.edit', donor_id=donor.donor_id) }}" class="btn btn-warning">
+            <i class="bi bi-pencil"></i> Edit Donor
+        </a>
+        <a href="{{ url_for('donors.list_donors') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-3">
+            <div class="card-header card-header-goj">
+                <h5 class="mb-0">Basic Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless mb-0">
+                    <tr>
+                        <th width="40%">Donor ID:</th>
+                        <td>{{ donor.donor_id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Type:</th>
+                        <td>
+                            {% if donor.donor_type == 'I' %}
+                                <span class="badge bg-info">Individual</span>
+                            {% else %}
+                                <span class="badge bg-primary">Organization</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Donor Name:</th>
+                        <td><strong>{{ donor.donor_name }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Organization Type:</th>
+                        <td>{{ donor.org_type_desc or '-' }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header card-header-goj">
+                <h5 class="mb-0">Contact Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless mb-0">
+                    <tr>
+                        <th width="40%">Address:</th>
+                        <td>
+                            {{ donor.address1_text }}<br>
+                            {% if donor.address2_text %}{{ donor.address2_text }}{% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Phone:</th>
+                        <td>{{ donor.phone_no }}</td>
+                    </tr>
+                    <tr>
+                        <th>Email:</th>
+                        <td>{{ donor.email_text or '-' }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header card-header-goj">
+                <h5 class="mb-0">Donation History</h5>
+            </div>
+            <div class="card-body">
+                {% if donations %}
+                <div class="list-group">
+                    {% for donation in donations %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Donation #{{ donation.donation_id }}</h6>
+                            <small>{{ donation.received_date }}</small>
+                        </div>
+                        <p class="mb-1">{{ donation.donation_desc }}</p>
+                        <small>
+                            Status: 
+                            {% if donation.status_code == 'A' %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ donation.status_code }}</span>
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No donations recorded yet.</p>
+                <a href="{{ url_for('donations.create') }}" class="btn btn-sm btn-success">
+                    <i class="bi bi-gift"></i> Record Donation
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

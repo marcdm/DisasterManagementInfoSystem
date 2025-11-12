@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Edit Donor - DRIMS{% endblock %}
+
+{% block content %}
+<h2><i class="bi bi-pencil"></i> Edit Donor: {{ donor.donor_name }}</h2>
+<a href="{{ url_for('donors.view', donor_id=donor.donor_id) }}" class="btn btn-secondary mb-3">
+    <i class="bi bi-arrow-left"></i> Back to Donor Details
+</a>
+
+<form method="POST" class="needs-validation" novalidate>
+    <div class="card mb-3">
+        <div class="card-header card-header-goj">
+            <h5 class="mb-0">Donor Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label"><strong>Donor Name:</strong></label>
+                <p class="form-control-plaintext">{{ donor.donor_name }}</p>
+                <small class="text-muted">Donor name cannot be changed</small>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="donor_type" class="form-label">Donor Type *</label>
+                    <select name="donor_type" id="donor_type" class="form-select" required>
+                        <option value="I" {% if donor.donor_type == 'I' %}selected{% endif %}>Individual</option>
+                        <option value="O" {% if donor.donor_type == 'O' %}selected{% endif %}>Organization</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="org_type_desc" class="form-label">Organization Type</label>
+                    <input type="text" name="org_type_desc" id="org_type_desc" class="form-control" 
+                           value="{{ donor.org_type_desc or '' }}" placeholder="e.g., NGO, Corporate, Foundation">
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="country_id" class="form-label">Country *</label>
+                    <select name="country_id" id="country_id" class="form-select" required>
+                        {% for country in countries %}
+                        <option value="{{ country.country_id }}" {% if country.country_id == donor.country_id %}selected{% endif %}>
+                            {{ country.country_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <label for="address1_text" class="form-label">Address Line 1 *</label>
+                    <input type="text" name="address1_text" id="address1_text" class="form-control" 
+                           value="{{ donor.address1_text }}" required>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <label for="address2_text" class="form-label">Address Line 2</label>
+                    <input type="text" name="address2_text" id="address2_text" class="form-control" 
+                           value="{{ donor.address2_text or '' }}">
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="phone_no" class="form-label">Phone Number *</label>
+                    <input type="text" name="phone_no" id="phone_no" class="form-control" 
+                           value="{{ donor.phone_no }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="email_text" class="form-label">Email</label>
+                    <input type="email" name="email_text" id="email_text" class="form-control" 
+                           value="{{ donor.email_text or '' }}">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mb-3">
+        <button type="submit" class="btn btn-warning">
+            <i class="bi bi-save"></i> Update Donor
+        </button>
+        <a href="{{ url_for('donors.view', donor_id=donor.donor_id) }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}
