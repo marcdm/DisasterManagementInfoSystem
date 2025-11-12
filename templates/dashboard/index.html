@@ -6,7 +6,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0"><i class="bi bi-speedometer2"></i> System Dashboard</h2>
+    <h2 class="mb-0"><i class="bi bi-grid-3x3-gap-fill"></i> System Dashboard</h2>
     <div class="text-muted">
         <i class="bi bi-clock"></i> Last updated: {{ now.strftime('%B %d, %Y %H:%M') if now else 'Just now' }}
     </div>
@@ -103,82 +103,6 @@
                 {% else %}
                 <div class="p-4 text-center text-muted">
                     <p class="mb-0">No inventory data available.</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-3 mb-4">
-    <div class="col-md-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header card-header-goj d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-list-check"></i> Recent Needs Lists</h5>
-                <a href="{{ url_for('needs_list.index') }}" class="btn btn-sm btn-light">View All</a>
-            </div>
-            <div class="card-body p-0">
-                {% if recent_needs %}
-                <div class="list-group list-group-flush">
-                    {% for need in recent_needs %}
-                    <a href="{{ url_for('needs_list.view', needs_list_id=need.needs_list_id) }}" class="list-group-item list-group-item-action border-0">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong class="text-primary">{{ need.needs_list_nbr }}</strong>
-                                {% if need.agency %}
-                                <span class="text-muted">{{ need.agency.agency_name }}</span>
-                                {% endif %}
-                                <br>
-                                <small class="text-muted">
-                                    <i class="bi bi-clock"></i> {{ need.create_dtime.strftime('%Y-%m-%d %H:%M') }}
-                                </small>
-                            </div>
-                            {{ status_badge(need.status) }}
-                        </div>
-                    </a>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="p-4 text-center text-muted">
-                    <i class="bi bi-inbox fs-1"></i>
-                    <p class="mb-0 mt-2">No needs lists yet.</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header card-header-goj d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-truck"></i> Recent Fulfilments</h5>
-                <a href="{{ url_for('fulfilment.index') }}" class="btn btn-sm btn-light">View All</a>
-            </div>
-            <div class="card-body p-0">
-                {% if recent_fulfilments %}
-                <div class="list-group list-group-flush">
-                    {% for ful in recent_fulfilments %}
-                    <a href="{{ url_for('fulfilment.view', fulfilment_id=ful.fulfilment_id) }}" class="list-group-item list-group-item-action border-0">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong class="text-primary">{{ ful.fulfilment_nbr }}</strong>
-                                {% if ful.warehouse %}
-                                <span class="text-muted">{{ ful.warehouse.warehouse_name }}</span>
-                                {% endif %}
-                                <br>
-                                <small class="text-muted">
-                                    <i class="bi bi-clock"></i> {{ ful.create_dtime.strftime('%Y-%m-%d %H:%M') }}
-                                </small>
-                            </div>
-                            {{ status_badge(ful.status) }}
-                        </div>
-                    </a>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="p-4 text-center text-muted">
-                    <i class="bi bi-inbox fs-1"></i>
-                    <p class="mb-0 mt-2">No fulfilments yet.</p>
                 </div>
                 {% endif %}
             </div>
