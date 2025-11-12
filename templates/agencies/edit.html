@@ -20,7 +20,21 @@
             </div>
             
             <div class="row mb-3">
-                <div class="col-md-6">
+                <div class="col-md-4">
+                    <label for="agency_type" class="form-label">Agency Type *</label>
+                    <select name="agency_type" id="agency_type" class="form-select" required>
+                        <option value="DISTRIBUTOR" {% if agency.agency_type == 'DISTRIBUTOR' %}selected{% endif %}>Distributor</option>
+                        <option value="SHELTER" {% if agency.agency_type == 'SHELTER' %}selected{% endif %}>Shelter</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="status_code" class="form-label">Status *</label>
+                    <select name="status_code" id="status_code" class="form-select" required>
+                        <option value="A" {% if agency.status_code == 'A' %}selected{% endif %}>Active</option>
+                        <option value="I" {% if agency.status_code == 'I' %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
                     <label for="parish_code" class="form-label">Parish *</label>
                     <select name="parish_code" id="parish_code" class="form-select" required>
                         {% for parish in parishes %}
@@ -30,6 +44,19 @@
                         {% endfor %}
                     </select>
                 </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="ineligible_event_id" class="form-label">Ineligible for Event</label>
+                <select name="ineligible_event_id" id="ineligible_event_id" class="form-select">
+                    <option value="">None - Eligible for All Events</option>
+                    {% for event in events %}
+                    <option value="{{ event.event_id }}" {% if agency.ineligible_event_id == event.event_id %}selected{% endif %}>
+                        {{ event.event_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <small class="text-muted">Select an event this agency cannot participate in (optional)</small>
             </div>
             
             <div class="mb-3">

@@ -19,6 +19,25 @@
                     <input type="text" name="agency_name" id="agency_name" class="form-control" required>
                     <small class="text-muted">Will be stored in UPPERCASE</small>
                 </div>
+                <div class="col-md-3">
+                    <label for="agency_type" class="form-label">Agency Type *</label>
+                    <select name="agency_type" id="agency_type" class="form-select" required>
+                        <option value="">Select Type</option>
+                        <option value="DISTRIBUTOR">Distributor</option>
+                        <option value="SHELTER">Shelter</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="status_code" class="form-label">Status *</label>
+                    <select name="status_code" id="status_code" class="form-select" required>
+                        <option value="">Select Status</option>
+                        <option value="A" selected>Active</option>
+                        <option value="I">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="parish_code" class="form-label">Parish *</label>
                     <select name="parish_code" id="parish_code" class="form-select" required>
@@ -27,6 +46,16 @@
                         <option value="{{ parish.parish_code }}">{{ parish.parish_name }}</option>
                         {% endfor %}
                     </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="ineligible_event_id" class="form-label">Ineligible for Event</label>
+                    <select name="ineligible_event_id" id="ineligible_event_id" class="form-select">
+                        <option value="">None - Eligible for All Events</option>
+                        {% for event in events %}
+                        <option value="{{ event.event_id }}">{{ event.event_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Select an event this agency cannot participate in (optional)</small>
                 </div>
             </div>
             

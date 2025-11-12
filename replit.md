@@ -19,6 +19,17 @@ Key capabilities include:
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+### November 12, 2025 - Agency Management Enhancement
+- **Updated Agency Forms**: Added new AIDMGMT-3.1 fields to agency management
+  - `agency_type`: Categorize as DISTRIBUTOR or SHELTER
+  - `status_code`: Track Active (A) or Inactive (I) status
+  - `ineligible_event_id`: Link to events the agency cannot participate in
+- **Updated Templates**: All agency forms (create, edit, view, index) now display new fields with badges
+- **Backend Integration**: Routes updated to handle new fields with proper validation
+- **UI Enhancement**: Status and type badges for visual clarity in agency listings
+
 ## System Architecture
 
 ### Technology Stack

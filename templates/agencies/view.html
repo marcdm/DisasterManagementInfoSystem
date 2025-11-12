@@ -29,6 +29,40 @@
                 <td><strong>{{ agency.agency_name }}</strong></td>
             </tr>
             <tr>
+                <th>Agency Type:</th>
+                <td>
+                    {% if agency.agency_type == 'DISTRIBUTOR' %}
+                    <span class="badge bg-primary">Distributor</span>
+                    {% elif agency.agency_type == 'SHELTER' %}
+                    <span class="badge bg-info">Shelter</span>
+                    {% else %}
+                    {{ agency.agency_type }}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Status:</th>
+                <td>
+                    {% if agency.status_code == 'A' %}
+                    <span class="badge bg-success">Active</span>
+                    {% elif agency.status_code == 'I' %}
+                    <span class="badge bg-secondary">Inactive</span>
+                    {% else %}
+                    {{ agency.status_code }}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Ineligible for Event:</th>
+                <td>
+                    {% if agency.ineligible_event %}
+                    <span class="badge bg-warning text-dark">{{ agency.ineligible_event.event_name }}</span>
+                    {% else %}
+                    <span class="text-muted">Eligible for all events</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
                 <th>Address:</th>
                 <td>
                     {{ agency.address1_text }}<br>
