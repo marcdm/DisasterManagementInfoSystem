@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Relief Request #{{ request.reliefrqst_id }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <h2 class="text-goj-green"><i class="bi bi-file-text"></i> Relief Request #{{ request.reliefrqst_id }}</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('requests.list_requests') }}" class="btn btn-secondary">Back to List</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header card-header-goj">
+            Request Details
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Agency:</strong> {{ request.agency.agency_name }}</p>
+                    <p><strong>Request Date:</strong> {{ request.request_date }}</p>
+                    <p><strong>Urgency:</strong> 
+                        <span class="badge bg-{{ request.urgency_ind|status_badge('urgency') }}">
+                            {{ request.urgency_ind|status_label('urgency') }}
+                        </span>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Status:</strong> 
+                        <span class="badge bg-{{ request.status_code|status_badge('reliefrqst') }}">
+                            {{ request.status_code|status_label('reliefrqst') }}
+                        </span>
+                    </p>
+                    <p><strong>Created By:</strong> {{ request.create_by_id }}</p>
+                    <p><strong>Created:</strong> {{ request.create_dtime }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header card-header-goj">
+            Requested Items
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Requested Qty</th>
+                            <th>Issued Qty</th>
+                            <th>Urgency</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in request.items %}
+                        <tr>
+                            <td>{{ item.item.item_name }}</td>
+                            <td>{{ item.request_qty }}</td>
+                            <td>{{ item.issue_qty }}</td>
+                            <td>
+                                <span class="badge bg-{{ item.urgency_ind|status_badge('urgency') }}">
+                                    {{ item.urgency_ind|status_label('urgency') }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ item.status_code|status_badge('reliefrqst_item') }}">
+                                    {{ item.status_code|status_label('reliefrqst_item') }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">No items in this request</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

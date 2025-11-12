@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Relief Requests{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <h2 class="text-goj-green"><i class="bi bi-file-text"></i> Relief Requests</h2>
+            <p class="text-muted">AIDMGMT Workflow</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('requests.create_request') }}" class="btn btn-goj">
+                <i class="bi bi-plus-circle"></i> Create Request
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                    <a class="nav-link {% if status_filter == 'all' %}active{% endif %}" href="{{ url_for('requests.list_requests') }}">All</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if status_filter == 'pending' %}active{% endif %}" href="{{ url_for('requests.list_requests', status='pending') }}">Pending</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if status_filter == 'completed' %}active{% endif %}" href="{{ url_for('requests.list_requests', status='completed') }}">Completed</a>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Agency</th>
+                            <th>Request Date</th>
+                            <th>Urgency</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in requests %}
+                        <tr>
+                            <td>{{ request.reliefrqst_id }}</td>
+                            <td>{{ request.agency.agency_name }}</td>
+                            <td>{{ request.request_date }}</td>
+                            <td>
+                                <span class="badge bg-{{ request.urgency_ind|status_badge('urgency') }}">
+                                    {{ request.urgency_ind|status_label('urgency') }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ request.status_code|status_badge('reliefrqst') }}">
+                                    {{ request.status_code|status_label('reliefrqst') }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('requests.view_request', request_id=request.reliefrqst_id) }}" class="btn btn-sm btn-primary">View</a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">No relief requests found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

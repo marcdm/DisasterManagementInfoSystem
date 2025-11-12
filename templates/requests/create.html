@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Relief Request{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2 class="text-goj-green"><i class="bi bi-plus-circle"></i> Create Relief Request</h2>
+            <p class="text-muted">AIDMGMT Workflow</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" id="requestForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="agency_id" class="form-label">Requesting Agency *</label>
+                        <select class="form-select" id="agency_id" name="agency_id" required>
+                            <option value="">Select agency...</option>
+                            {% for agency in agencies %}
+                            <option value="{{ agency.agency_id }}">{{ agency.agency_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="request_date" class="form-label">Request Date *</label>
+                        <input type="date" class="form-control" id="request_date" name="request_date" max="{{ today }}" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="urgency_ind" class="form-label">Urgency *</label>
+                        <select class="form-select" id="urgency_ind" name="urgency_ind" required>
+                            {% for level in urgency_levels %}
+                            <option value="{{ level }}">{{ level|status_label('urgency') }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <hr>
+                <h5>Request Items</h5>
+                <div id="items-container">
+                    <div class="row item-row mb-2">
+                        <div class="col-md-6">
+                            <select class="form-select" name="item_id[]" required>
+                                <option value="">Select item...</option>
+                                {% for item in items %}
+                                <option value="{{ item.item_id }}">{{ item.item_name }} ({{ item.sku_code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="number" class="form-control" name="item_qty[]" placeholder="Quantity" step="0.01" min="0.01" required>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" name="item_urgency[]" required>
+                                {% for level in urgency_levels %}
+                                <option value="{{ level }}">{{ level|status_label('urgency') }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-danger btn-sm remove-item" disabled>-</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-sm btn-secondary mb-3" id="add-item">+ Add Item</button>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-goj">Create Request</button>
+                    <a href="{{ url_for('requests.list_requests') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('add-item').addEventListener('click', function() {
+    const container = document.getElementById('items-container');
+    const row = container.querySelector('.item-row').cloneNode(true);
+    row.querySelectorAll('input, select').forEach(input => input.value = '');
+    row.querySelector('.remove-item').disabled = false;
+    container.appendChild(row);
+});
+
+document.getElementById('items-container').addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-item')) {
+        e.target.closest('.item-row').remove();
+    }
+});
+</script>
+{% endblock %}

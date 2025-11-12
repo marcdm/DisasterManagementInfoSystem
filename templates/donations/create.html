@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Donation{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2 class="text-goj-green"><i class="bi bi-plus-circle"></i> Create Donation</h2>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="donor_id" class="form-label">Donor *</label>
+                        <select class="form-select" id="donor_id" name="donor_id" required>
+                            <option value="">Select donor...</option>
+                            {% for donor in donors %}
+                            <option value="{{ donor.donor_id }}">{{ donor.donor_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="event_id" class="form-label">Event *</label>
+                        <select class="form-select" id="event_id" name="event_id" required>
+                            <option value="">Select event...</option>
+                            {% for event in events %}
+                            <option value="{{ event.event_id }}">{{ event.event_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="donation_desc" class="form-label">Donation Description *</label>
+                    <textarea class="form-control" id="donation_desc" name="donation_desc" rows="3" required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="received_date" class="form-label">Received Date *</label>
+                    <input type="date" class="form-control" id="received_date" name="received_date" max="{{ today }}" required>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-goj">Create Donation</button>
+                    <a href="{{ url_for('donations.list_donations') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Items{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <h2 class="text-goj-green"><i class="bi bi-box-seam"></i> Relief Items</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('items.create_item') }}" class="btn btn-goj">
+                <i class="bi bi-plus-circle"></i> Create Item
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                    <a class="nav-link {% if status_filter == 'active' %}active{% endif %}" href="{{ url_for('items.list_items', status='active') }}">Active</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if status_filter == 'inactive' %}active{% endif %}" href="{{ url_for('items.list_items', status='inactive') }}">Inactive</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if status_filter == 'all' %}active{% endif %}" href="{{ url_for('items.list_items', status='all') }}">All</a>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>SKU</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Reorder Qty</th>
+                            <th>UOM</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>{{ item.item_id }}</td>
+                            <td><code>{{ item.sku_code }}</code></td>
+                            <td>{{ item.item_name }}</td>
+                            <td><span class="badge bg-secondary">{{ item.category_code }}</span></td>
+                            <td>{{ item.reorder_qty }}</td>
+                            <td>{{ item.default_uom_code }}</td>
+                            <td>
+                                <span class="badge bg-{{ item.status_code|status_badge('item') }}">
+                                    {{ item.status_code|status_label('item') }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">No items found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

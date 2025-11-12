@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventory{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <h2 class="text-goj-green"><i class="bi bi-boxes"></i> Inventory Summary</h2>
+        </div>
+        <div class="col-md-6">
+            <form method="GET" class="d-flex gap-2">
+                <select class="form-select" name="warehouse_id" onchange="this.form.submit()">
+                    <option value="">All Warehouses</option>
+                    {% for warehouse in warehouses %}
+                    <option value="{{ warehouse.warehouse_id }}" {% if selected_warehouse_id == warehouse.warehouse_id %}selected{% endif %}>
+                        {{ warehouse.warehouse_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Warehouse</th>
+                            <th>Item</th>
+                            <th>SKU</th>
+                            <th>Usable</th>
+                            <th>Reserved</th>
+                            <th>Defective</th>
+                            <th>Expired</th>
+                            <th>UOM</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inv, item_name, sku_code, warehouse_name in inventory_items %}
+                        <tr>
+                            <td>{{ warehouse_name }}</td>
+                            <td>{{ item_name }}</td>
+                            <td><code>{{ sku_code }}</code></td>
+                            <td><strong>{{ inv.usable_qty }}</strong></td>
+                            <td class="text-warning">{{ inv.reserved_qty }}</td>
+                            <td class="text-danger">{{ inv.defective_qty }}</td>
+                            <td class="text-muted">{{ inv.expired_qty }}</td>
+                            <td>{{ inv.uom_code }}</td>
+                            <td>
+                                <span class="badge bg-{{ inv.status_code|status_badge('inventory') }}">
+                                    {{ inv.status_code|status_label('inventory') }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted">No inventory records found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

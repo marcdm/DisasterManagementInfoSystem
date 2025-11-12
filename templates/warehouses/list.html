@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Warehouses{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <h2 class="text-goj-green"><i class="bi bi-building"></i> Warehouses</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('warehouses.create_warehouse') }}" class="btn btn-goj">
+                <i class="bi bi-plus-circle"></i> Create Warehouse
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                    <a class="nav-link {% if status_filter == 'active' %}active{% endif %}" href="{{ url_for('warehouses.list_warehouses', status='active') }}">Active</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if status_filter == 'inactive' %}active{% endif %}" href="{{ url_for('warehouses.list_warehouses', status='inactive') }}">Inactive</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if status_filter == 'all' %}active{% endif %}" href="{{ url_for('warehouses.list_warehouses', status='all') }}">All</a>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Parish</th>
+                            <th>Contact</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for warehouse in warehouses %}
+                        <tr>
+                            <td>{{ warehouse.warehouse_id }}</td>
+                            <td>{{ warehouse.warehouse_name }}</td>
+                            <td><span class="badge bg-info">{{ warehouse.warehouse_type }}</span></td>
+                            <td>{{ warehouse.parish.parish_name if warehouse.parish else warehouse.parish_code }}</td>
+                            <td>{{ warehouse.contact_name }}</td>
+                            <td>
+                                <span class="badge bg-{{ warehouse.status_code|status_badge('warehouse') }}">
+                                    {{ warehouse.status_code|status_label('warehouse') }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">No warehouses found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

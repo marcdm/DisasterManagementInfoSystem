@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Warehouse{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2 class="text-goj-green"><i class="bi bi-plus-circle"></i> Create Warehouse</h2>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="warehouse_name" class="form-label">Warehouse Name *</label>
+                        <input type="text" class="form-control" id="warehouse_name" name="warehouse_name" required>
+                        <small class="text-muted">Will be converted to UPPERCASE</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="warehouse_type" class="form-label">Warehouse Type *</label>
+                        <select class="form-select" id="warehouse_type" name="warehouse_type" required>
+                            <option value="">Select type...</option>
+                            {% for type in warehouse_types %}
+                            <option value="{{ type }}">{{ type }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="address1_text" class="form-label">Address Line 1 *</label>
+                    <input type="text" class="form-control" id="address1_text" name="address1_text" maxlength="255" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="address2_text" class="form-label">Address Line 2</label>
+                    <input type="text" class="form-control" id="address2_text" name="address2_text" maxlength="255">
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="parish_code" class="form-label">Parish *</label>
+                        <select class="form-select" id="parish_code" name="parish_code" required>
+                            <option value="">Select parish...</option>
+                            {% for parish in parishes %}
+                            <option value="{{ parish.parish_code }}">{{ parish.parish_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="contact_name" class="form-label">Contact Name *</label>
+                        <input type="text" class="form-control" id="contact_name" name="contact_name" maxlength="50" required>
+                        <small class="text-muted">Will be converted to UPPERCASE</small>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="phone_no" class="form-label">Phone Number *</label>
+                        <input type="tel" class="form-control" id="phone_no" name="phone_no" maxlength="20" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="email_text" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email_text" name="email_text" maxlength="100">
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-goj">Create Warehouse</button>
+                    <a href="{{ url_for('warehouses.list_warehouses') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
