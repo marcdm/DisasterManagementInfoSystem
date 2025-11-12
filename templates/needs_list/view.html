@@ -1,12 +1,17 @@
 {% extends "base.html" %}
-{% from "macros/status_badge.html" import render_status_badge %}
+{% from "macros.html" import status_badge %}
 
-{% block title %}{{ needs_list.list_number }} - DRIMS{% endblock %}
+{% set active_page = 'needs_list' %}
+
+{% block title %}{{ needs_list.needs_list_nbr }} - DRIMS{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Needs List: {{ needs_list.list_number }}</h2>
-    <a href="{{ url_for('needs_list.index') }}" class="btn btn-secondary">
+    <div>
+        <h2 class="mb-1"><i class="bi bi-list-check"></i> {{ needs_list.needs_list_nbr }}</h2>
+        <p class="text-muted mb-0">Needs List Details</p>
+    </div>
+    <a href="{{ url_for('needs_list.index') }}" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left"></i> Back to List
     </a>
 </div>
@@ -22,83 +27,116 @@
     {% endif %}
 {% endwith %}
 
-<div class="row">
-    <div class="col-md-8">
-        <div class="card mb-3">
-            <div class="card-header" style="background-color: var(--goj-green); color: white;">
-                <h5 class="mb-0">List Details</h5>
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header card-header-goj d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Request Information</h5>
+                {{ status_badge(needs_list.status) }}
             </div>
             <div class="card-body">
-                <div class="row mb-2">
-                    <div class="col-md-4"><strong>List Number:</strong></div>
-                    <div class="col-md-8">{{ needs_list.list_number }}</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small mb-1">List Number</label>
+                        <div class="fw-bold">{{ needs_list.needs_list_nbr }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small mb-1">Priority</label>
+                        <div>
+                            {% if needs_list.priority == 'High' %}
+                                <span class="badge bg-danger">High</span>
+                            {% elif needs_list.priority == 'Medium' %}
+                                <span class="badge bg-warning">Medium</span>
+                            {% else %}
+                                <span class="badge bg-info">Low</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small mb-1">Agency</label>
+                        <div class="fw-bold">
+                            {% if needs_list.agency %}
+                                <i class="bi bi-building"></i> {{ needs_list.agency.agency_name }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small mb-1">Event</label>
+                        <div class="fw-bold">
+                            {% if needs_list.event %}
+                                <i class="bi bi-calendar-event"></i> {{ needs_list.event.event_name }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small mb-1">Requested By</label>
+                        <div>
+                            <i class="bi bi-person"></i> {{ needs_list.requested_by_name or 'N/A' }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small mb-1">Contact</label>
+                        <div>
+                            <i class="bi bi-telephone"></i> {{ needs_list.requested_by_contact or 'N/A' }}
+                        </div>
+                    </div>
+                    {% if needs_list.notes %}
+                    <div class="col-12">
+                        <label class="text-muted small mb-1">Notes</label>
+                        <div class="p-2 bg-light rounded">{{ needs_list.notes }}</div>
+                    </div>
+                    {% endif %}
+                    {% if needs_list.justification %}
+                    <div class="col-12">
+                        <label class="text-muted small mb-1">Justification</label>
+                        <div class="p-2 bg-light rounded">{{ needs_list.justification }}</div>
+                    </div>
+                    {% endif %}
                 </div>
-                <div class="row mb-2">
-                    <div class="col-md-4"><strong>Agency:</strong></div>
-                    <div class="col-md-8">{{ needs_list.agency.agency_name }}</div>
-                </div>
-                <div class="row mb-2">
-                    <div class="col-md-4"><strong>Event:</strong></div>
-                    <div class="col-md-8">{{ needs_list.event.event_name }}</div>
-                </div>
-                <div class="row mb-2">
-                    <div class="col-md-4"><strong>Priority:</strong></div>
-                    <div class="col-md-8">{{ render_status_badge(needs_list.priority, 'needs_list_priority') }}</div>
-                </div>
-                <div class="row mb-2">
-                    <div class="col-md-4"><strong>Status:</strong></div>
-                    <div class="col-md-8">{{ render_status_badge(needs_list.status, 'needs_list') }}</div>
-                </div>
-                <div class="row mb-2">
-                    <div class="col-md-4"><strong>Requested By:</strong></div>
-                    <div class="col-md-8">{{ needs_list.requested_by_name or 'N/A' }}</div>
-                </div>
-                <div class="row mb-2">
-                    <div class="col-md-4"><strong>Contact:</strong></div>
-                    <div class="col-md-8">{{ needs_list.requested_by_contact or 'N/A' }}</div>
-                </div>
-                {% if needs_list.notes %}
-                <div class="row mb-2">
-                    <div class="col-md-4"><strong>Notes:</strong></div>
-                    <div class="col-md-8">{{ needs_list.notes }}</div>
-                </div>
-                {% endif %}
-                {% if needs_list.justification %}
-                <div class="row mb-2">
-                    <div class="col-md-4"><strong>Justification:</strong></div>
-                    <div class="col-md-8">{{ needs_list.justification }}</div>
-                </div>
-                {% endif %}
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-header" style="background-color: var(--goj-green); color: white;">
-                <h5 class="mb-0">Items Requested</h5>
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header card-header-goj">
+                <h5 class="mb-0"><i class="bi bi-box-seam"></i> Requested Items</h5>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+                    <table class="table table-hover table-sm mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <th>Item</th>
-                                <th>Requested</th>
-                                <th>Approved</th>
-                                <th>Fulfilled</th>
-                                <th>Status</th>
+                                <th class="py-2 px-3">Item</th>
+                                <th class="py-2 px-3 text-end">Requested</th>
+                                <th class="py-2 px-3 text-end">Approved</th>
+                                <th class="py-2 px-3 text-end">Fulfilled</th>
+                                <th class="py-2 px-3">Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for item in needs_list.items %}
                             <tr>
-                                <td>
-                                    <strong>{{ item.item.item_name }}</strong><br>
-                                    <small class="text-muted">{{ item.item.item_catg_name }}</small>
+                                <td class="py-2 px-3">
+                                    <strong>{{ item.item.item_name if item.item else 'N/A' }}</strong>
+                                    {% if item.item and item.item.item_catg_desc %}
+                                        <br><small class="text-muted">{{ item.item.item_catg_desc }}</small>
+                                    {% endif %}
                                 </td>
-                                <td>{{ "%.2f"|format(item.requested_qty) }}</td>
-                                <td>{{ "%.2f"|format(item.approved_qty) }}</td>
-                                <td>{{ "%.2f"|format(item.fulfilled_qty) }}</td>
-                                <td><span class="badge bg-secondary">{{ item.status }}</span></td>
+                                <td class="py-2 px-3 text-end">{{ "%.2f"|format(item.requested_qty) }}</td>
+                                <td class="py-2 px-3 text-end">{{ "%.2f"|format(item.approved_qty or 0) }}</td>
+                                <td class="py-2 px-3 text-end">{{ "%.2f"|format(item.fulfilled_qty or 0) }}</td>
+                                <td class="py-2 px-3">
+                                    {% if item.fulfilled_qty and item.fulfilled_qty >= item.requested_qty %}
+                                        <span class="badge bg-success">Fulfilled</span>
+                                    {% elif item.approved_qty %}
+                                        <span class="badge bg-info">Approved</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Pending</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -106,62 +144,176 @@
                 </div>
             </div>
         </div>
+        
+        {% set related_fulfilments = needs_list.fulfilments %}
+        {% if related_fulfilments %}
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header card-header-goj">
+                <h5 class="mb-0"><i class="bi bi-truck"></i> Related Fulfilments</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for fulfilment in related_fulfilments %}
+                    <a href="{{ url_for('fulfilment.view', fulfilment_id=fulfilment.fulfilment_id) }}" class="list-group-item list-group-item-action border-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ fulfilment.fulfilment_nbr }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="bi bi-building"></i> {{ fulfilment.warehouse.warehouse_name if fulfilment.warehouse else 'N/A' }}
+                                    | <i class="bi bi-calendar"></i> {{ fulfilment.create_dtime.strftime('%Y-%m-%d') if fulfilment.create_dtime else 'N/A' }}
+                                </small>
+                            </div>
+                            {{ status_badge(fulfilment.status) }}
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
-    <div class="col-md-4">
-        <div class="card mb-3">
-            <div class="card-header" style="background-color: var(--goj-gold);">
-                <h6 class="mb-0">Actions</h6>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header card-header-goj">
+                <h5 class="mb-0"><i class="bi bi-lightning"></i> Quick Actions</h5>
             </div>
             <div class="card-body">
-                {% if needs_list.is_draft %}
-                <form method="POST" action="{{ url_for('needs_list.submit', needs_list_id=needs_list.id) }}" class="mb-2">
+                {% if needs_list.status == 'Draft' %}
+                <form method="POST" action="{{ url_for('needs_list.submit', needs_list_id=needs_list.needs_list_id) }}" class="mb-2">
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="bi bi-send"></i> Submit for Review
                     </button>
                 </form>
+                <a href="{{ url_for('needs_list.edit', needs_list_id=needs_list.needs_list_id) }}" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-pencil"></i> Edit
+                </a>
                 {% endif %}
 
                 {% if needs_list.status == 'Submitted' %}
-                <form method="POST" action="{{ url_for('needs_list.approve', needs_list_id=needs_list.id) }}" class="mb-2">
+                <form method="POST" action="{{ url_for('needs_list.approve', needs_list_id=needs_list.needs_list_id) }}" class="mb-2">
                     <button type="submit" class="btn btn-success w-100">
                         <i class="bi bi-check-circle"></i> Approve
                     </button>
                 </form>
-                <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                <button type="button" class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#rejectModal">
                     <i class="bi bi-x-circle"></i> Reject
                 </button>
                 {% endif %}
 
                 {% if needs_list.status == 'Approved' %}
-                <a href="{{ url_for('fulfilment.create_from_needs_list', needs_list_id=needs_list.id) }}" class="btn btn-primary w-100 mb-2">
-                    <i class="bi bi-box"></i> Create Fulfilment
+                <a href="{{ url_for('fulfilment.create', needs_list_id=needs_list.needs_list_id) }}" class="btn btn-primary w-100 mb-2">
+                    <i class="bi bi-box-seam"></i> Create Fulfilment
+                </a>
+                {% endif %}
+                
+                {% if not needs_list.status in ['Draft', 'Submitted', 'Approved'] %}
+                <a href="{{ url_for('needs_list.index') }}" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-arrow-left"></i> Back to List
                 </a>
                 {% endif %}
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header" style="background-color: var(--goj-gold);">
-                <h6 class="mb-0">Timeline</h6>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header card-header-goj">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Activity Timeline</h5>
             </div>
             <div class="card-body">
-                <div class="small">
-                    <p><strong>Created:</strong><br>{{ needs_list.created_at.strftime('%Y-%m-%d %H:%M') if needs_list.created_at else 'N/A' }}<br>
-                    <small class="text-muted">by {{ needs_list.created_by }}</small></p>
+                <div class="timeline">
+                    <div class="timeline-item mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content ms-3 flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong class="text-primary">Created</strong>
+                                        <div class="small text-muted">
+                                            {% if needs_list.create_dtime %}
+                                                {{ needs_list.create_dtime.strftime('%b %d, %Y %I:%M %p') }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </div>
+                                        <div class="small text-muted">
+                                            {% if needs_list.create_by %}
+                                                by {{ needs_list.create_by.full_name if needs_list.create_by.full_name else needs_list.create_by.email }}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <i class="bi bi-check-circle text-primary"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     
-                    {% if needs_list.submitted_at %}
-                    <p><strong>Submitted:</strong><br>{{ needs_list.submitted_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    {% if needs_list.status != 'Draft' %}
+                    <div class="timeline-item mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="timeline-marker bg-info"></div>
+                            <div class="timeline-content ms-3 flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong class="text-info">Submitted</strong>
+                                        <div class="small text-muted">
+                                            {% if needs_list.update_dtime %}
+                                                {{ needs_list.update_dtime.strftime('%b %d, %Y %I:%M %p') }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <i class="bi bi-check-circle text-info"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     {% endif %}
                     
-                    {% if needs_list.reviewed_at %}
-                    <p><strong>Reviewed:</strong><br>{{ needs_list.reviewed_at.strftime('%Y-%m-%d %H:%M') }}<br>
-                    <small class="text-muted">by {{ needs_list.reviewed_by }}</small></p>
+                    {% if needs_list.status in ['Approved', 'In Progress', 'Completed'] %}
+                    <div class="timeline-item mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="timeline-marker bg-success"></div>
+                            <div class="timeline-content ms-3 flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong class="text-success">Approved</strong>
+                                        <div class="small text-muted">
+                                            {% if needs_list.update_dtime %}
+                                                {{ needs_list.update_dtime.strftime('%b %d, %Y %I:%M %p') }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </div>
+                                        <div class="small text-muted">
+                                            {% if needs_list.update_by %}
+                                                by {{ needs_list.update_by.full_name if needs_list.update_by.full_name else needs_list.update_by.email }}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <i class="bi bi-check-circle text-success"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     {% endif %}
                     
-                    {% if needs_list.approved_at %}
-                    <p><strong>Approved:</strong><br>{{ needs_list.approved_at.strftime('%Y-%m-%d %H:%M') }}<br>
-                    <small class="text-muted">by {{ needs_list.approved_by }}</small></p>
+                    {% if needs_list.status == 'Completed' %}
+                    <div class="timeline-item">
+                        <div class="d-flex align-items-start">
+                            <div class="timeline-marker bg-success"></div>
+                            <div class="timeline-content ms-3 flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong class="text-success">Completed</strong>
+                                        <div class="small text-muted">All items fulfilled</div>
+                                    </div>
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -169,10 +321,38 @@
     </div>
 </div>
 
+<style>
+.timeline-item {
+    position: relative;
+}
+.timeline-marker {
+    position: relative;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px currentColor;
+    flex-shrink: 0;
+}
+.timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 20px;
+    width: 2px;
+    height: calc(100% - 12px);
+    background: #dee2e6;
+    z-index: 0;
+}
+.timeline-content {
+    padding-bottom: 1rem;
+}
+</style>
+
 <div class="modal fade" id="rejectModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ url_for('needs_list.reject', needs_list_id=needs_list.id) }}">
+            <form method="POST" action="{{ url_for('needs_list.reject', needs_list_id=needs_list.needs_list_id) }}">
                 <div class="modal-header">
                     <h5 class="modal-title">Reject Needs List</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
