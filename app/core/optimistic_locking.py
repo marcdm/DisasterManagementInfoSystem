@@ -2,9 +2,7 @@
 Optimistic Locking Implementation for DRIMS
 Uses version_nbr column to prevent concurrent modification conflicts
 """
-from sqlalchemy import event, inspect
-from sqlalchemy.orm import Session
-from sqlalchemy.orm.attributes import instance_state
+from sqlalchemy.orm.exc import StaleDataError
 from app.core.exceptions import OptimisticLockError
 import logging
 
@@ -13,76 +11,41 @@ logger = logging.getLogger(__name__)
 
 def setup_optimistic_locking(db):
     """
-    Register optimistic locking event listeners on the SQLAlchemy session.
+    Setup optimistic locking using SQLAlchemy's version_id_col feature.
     
     This ensures that all UPDATE operations on tables with version_nbr
-    include the version number in the WHERE clause and increment it.
+    include the version number in the WHERE clause and increment it automatically.
     """
     
-    @event.listens_for(Session, "before_flush")
-    def enforce_optimistic_lock(session, flush_context, instances):
-        """
-        Before flush event: For all dirty objects with version_nbr,
-        execute a manual UPDATE with version_nbr in WHERE clause.
-        """
-        for obj in list(session.dirty):
-            if not hasattr(obj, 'version_nbr'):
-                continue
-            
-            if not session.is_modified(obj):
-                continue
-            
-            state = instance_state(obj)
-            mapper = state.mapper
-            table = mapper.local_table
-            
-            if 'version_nbr' not in table.c:
-                continue
-            
-            history = state.attrs.version_nbr.history
-            if history.has_changes():
-                continue
-            
-            current_version = obj.version_nbr
-            if current_version is None:
-                logger.warning(
-                    f"Object {obj.__class__.__name__} has None version_nbr, skipping optimistic lock"
-                )
-                continue
-            
-            pk_columns = [col for col in mapper.primary_key]
-            pk_dict = {col.name: getattr(obj, col.name) for col in pk_columns}
-            
-            update_values = {}
-            for attr in state.attrs:
-                if attr.key == 'version_nbr':
-                    continue
-                if attr.history.has_changes():
-                    update_values[attr.key] = getattr(obj, attr.key)
-            
-            if not update_values:
-                continue
-            
-            update_values['version_nbr'] = current_version + 1
-            
-            stmt = table.update()
-            for col_name, col_value in pk_dict.items():
-                stmt = stmt.where(table.c[col_name] == col_value)
-            stmt = stmt.where(table.c.version_nbr == current_version)
-            stmt = stmt.values(**update_values)
-            
-            result = session.execute(stmt)
-            
-            if result.rowcount == 0:
-                session.rollback()
-                raise OptimisticLockError(
-                    obj.__class__.__name__,
-                    pk_dict,
-                    f"Stale version {current_version} - record was modified by another transaction"
-                )
-            
-            obj.version_nbr = current_version + 1
-            
-            session.expire(obj)
+    from sqlalchemy import inspect
+    from app.db import models
     
-    logger.info("Optimistic locking enabled for all tables with version_nbr")
+    configured_count = 0
+    
+    for model_name in dir(models):
+        model_class = getattr(models, model_name)
+        
+        if not isinstance(model_class, type):
+            continue
+        
+        if not hasattr(model_class, '__tablename__'):
+            continue
+        
+        if not hasattr(model_class, 'version_nbr'):
+            continue
+        
+        try:
+            mapper_obj = inspect(model_class)
+            
+            for prop in mapper_obj.iterate_properties:
+                if hasattr(prop, 'columns') and len(prop.columns) > 0:
+                    col = prop.columns[0]
+                    if col.name == 'version_nbr':
+                        mapper_obj.version_id_col = col
+                        configured_count += 1
+                        logger.info(f"✓ Configured optimistic locking for {model_name}")
+                        break
+        except Exception as e:
+            logger.warning(f"Could not configure optimistic locking for {model_name}: {e}")
+    
+    logger.info(f"Optimistic locking configured for {configured_count} models with version_nbr")
