@@ -18,24 +18,31 @@ def index():
 def create():
     if request.method == 'POST':
         try:
+            from app.db.models import User
+            from app.core.audit import add_audit_fields
+            
             latest_list = NeedsList.query.order_by(NeedsList.id.desc()).first()
             next_id = (latest_list.id + 1) if latest_list else 1
             list_number = f"NL{next_id:06d}"
+            
+            submission_action = request.form.get('submission_action', 'draft')
+            status = 'Draft' if submission_action == 'draft' else 'Submitted'
+            is_draft = (submission_action == 'draft')
             
             needs_list = NeedsList(
                 list_number=list_number,
                 agency_id=int(request.form['agency_id']),
                 event_id=int(request.form['event_id']),
-                submission_type=request.form.get('submission_type', 'DRAFT'),
                 requested_by_name=request.form.get('requested_by_name'),
                 requested_by_contact=request.form.get('requested_by_contact'),
-                priority=request.form.get('priority', 'MEDIUM'),
-                urgency=request.form.get('urgency', 'ROUTINE'),
-                status='Draft',
-                is_draft=True,
+                priority=request.form.get('priority', 'Medium'),
+                urgency=request.form.get('urgency', 'Routine'),
+                status=status,
+                is_draft=is_draft,
                 notes=request.form.get('notes'),
                 justification=request.form.get('justification'),
-                created_by=current_user.email
+                created_by=current_user.email,
+                submitted_at=datetime.now() if not is_draft else None
             )
             
             db.session.add(needs_list)
@@ -48,15 +55,12 @@ def create():
                     qty = request.form.get(key)
                     if qty and float(qty) > 0:
                         item_notes = request.form.get(f'item_{item_id}_notes', '')
-                        item_justification = request.form.get(f'item_{item_id}_justification', '')
                         
                         needs_item = NeedsListItem(
                             needs_list_id=needs_list.id,
                             item_id=item_id,
                             requested_qty=Decimal(qty),
-                            notes=item_notes,
-                            justification=item_justification,
-                            status='Pending'
+                            notes=item_notes
                         )
                         db.session.add(needs_item)
                         item_count += 1
@@ -64,23 +68,23 @@ def create():
             if item_count == 0:
                 flash('Please add at least one item to the needs list', 'danger')
                 db.session.rollback()
-                agencies = Agency.query.order_by(Agency.agency_name).all()
+                agencies = Agency.query.filter_by(status_code='A').order_by(Agency.agency_name).all()
                 events = Event.query.filter_by(status_code='A').order_by(Event.event_name).all()
                 items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
-                return render_template('needs_list/create.html', agencies=agencies, events=events, items=items)
+                return render_template('needs_list/create_wizard.html', agencies=agencies, events=events, items=items)
             
             db.session.commit()
-            flash(f'Needs list {list_number} created successfully with {item_count} items', 'success')
+            flash(f'Needs list {list_number} {"created as draft" if is_draft else "submitted successfully"} with {item_count} items', 'success')
             return redirect(url_for('needs_list.view', needs_list_id=needs_list.id))
             
         except Exception as e:
             db.session.rollback()
             flash(f'Error creating needs list: {str(e)}', 'danger')
     
-    agencies = Agency.query.order_by(Agency.agency_name).all()
+    agencies = Agency.query.filter_by(status_code='A').order_by(Agency.agency_name).all()
     events = Event.query.filter_by(status_code='A').order_by(Event.event_name).all()
     items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
-    return render_template('needs_list/create.html', agencies=agencies, events=events, items=items)
+    return render_template('needs_list/create_wizard.html', agencies=agencies, events=events, items=items)
 
 @needs_list_bp.route('/<int:needs_list_id>')
 @login_required
