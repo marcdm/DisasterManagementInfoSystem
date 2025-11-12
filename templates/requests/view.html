@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% from 'macros/workflow_stepper.html' import workflow_stepper %}
+{% from 'macros/workflow_stepper.html' import relief_request_stepper %}
 
 {% block title %}Relief Request #{{ request.reliefrqst_id }}{% endblock %}
 
@@ -33,7 +33,7 @@
         </div>
     </div>
 
-    {{ workflow_stepper(request.status_code) }}
+    {{ relief_request_stepper(request.status_code) }}
 
     <div class="row">
         <div class="col-md-6 mb-3">
