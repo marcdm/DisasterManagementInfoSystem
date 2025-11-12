@@ -282,6 +282,14 @@ class Donation(db.Model):
     event = db.relationship('Event', backref='donations')
     custodian = db.relationship('Custodian', backref='donations')
 
+class ReliefRqstStatus(db.Model):
+    """Relief Request Status Lookup Table"""
+    __tablename__ = 'reliefrqst_status'
+    
+    status_code = db.Column(db.SmallInteger, primary_key=True)
+    status_desc = db.Column(db.String(20), nullable=False)
+    is_active_flag = db.Column(db.Boolean, nullable=False, default=True)
+
 class ReliefRqst(db.Model):
     """Relief Request / Needs List (AIDMGMT workflow)"""
     __tablename__ = 'reliefrqst'
@@ -293,7 +301,7 @@ class ReliefRqst(db.Model):
     urgency_ind = db.Column(db.CHAR(1), nullable=False)
     rqst_notes_text = db.Column(db.Text)
     review_notes_text = db.Column(db.Text)
-    status_code = db.Column(db.SmallInteger, nullable=False)
+    status_code = db.Column(db.SmallInteger, db.ForeignKey('reliefrqst_status.status_code'), nullable=False)
     create_by_id = db.Column(db.String(20), nullable=False)
     create_dtime = db.Column(db.DateTime, nullable=False)
     review_by_id = db.Column(db.String(20))
@@ -304,6 +312,7 @@ class ReliefRqst(db.Model):
     
     agency = db.relationship('Agency', backref='relief_requests')
     eligible_event = db.relationship('Event', backref='eligible_relief_requests')
+    status = db.relationship('ReliefRqstStatus', backref='relief_requests')
 
 class ReliefRqstItem(db.Model):
     """Relief Request Item"""

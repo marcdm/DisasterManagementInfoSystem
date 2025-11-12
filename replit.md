@@ -21,6 +21,20 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### November 12, 2025 - Relief Request Status Lookup Table Migration
+- **Database Migration**: Created `reliefrqst_status` lookup table for standardized status management
+  - **Table Structure**: status_code (smallint PK), status_desc (varchar 20), is_active_flag (boolean)
+  - **Status Codes**: 8 standard values (0=DRAFT, 1=Awaiting approval, 2=CANCELLED, 3=SUBMITTED, 4=DENIED, 5=PART FILLED, 6=CLOSED, 7=FILLED)
+  - **Foreign Key**: `reliefrqst.status_code` now references `reliefrqst_status.status_code`
+  - **Data Type**: Changed status_code from CHAR(1) to smallint for better type safety
+  - **Indexes**: Added performance indexes on (agency_id, request_date), (request_date, status_code), (status_code, urgency_ind)
+- **Model Updates**: 
+  - Created `ReliefRqstStatus` model for lookup table
+  - Updated `ReliefRqst` model with foreign key relationship to status table
+  - Added `status` relationship property for easy access to status description
+- **Idempotency**: Migration is fully idempotent and can be run multiple times safely
+- **Template Fixes**: Corrected workflow stepper macro import and UOM field references in request view
+
 ### November 12, 2025 - User Creation Organization Dropdown with Security Enhancements
 - **User Interface**: Replaced text input with dropdown for organization field in user creation and editing
   - **Dropdown Structure**: Uses `<optgroup>` to separate active agencies (status='A') from custodians
