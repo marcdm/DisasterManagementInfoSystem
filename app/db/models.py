@@ -132,6 +132,7 @@ class Agency(db.Model):
     phone_no = db.Column(db.String(20), nullable=False)
     email_text = db.Column(db.String(100))
     ineligible_event_id = db.Column(db.Integer, db.ForeignKey('event.event_id'))
+    warehouse_id = db.Column(db.Integer, db.ForeignKey('warehouse.warehouse_id'))
     status_code = db.Column(db.CHAR(1), nullable=False)
     create_by_id = db.Column(db.String(20), nullable=False)
     create_dtime = db.Column(db.DateTime, nullable=False)
@@ -141,6 +142,7 @@ class Agency(db.Model):
     
     parish = db.relationship('Parish', backref='agencies')
     ineligible_event = db.relationship('Event', backref='ineligible_agencies')
+    warehouse = db.relationship('Warehouse', backref='agency', uselist=False)
 
 class Parish(db.Model):
     """Jamaican Parish"""

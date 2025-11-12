@@ -47,7 +47,20 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6" id="warehouse_field" style="display: none;">
+                    <label for="warehouse_id" class="form-label">Warehouse <span class="text-danger">*</span></label>
+                    <select name="warehouse_id" id="warehouse_id" class="form-select">
+                        <option value="">Select Warehouse</option>
+                        {% for warehouse in warehouses %}
+                        <option value="{{ warehouse.warehouse_id }}">{{ warehouse.warehouse_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Required for DISTRIBUTOR agencies</small>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-12">
                     <label for="ineligible_event_id" class="form-label">Ineligible for Event</label>
                     <select name="ineligible_event_id" id="ineligible_event_id" class="form-select">
                         <option value="">None - Eligible for All Events</option>
@@ -91,4 +104,27 @@
     </button>
     <a href="{{ url_for('agencies.list_agencies') }}" class="btn btn-secondary">Cancel</a>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const agencyTypeSelect = document.getElementById('agency_type');
+    const warehouseField = document.getElementById('warehouse_field');
+    const warehouseSelect = document.getElementById('warehouse_id');
+    
+    function toggleWarehouseField() {
+        const agencyType = agencyTypeSelect.value;
+        if (agencyType === 'DISTRIBUTOR') {
+            warehouseField.style.display = 'block';
+            warehouseSelect.required = true;
+        } else {
+            warehouseField.style.display = 'none';
+            warehouseSelect.required = false;
+            warehouseSelect.value = '';
+        }
+    }
+    
+    agencyTypeSelect.addEventListener('change', toggleWarehouseField);
+    toggleWarehouseField();
+});
+</script>
 {% endblock %}

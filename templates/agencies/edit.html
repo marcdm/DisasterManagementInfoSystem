@@ -46,17 +46,31 @@
                 </div>
             </div>
             
-            <div class="mb-3">
-                <label for="ineligible_event_id" class="form-label">Ineligible for Event</label>
-                <select name="ineligible_event_id" id="ineligible_event_id" class="form-select">
-                    <option value="">None - Eligible for All Events</option>
-                    {% for event in events %}
-                    <option value="{{ event.event_id }}" {% if agency.ineligible_event_id == event.event_id %}selected{% endif %}>
-                        {{ event.event_name }}
-                    </option>
-                    {% endfor %}
-                </select>
-                <small class="text-muted">Select an event this agency cannot participate in (optional)</small>
+            <div class="row mb-3">
+                <div class="col-md-6" id="warehouse_field">
+                    <label for="warehouse_id" class="form-label">Warehouse <span class="text-danger" id="warehouse_required">*</span></label>
+                    <select name="warehouse_id" id="warehouse_id" class="form-select">
+                        <option value="">Select Warehouse</option>
+                        {% for warehouse in warehouses %}
+                        <option value="{{ warehouse.warehouse_id }}" {% if agency.warehouse_id == warehouse.warehouse_id %}selected{% endif %}>
+                            {{ warehouse.warehouse_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Required for DISTRIBUTOR agencies</small>
+                </div>
+                <div class="col-md-6">
+                    <label for="ineligible_event_id" class="form-label">Ineligible for Event</label>
+                    <select name="ineligible_event_id" id="ineligible_event_id" class="form-select">
+                        <option value="">None - Eligible for All Events</option>
+                        {% for event in events %}
+                        <option value="{{ event.event_id }}" {% if agency.ineligible_event_id == event.event_id %}selected{% endif %}>
+                            {{ event.event_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Select an event this agency cannot participate in (optional)</small>
+                </div>
             </div>
             
             <div class="mb-3">
@@ -91,4 +105,30 @@
     </button>
     <a href="{{ url_for('agencies.view', agency_id=agency.agency_id) }}" class="btn btn-secondary">Cancel</a>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const agencyTypeSelect = document.getElementById('agency_type');
+    const warehouseField = document.getElementById('warehouse_field');
+    const warehouseSelect = document.getElementById('warehouse_id');
+    const warehouseRequired = document.getElementById('warehouse_required');
+    
+    function toggleWarehouseField() {
+        const agencyType = agencyTypeSelect.value;
+        if (agencyType === 'DISTRIBUTOR') {
+            warehouseField.style.display = 'block';
+            warehouseSelect.required = true;
+            warehouseRequired.style.display = 'inline';
+        } else {
+            warehouseField.style.display = 'none';
+            warehouseSelect.required = false;
+            warehouseSelect.value = '';
+            warehouseRequired.style.display = 'none';
+        }
+    }
+    
+    agencyTypeSelect.addEventListener('change', toggleWarehouseField);
+    toggleWarehouseField();
+});
+</script>
 {% endblock %}

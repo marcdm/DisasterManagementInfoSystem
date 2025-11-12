@@ -30,6 +30,18 @@ Preferred communication style: Simple, everyday language.
 - **Responsive Design**: Logo sizing adapts to different screen sizes
 - **Best Practices**: Follows international standards for government web applications
 
+### November 12, 2025 - Agency Table Referential Integrity Enhancement
+- **Database Schema Update**: Added `warehouse_id` field to agency table with full referential integrity
+  - Foreign key constraint to `warehouse(warehouse_id)`
+  - Complex CHECK constraint (`c_agency_5`): SHELTER agencies must have NULL warehouse_id, DISTRIBUTOR agencies must have non-NULL warehouse_id
+  - Ensures business rules are enforced at database level
+- **Model Update**: Agency model now includes `warehouse_id` field and relationship to Warehouse
+- **Form Enhancements**: Dynamic warehouse field visibility based on agency type
+  - JavaScript-based toggle: shows warehouse selector only for DISTRIBUTOR agencies
+  - Client-side and server-side validation
+- **UI Improvements**: Agency view page displays associated warehouse with clickable link
+- **Validation**: Backend validation ensures DISTRIBUTOR agencies must select a warehouse
+
 ### November 12, 2025 - Agency Management Enhancement
 - **Updated Agency Forms**: Added new AIDMGMT-3.1 fields to agency management
   - `agency_type`: Categorize as DISTRIBUTOR or SHELTER

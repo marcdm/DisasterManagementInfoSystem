@@ -41,6 +41,18 @@
                 </td>
             </tr>
             <tr>
+                <th>Warehouse:</th>
+                <td>
+                    {% if agency.warehouse %}
+                    <a href="{{ url_for('warehouses.view', warehouse_id=agency.warehouse.warehouse_id) }}">
+                        {{ agency.warehouse.warehouse_name }}
+                    </a>
+                    {% else %}
+                    <span class="text-muted">No warehouse assigned</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
                 <th>Status:</th>
                 <td>
                     {% if agency.status_code == 'A' %}
