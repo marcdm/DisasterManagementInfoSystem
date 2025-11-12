@@ -1,9 +1,27 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, jsonify
 from flask_login import login_required
 from sqlalchemy import func
 from app.db.models import db, Inventory, Item, NeedsList, Fulfilment
 
 notifications_bp = Blueprint('notifications', __name__)
+
+@notifications_bp.route('/api/unread_count')
+@login_required
+def unread_count():
+    low_stock_count = db.session.query(
+        func.count(Item.item_id)
+    ).join(Inventory).filter(
+        Item.status_code == 'A'
+    ).group_by(Item.item_id).having(
+        func.sum(Inventory.usable_qty) <= Item.reorder_level
+    ).count()
+    
+    pending_needs = NeedsList.query.filter_by(status='Submitted').count()
+    pending_fulfilments = Fulfilment.query.filter_by(status='In Preparation').count()
+    
+    total_count = low_stock_count + pending_needs + pending_fulfilments
+    
+    return jsonify({'count': total_count})
 
 @notifications_bp.route('/')
 @login_required

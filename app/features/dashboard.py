@@ -64,6 +64,7 @@ def index():
     ).group_by(Fulfilment.status).all()
     
     return render_template('dashboard/index.html',
+        now=datetime.now(),
         total_items=total_items,
         total_warehouses=total_warehouses,
         total_events=total_events,

@@ -1,151 +1,109 @@
 {% extends "base.html" %}
+{% from "macros.html" import kpi_card, status_badge, data_table %}
 {% block title %}Dashboard - DRIMS{% endblock %}
 
+{% set active_page = 'dashboard' %}
+
 {% block content %}
-<h2><i class="bi bi-speedometer2"></i> System Dashboard</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="bi bi-speedometer2"></i> System Dashboard</h2>
+    <div class="text-muted">
+        <i class="bi bi-clock"></i> Last updated: {{ now.strftime('%B %d, %Y %H:%M') if now else 'Just now' }}
+    </div>
+</div>
 
 <div class="row g-3 mb-4">
     <div class="col-md-3">
-        <div class="card text-white bg-primary">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title mb-0">Active Items</h6>
-                        <h2 class="mb-0">{{ total_items }}</h2>
-                    </div>
-                    <div><i class="bi bi-box-seam" style="font-size: 3rem; opacity: 0.5;"></i></div>
-                </div>
-            </div>
-            <div class="card-footer bg-primary bg-opacity-75">
-                <a href="{{ url_for('items.list_items') }}" class="text-white text-decoration-none">
-                    View Items <i class="bi bi-arrow-right"></i>
-                </a>
-            </div>
-        </div>
+        {{ kpi_card('box-seam', 'Active Items', total_items, 'primary') }}
     </div>
-    
     <div class="col-md-3">
-        <div class="card text-white bg-success">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title mb-0">Warehouses</h6>
-                        <h2 class="mb-0">{{ total_warehouses }}</h2>
-                    </div>
-                    <div><i class="bi bi-building" style="font-size: 3rem; opacity: 0.5;"></i></div>
-                </div>
-            </div>
-            <div class="card-footer bg-success bg-opacity-75">
-                <a href="{{ url_for('warehouses.list_warehouses') }}" class="text-white text-decoration-none">
-                    View Warehouses <i class="bi bi-arrow-right"></i>
-                </a>
-            </div>
-        </div>
+        {{ kpi_card('building', 'Warehouses', total_warehouses, 'success') }}
     </div>
-    
     <div class="col-md-3">
-        <div class="card text-white bg-warning">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title mb-0">Active Events</h6>
-                        <h2 class="mb-0">{{ total_events }}</h2>
-                    </div>
-                    <div><i class="bi bi-calendar-event" style="font-size: 3rem; opacity: 0.5;"></i></div>
-                </div>
-            </div>
-            <div class="card-footer bg-warning bg-opacity-75">
-                <a href="{{ url_for('events.list_events') }}" class="text-white text-decoration-none">
-                    View Events <i class="bi bi-arrow-right"></i>
-                </a>
-            </div>
-        </div>
+        {{ kpi_card('calendar-event', 'Active Events', total_events, 'warning') }}
     </div>
-    
     <div class="col-md-3">
-        <div class="card text-white bg-info">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title mb-0">Total Inventory Value</h6>
-                        <h2 class="mb-0">${{ "%.2f"|format(total_inventory_value) }}</h2>
-                    </div>
-                    <div><i class="bi bi-cash-stack" style="font-size: 3rem; opacity: 0.5;"></i></div>
-                </div>
-            </div>
-            <div class="card-footer bg-info bg-opacity-75">
-                <a href="{{ url_for('inventory.list_inventory') }}" class="text-white text-decoration-none">
-                    View Inventory <i class="bi bi-arrow-right"></i>
-                </a>
-            </div>
-        </div>
+        {{ kpi_card('cash-stack', 'Total Value', '$%.2f'|format(total_inventory_value), 'info') }}
     </div>
 </div>
 
 <div class="row g-3 mb-4">
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-danger text-white">
-                <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill"></i> Low Stock Alert</h5>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill"></i> Low Stock Alerts</h5>
+                {% if low_stock_items %}
+                <span class="badge bg-white text-danger">{{ low_stock_items|length }} items</span>
+                {% endif %}
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if low_stock_items %}
                 <div class="table-responsive">
-                    <table class="table table-sm table-hover mb-0">
-                        <thead>
+                    <table class="table table-hover table-sm mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <th>Item</th>
-                                <th class="text-end">Current Stock</th>
-                                <th class="text-end">Reorder Level</th>
+                                <th class="py-2 px-3">Item</th>
+                                <th class="py-2 px-3 text-end">Current</th>
+                                <th class="py-2 px-3 text-end">Reorder Level</th>
+                                <th class="py-2 px-3 text-end">Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for item in low_stock_items %}
-                            <tr>
-                                <td><a href="{{ url_for('items.view', item_id=item.item_id) }}">{{ item.item_name }}</a></td>
-                                <td class="text-end">{{ "%.2f"|format(item.total_qty) }}</td>
-                                <td class="text-end">{{ "%.2f"|format(item.reorder_level) }}</td>
+                            <tr style="cursor: pointer;" onclick="window.location='{{ url_for('items.view', item_id=item.item_id) }}'">
+                                <td class="py-2 px-3">{{ item.item_name }}</td>
+                                <td class="py-2 px-3 text-end">{{ "%.2f"|format(item.total_qty) }}</td>
+                                <td class="py-2 px-3 text-end">{{ "%.2f"|format(item.reorder_level) }}</td>
+                                <td class="py-2 px-3 text-end">
+                                    <span class="badge bg-danger">Low</span>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
                 {% else %}
-                <p class="text-muted mb-0">All items are adequately stocked.</p>
+                <div class="p-4 text-center text-muted">
+                    <i class="bi bi-check-circle fs-1"></i>
+                    <p class="mb-0 mt-2">All items are adequately stocked.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
     </div>
     
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-header card-header-goj">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header card-header-goj d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-building"></i> Warehouse Stock Levels</h5>
+                <a href="{{ url_for('warehouses.list_warehouses') }}" class="btn btn-sm btn-light">View All</a>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if warehouse_stock %}
                 <div class="table-responsive">
-                    <table class="table table-sm table-hover mb-0">
-                        <thead>
+                    <table class="table table-hover table-sm mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <th>Warehouse</th>
-                                <th class="text-end">Items</th>
-                                <th class="text-end">Total Qty</th>
+                                <th class="py-2 px-3">Warehouse</th>
+                                <th class="py-2 px-3 text-end">Items</th>
+                                <th class="py-2 px-3 text-end">Total Qty</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for wh in warehouse_stock %}
-                            <tr>
-                                <td><a href="{{ url_for('warehouses.view', warehouse_id=wh.warehouse_id) }}">{{ wh.warehouse_name }}</a></td>
-                                <td class="text-end">{{ wh.item_count }}</td>
-                                <td class="text-end">{{ "%.2f"|format(wh.total_qty) }}</td>
+                            <tr style="cursor: pointer;" onclick="window.location='{{ url_for('warehouses.view', warehouse_id=wh.warehouse_id) }}'">
+                                <td class="py-2 px-3">{{ wh.warehouse_name }}</td>
+                                <td class="py-2 px-3 text-end">{{ wh.item_count }}</td>
+                                <td class="py-2 px-3 text-end">{{ "%.2f"|format(wh.total_qty) }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
                 {% else %}
-                <p class="text-muted mb-0">No inventory data available.</p>
+                <div class="p-4 text-center text-muted">
+                    <p class="mb-0">No inventory data available.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
@@ -154,97 +112,116 @@
 
 <div class="row g-3 mb-4">
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-header card-header-goj">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header card-header-goj d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-list-check"></i> Recent Needs Lists</h5>
+                <a href="{{ url_for('needs_list.index') }}" class="btn btn-sm btn-light">View All</a>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if recent_needs %}
                 <div class="list-group list-group-flush">
                     {% for need in recent_needs %}
-                    <a href="{{ url_for('needs_list.view', needs_list_id=need.needs_list_id) }}" class="list-group-item list-group-item-action">
+                    <a href="{{ url_for('needs_list.view', needs_list_id=need.needs_list_id) }}" class="list-group-item list-group-item-action border-0">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <strong>{{ need.needs_list_nbr }}</strong> - {{ need.agency.agency_name if need.agency }}
-                                <br><small class="text-muted">{{ need.create_dtime.strftime('%Y-%m-%d %H:%M') }}</small>
+                                <strong class="text-primary">{{ need.needs_list_nbr }}</strong>
+                                {% if need.agency %}
+                                <span class="text-muted">{{ need.agency.agency_name }}</span>
+                                {% endif %}
+                                <br>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock"></i> {{ need.create_dtime.strftime('%Y-%m-%d %H:%M') }}
+                                </small>
                             </div>
-                            <span class="badge bg-{{ need.status | status_badge('needs_list') }}">{{ need.status }}</span>
+                            {{ status_badge(need.status) }}
                         </div>
                     </a>
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-muted mb-0">No needs lists yet.</p>
+                <div class="p-4 text-center text-muted">
+                    <i class="bi bi-inbox fs-1"></i>
+                    <p class="mb-0 mt-2">No needs lists yet.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
     </div>
     
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-header card-header-goj">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header card-header-goj d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-truck"></i> Recent Fulfilments</h5>
+                <a href="{{ url_for('fulfilment.index') }}" class="btn btn-sm btn-light">View All</a>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if recent_fulfilments %}
                 <div class="list-group list-group-flush">
                     {% for ful in recent_fulfilments %}
-                    <a href="{{ url_for('fulfilment.view', fulfilment_id=ful.fulfilment_id) }}" class="list-group-item list-group-item-action">
+                    <a href="{{ url_for('fulfilment.view', fulfilment_id=ful.fulfilment_id) }}" class="list-group-item list-group-item-action border-0">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <strong>{{ ful.fulfilment_nbr }}</strong> - {{ ful.warehouse.warehouse_name if ful.warehouse }}
-                                <br><small class="text-muted">{{ ful.create_dtime.strftime('%Y-%m-%d %H:%M') }}</small>
+                                <strong class="text-primary">{{ ful.fulfilment_nbr }}</strong>
+                                {% if ful.warehouse %}
+                                <span class="text-muted">{{ ful.warehouse.warehouse_name }}</span>
+                                {% endif %}
+                                <br>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock"></i> {{ ful.create_dtime.strftime('%Y-%m-%d %H:%M') }}
+                                </small>
                             </div>
-                            <span class="badge bg-{{ ful.status | status_badge('fulfilment') }}">{{ ful.status }}</span>
+                            {{ status_badge(ful.status) }}
                         </div>
                     </a>
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-muted mb-0">No fulfilments yet.</p>
+                <div class="p-4 text-center text-muted">
+                    <i class="bi bi-inbox fs-1"></i>
+                    <p class="mb-0 mt-2">No fulfilments yet.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
 
+{% if active_events %}
 <div class="row g-3">
     <div class="col-md-12">
-        <div class="card">
-            <div class="card-header card-header-goj">
-                <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Active Events</h5>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header card-header-goj d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Active Disaster Events</h5>
+                <a href="{{ url_for('events.list_events') }}" class="btn btn-sm btn-light">Manage Events</a>
             </div>
-            <div class="card-body">
-                {% if active_events %}
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead>
+                    <table class="table table-hover table-sm mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <th>Event ID</th>
-                                <th>Event Name</th>
-                                <th>Type</th>
-                                <th>Start Date</th>
-                                <th>Parish</th>
+                                <th class="py-2 px-3">Event ID</th>
+                                <th class="py-2 px-3">Event Name</th>
+                                <th class="py-2 px-3">Type</th>
+                                <th class="py-2 px-3">Start Date</th>
+                                <th class="py-2 px-3">Parish</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for event in active_events %}
-                            <tr>
-                                <td><a href="{{ url_for('events.view', event_id=event.event_id) }}">{{ event.event_id }}</a></td>
-                                <td>{{ event.event_name }}</td>
-                                <td>{{ event.event_type_desc }}</td>
-                                <td>{{ event.event_start_date.strftime('%Y-%m-%d') if event.event_start_date }}</td>
-                                <td>{{ event.parish.parish_name if event.parish }}</td>
+                            <tr style="cursor: pointer;" onclick="window.location='{{ url_for('events.view', event_id=event.event_id) }}'">
+                                <td class="py-2 px-3"><strong>{{ event.event_id }}</strong></td>
+                                <td class="py-2 px-3">{{ event.event_name }}</td>
+                                <td class="py-2 px-3">{{ event.event_type_desc }}</td>
+                                <td class="py-2 px-3">{{ event.event_start_date.strftime('%Y-%m-%d') if event.event_start_date else 'N/A' }}</td>
+                                <td class="py-2 px-3">{{ event.parish.parish_name if event.parish else 'N/A' }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
-                {% else %}
-                <p class="text-muted mb-0">No active events.</p>
-                {% endif %}
             </div>
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}
