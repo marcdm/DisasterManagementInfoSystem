@@ -21,6 +21,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### November 12, 2025 - Optimistic Locking Implementation
+- **Configuration**: Automatic optimistic locking using SQLAlchemy's `version_id_col` feature
+- **Coverage**: All 40 database tables with `version_nbr` column now have optimistic locking enabled
+- **Mechanism**: Version numbers automatically increment on updates; concurrent modifications raise `StaleDataError`
+- **Implementation**: `app/core/optimistic_locking.py` configures all mappers during app initialization
+- **Custom Exception**: `OptimisticLockError` class in `app/core/exceptions.py` for application-specific error handling
+- **Verification**: Version increments confirmed working (e.g., 4→5→6 on successive updates)
+- **Documentation**: Comprehensive guide in `docs/OPTIMISTIC_LOCKING.md` with usage examples and testing patterns
+- **Benefits**: Prevents lost updates, no database locks needed, automatic version management, audit compliance
+
 ### November 12, 2025 - DRIMS Needs/Fulfillment Workflow Removal (System Simplification)
 - **Scope**: Removed entire Needs List/Fulfillment/Dispatch/Receipt workflow to focus exclusively on AIDMGMT
 - **Database**: Dropped 7 tables (needs_list, needs_list_item, fulfilment, fulfilment_line_item, fulfilment_edit_log, dispatch_manifest, receipt_record)
