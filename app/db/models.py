@@ -301,7 +301,7 @@ class ReliefRqst(db.Model):
     urgency_ind = db.Column(db.CHAR(1), nullable=False)
     rqst_notes_text = db.Column(db.Text)
     review_notes_text = db.Column(db.Text)
-    status_code = db.Column(db.SmallInteger, db.ForeignKey('reliefrqst_status.status_code'), nullable=False)
+    status_code = db.Column(db.SmallInteger, db.ForeignKey('reliefrqst_status.status_code'), nullable=False, default=0)
     create_by_id = db.Column(db.String(20), nullable=False)
     create_dtime = db.Column(db.DateTime, nullable=False)
     review_by_id = db.Column(db.String(20))
