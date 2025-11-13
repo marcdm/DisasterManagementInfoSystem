@@ -19,16 +19,31 @@ requests_bp = Blueprint('requests', __name__, url_prefix='/relief-requests')
 
 @requests_bp.route('/')
 @login_required
-@agency_user_required
 def list_requests():
     """
-    List all relief requests for the current user's agency.
-    Agency users only see their own agency's requests.
+    List relief requests.
+    - Agency users: See only their own agency's requests
+    - Directors: See all requests (for eligibility review)
     """
+    from app.core.rbac import is_director_level
+    
     status_filter = request.args.get('status', 'all')
     
-    # Filter by current user's agency
-    query = ReliefRqst.query.filter_by(agency_id=current_user.agency_id)
+    is_director = is_director_level()
+    is_agency_user = not is_director and current_user.agency_id is not None
+    
+    # Check access
+    if not is_director and not is_agency_user:
+        flash('You do not have permission to view relief requests.', 'danger')
+        abort(403)
+    
+    # Build query based on user type
+    if is_agency_user:
+        # Agency users see only their own agency's requests
+        query = ReliefRqst.query.filter_by(agency_id=current_user.agency_id)
+    else:
+        # Directors see all requests
+        query = ReliefRqst.query
     
     # Apply status filter
     if status_filter == 'draft':
