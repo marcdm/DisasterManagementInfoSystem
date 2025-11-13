@@ -21,6 +21,47 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### November 13, 2025 - Relief Request Edit Items Page UX Overhaul
+- **Two-Column Responsive Layout**: Redesigned edit items page for better usability and workflow visibility
+  - **Left Column (70%)**: Main content area with request summary card, item form, and current items table
+  - **Right Column (30%)**: Vertical workflow stepper showing user progress through request lifecycle
+  - **Responsive Design**: Workflow stepper stacks below main content on mobile devices (<992px)
+- **Request Summary Card**: Added prominent summary section at page top
+  - Displays: Agency name, Request date, Tracking number, Current status (with color-coded badges)
+  - Visual hierarchy: DRAFT (yellow), SUBMITTED (blue), FILLED (green)
+- **Vertical Workflow Stepper**: 5-step visual guide showing current position in workflow
+  - Steps: (1) Create Relief Request, (2) Add/Edit Items, (3) Review & Confirm, (4) Submit to ODPEM, (5) ODPEM Review & Decision
+  - Active step highlighted in green, completed steps show checkmarks, future steps in gray
+  - Contextual helper text explains current step actions
+- **Enhanced Form UX**: Improved clarity and user guidance
+  - Clear required field indicators (red asterisks)
+  - Inline validation hints (urgency-based justification requirement)
+  - Better spacing and visual grouping of related fields
+  - Truncated justification text in table with full text on hover (max-width: 200px)
+- **Save Draft Functionality**: New route and button for explicit save action
+  - Route: `POST /relief-requests/<id>/save_draft`
+  - Commits any pending session changes
+  - Shows success message: "Draft saved successfully. You can return later to complete this request."
+  - Redirects back to edit page
+  - Note: Items are auto-saved when added/deleted; this provides user feedback
+- **Submit to ODPEM Enhancement**: Improved submission workflow
+  - Hidden `version_nbr` field for optimistic locking (prevents concurrent submission conflicts)
+  - Confirmation dialog: "Submit this request to ODPEM? You will not be able to edit items after submission."
+  - Only enabled when request has at least one item
+  - Disabled state shows helpful tooltip when no items present
+- **Action Button Organization**: Logical button grouping at bottom of items section
+  - Primary actions: Save Draft (secondary style), Submit to ODPEM (primary green style)
+  - Secondary action: Back to Request (outline style)
+  - Buttons only shown for draft requests (status_code = 0)
+- **Version Handling Design**: Request version_nbr only increments on status changes, not item edits
+  - Adding/deleting items does NOT increment request version_nbr
+  - Page redirects after each item operation, ensuring fresh data and correct version_nbr in submit form
+  - This prevents false optimistic locking conflicts during iterative draft editing
+- **CSS Organization**: Inline styles in `<style>` block for page-specific customization
+  - Custom classes: `.request-summary-card`, `.workflow-stepper`, `.workflow-step`, `.step-icon`, `.status-badge`
+  - Maintains consistency with global DRIMS styles (`.drims-card`, `.drims-table`)
+  - Sticky positioning on workflow stepper (desktop only)
+
 ### November 13, 2025 - Required By Date Field and Date Format Standardization
 - **Required By Date Field**: Added optional date field for relief request items
   - **UI Enhancement**: Added date input field to both `requests/edit_items.html` and `agency_requests/edit_items.html` templates
