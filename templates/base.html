@@ -563,9 +563,9 @@
     {% endif %}
 
     {% if current_user.is_authenticated %}
-    <div class="main-content">
+    <div class="main-content" id="main-content">
     {% else %}
-    <main class="container mt-5">
+    <main class="container mt-5" id="main-content">
     {% endif %}
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
