@@ -35,12 +35,18 @@ Preferred communication style: Simple, everyday language.
 - **Needs Lists Design Pattern**: Unified modern UI across Relief Requests and Eligibility workflows:
   - **Summary Metric Cards**: 3-card dashboard showing key metrics (total, high priority, items)
   - **Filter Tabs**: Functional tabs with live count badges for filtering by priority
-  - **Workflow Sidebar**: 4-step visual progress indicator on review/detail pages
+  - **Workflow Sidebar**: 5-step visual progress indicator showing request lifecycle
   - **Status Badges**: Color-coded badges for status and priority levels
   - **Standardized Tables**: `relief-requests-table` class with consistent styling, row hover states
   - **Action Buttons**: `btn-relief-primary` and `btn-relief-secondary` for consistent CTA styling
   - **Shared Components**: Jinja2 macros (`_status_badge.html`, `_summary_cards.html`, `_workflow_sidebar.html`)
   - **Shared Stylesheet**: `relief-requests-ui.css` for unified styling across both workflows
+- **Agency Relief Request Workflow (5 Steps)**:
+  1. **Create Request** - Provide basic request details and disaster event (status=0)
+  2. **Add Items** - Add items with quantities, urgency levels, and justifications (status=0)
+  3. **Review & Submit** - Submit request to ODPEM for processing (status=0→1)
+  4. **Eligibility Review** - ODPEM reviews and approves/denies (status=1→3/4/8)
+  5. **Fulfillment & Delivery** - ODPEM logistics prepares and delivers items (status=3→5→6/7)
 
 ### Database Architecture
 - **Schema**: Based on the authoritative ODPEM `aidmgmt-3.sql` schema, comprising 40 tables.
