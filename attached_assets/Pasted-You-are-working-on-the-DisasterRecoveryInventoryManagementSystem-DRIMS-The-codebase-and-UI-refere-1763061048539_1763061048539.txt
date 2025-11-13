@@ -1,0 +1,393 @@
+You are working on the DisasterRecoveryInventoryManagementSystem (DRIMS).
+The codebase and UI reference are in this project (already uploaded):
+
+DisasterRecoveryInventoryManagementSystem-main
+
+Your task is to reuse and adapt the entire “Needs Lists” UI and navigation workflow and apply it to the Relief Request workflow that already exists in my DRIM database (using the reliefrqst-related tables).
+
+⚠️ CRITICAL CONSTRAINTS (DO NOT BREAK THESE):
+
+Do NOT change any database tables or schema.
+
+Do not edit SCHEMA.sql, migrations, or existing models.
+
+You must only work with the existing DRIM / DRIMS schema (including reliefrqst, reliefrqst_item, etc.).
+
+Backend data structures for relief requests must stay as-is.
+
+You may add new view functions / routes / templates and small helper functions.
+
+You may NOT rename or drop columns, tables, or indexes.
+
+Keep the existing look & feel of DRIMS:
+
+Continue using the same layout, styling, Bootstrap components, icons, and cards as in the Needs Lists workflow.
+
+Accessibility: All new Relief Request pages must be easy to use, keyboard accessible, and aligned with WCAG best practices (proper headings, labels, focus states, sufficient contrast, ARIA attributes where needed).
+
+1. STUDY THE EXISTING “NEEDS LISTS” WORKFLOW UI
+
+Use the existing Needs Lists implementation as the UI/UX blueprint. Carefully examine:
+
+Templates (in templates/):
+
+all_needs_lists.html
+
+main_needs_lists.html
+
+agency_needs_lists.html
+
+warehouse_needs_lists.html
+
+logistics_officer_needs_lists.html
+
+logistics_manager_needs_lists.html
+
+needs_list_form.html
+
+needs_list_details.html
+
+needs_list_prepare.html
+
+needs_list_completed_report.html
+
+Routes & logic (in app.py):
+Look for routes like:
+
+/needs-lists
+
+/needs-lists/new
+
+/needs-lists/<int:list_id>
+
+/needs-lists/<int:list_id>/edit
+
+/needs-lists/<int:list_id>/prepare
+
+/needs-lists/<int:list_id>/dispatch
+
+/needs-lists/<int:list_id>/confirm-receipt
+
+/needs-lists/<int:list_id>/completed-report
+
+Any related API/lock endpoints (/api/needs-lists/...) and permission helpers (can_view_needs_list, etc.)
+
+Understand:
+
+Navigation: where menu items live, breadcrumbs, “Back” buttons, tabs, and status badges.
+
+Layouts: page heading area, summary cards, main content table/forms, and any right-hand side panels.
+
+Workflow: how a Needs List moves from Draft → Submitted → Prepared/Approved → Dispatched → Received → Completed.
+
+You are going to mirror this entire interaction pattern, but for Relief Requests.
+
+2. CREATE A PARALLEL “RELIEF REQUEST” WORKFLOW USING THE SAME UI PATTERNS
+
+Implement a Relief Request workflow that visually and structurally mirrors the Needs List workflow, mapped to the existing relief tables (reliefrqst, reliefrqst_item, and related tables) in my DRIM database.
+
+2.1. New navigation & menu entries
+
+Add a main navigation entry and section for Relief Requests, aligned with how Needs Lists are exposed:
+
+In the main navigation (where “Needs Lists” appears), add:
+
+Menu label: Relief Requests
+
+This should open a main Relief Requests listing page (see below).
+
+If there are dashboards by role (Agency / Main Hub / Warehouse / Logistics / Director etc.), then:
+
+Reuse the same pattern: where there are Needs List entry points, add equivalent Relief Request entry points (e.g., “My Relief Requests”, “All Relief Requests”, etc.), but do not remove or break existing Needs List navigation.
+
+2.2. Relief Request pages to implement (UI only, reuse patterns)
+
+For each Needs List page, create an analogous Relief Request page and template.
+
+a. Relief Request Listings
+
+Mirroring:
+
+all_needs_lists.html
+
+main_needs_lists.html
+
+agency_needs_lists.html
+
+warehouse_needs_lists.html
+
+logistics_officer_needs_lists.html
+
+logistics_manager_needs_lists.html
+
+Create Relief versions, for example:
+
+all_relief_requests.html – Global/oversight listing of relief requests.
+
+agency_relief_requests.html – “My Relief Requests” for Agency/Sub-hub users.
+
+warehouse_relief_requests.html – Relief Requests relevant to warehouse / logistics roles.
+
+relief_requests_main.html or similar naming – For main hub / central roles.
+
+Any role-specific dashboards mirroring the needs lists ones.
+
+UI requirements:
+
+Keep table layout, filters, search, status pills/badges, and action buttons consistent with Needs Lists, but with Relief Request labels.
+
+Status column should show Relief Request statuses (Draft, Submitted, Approved, Denied, Closed, etc.), styled similarly to Needs List statuses.
+
+Action buttons (View, Edit, Review Eligibility, etc.) should appear in similar positions and styles as in Needs Lists tables.
+
+b. Create / Edit Relief Request
+
+Mirror needs_list_form.html:
+
+Create relief_request_form.html (or similar name) using the same layout and form styling:
+
+Page title: e.g., “Create Relief Request” or “Edit Relief Request”.
+
+Use icons consistent with Needs List pages.
+
+Use the same card layout and spacing.
+
+For fields, bind to the existing Relief Request data model:
+
+Request meta fields (e.g., disaster event, parish/location, requesting agency, contact person, date, etc.).
+
+Items section: table for adding/removing/editing requested items, mirroring how items are handled in Needs Lists.
+
+Support Draft saving:
+
+Include a “Save Draft” button (as you do for draft Needs Lists) so that users can return later and complete the request.
+
+After saving as draft, redirect to the Relief Request details page and show a success message (toast/flash) in the same style.
+
+c. Relief Request Details Page
+
+Mirror needs_list_details.html:
+
+Create relief_request_details.html to show:
+
+Top summary area with:
+
+Relief Request number
+
+Requesting agency/hub
+
+Disaster event
+
+Status (with badge)
+
+Key meta info (created by, created date, last updated, etc.)
+
+Items section:
+
+A responsive table listing requested items (description, quantity, unit, notes, etc.).
+
+Action buttons similar to Needs Lists:
+
+Edit (for drafts / appropriate roles)
+
+Submit (if in Draft)
+
+“Relief Request Review” entry point for executive/eligibility roles
+
+Any fulfilment / logistics actions if part of the relief flow.
+
+Workflow Sidebar:
+On the right side of this page (and other core Relief Request pages), add a simple Workflow Guide panel that shows where the user is in the process, e.g.:
+
+Draft Relief Request
+
+Submit to ODPEM
+
+Eligibility Review
+
+Fulfilment Planning
+
+Dispatch & Delivery
+
+Closure / Completed
+
+Highlight the current step.
+
+Use the same card / sidebar style as used elsewhere in the app.
+
+Make it keyboard accessible and screen-reader friendly.
+
+d. Prepare / Fulfil / Close Relief Request (if applicable)
+
+If the relief workflow mirrors the fulfillment/distribution behavior of Needs Lists, then create equivalents for:
+
+needs_list_prepare.html → relief_request_prepare.html
+
+For the logistics / warehouse roles to plan and adjust what can actually be supplied, using similar UI for line-item adjustments.
+
+Any “Completed” / “Summary” page (like needs_list_completed_report.html) →
+
+relief_request_completed_report.html
+
+Show metrics, timeline, and summary in the same layout, but with Relief wording.
+
+Wherever Needs Lists have:
+
+Fulfilment tables,
+
+Dispatch details,
+
+Confirm receipt,
+the Relief Request flow should:
+
+Reuse the same UI structure and table layouts,
+
+But operate on Relief Request data and status transitions.
+
+3. REUSE LOCKING, STATUS BANNERS, AND NOTIFICATIONS PATTERNS
+
+The Needs Lists use several UX patterns that should be reused for Relief Requests:
+
+Lock Status Banner
+
+Needs Lists include _lock_status_banner.html and related APIs (/api/needs-lists/<id>/extend-lock, etc.).
+
+Implement similar locking and banners for Relief Requests (if supported by the Relief tables and logic), so that users don’t overwrite each other’s edits.
+
+Status Banners & Alerts
+
+Any alert banners that appear at the top of Needs List pages (change request banner, warning banners, etc.) should be ported over with Relief-specific text.
+
+Notifications
+
+Wherever Needs List actions trigger notifications, mirror that behavior for Relief Requests (using the existing notification mechanisms), but with:
+
+Correct Relief Request names.
+
+Correct links (e.g., url_for('relief_request_details', ...)).
+
+4. RELIEF REQUEST REVIEW / ELIGIBILITY SCREEN
+
+There is a role whose job is to determine eligibility of a Relief Request (Yes/No) and provide a rationale if “No”.
+
+Create a dedicated page for this, reusing the Needs List detail layout:
+
+Page name (for menu & breadcrumb):
+
+“Relief Request Review” (this should be compact enough to fit comfortably in the menu).
+
+UI behavior:
+
+Show the Relief Request summary at the top.
+
+Show the items list.
+
+Provide:
+
+A clear Yes / No (eligible / ineligible) control (radio buttons or toggle, styled as buttons).
+
+If No is selected, enforce entry of a mandatory reason (textarea).
+
+Default selection should be “Yes”.
+
+On saving the decision:
+
+Update the Relief Request status (e.g., to “Approved” or “Denied”) using existing backend logic.
+
+Send notifications to the Relief Request owner (as with Needs Lists).
+
+Redirect back to the Relief Request details page with a success message.
+
+5. ACCESSIBILITY & UX POLISH
+
+Apply these across all new Relief Request pages:
+
+Use proper <h1>, <h2>, etc. for headings.
+
+Ensure all form fields have <label> elements or aria-label.
+
+All interactive controls must be reachable and usable via keyboard alone.
+
+Provide visually clear focus outlines.
+
+Use ARIA attributes sparingly but correctly where needed (e.g., for the workflow sidebar).
+
+Avoid long scrolling where possible:
+
+Use summary cards and tidy tables like in Needs Lists.
+
+Reuse the “compact spacing” pattern from the Needs List completion/summary pages.
+
+6. WIREFLOW / NAVIGATION EXPECTATIONS
+
+At a high level, for a typical Agency user, the Relief Request UI/navigation should feel like this:
+
+Relief Requests → My Relief Requests
+
+List of their relief requests (table identical in layout to My Needs Lists).
+
+Create Relief Request
+
+Uses relief_request_form.html.
+
+Can save as Draft or Submit.
+
+View Relief Request
+
+Details page with:
+
+Summary card,
+
+Items table,
+
+Right-side workflow guide,
+
+Action buttons (Edit Draft, Submit, View Review status, etc.).
+
+Relief Request Review (for executives/ODPEM roles)
+
+Simple UI to mark Yes/No eligibility with rationale.
+
+Updates status and notifies requester.
+
+Fulfilment / Dispatch / Completed
+
+For logistics/warehouse roles, pages that look and behave like the Needs List prepare/dispatch/completion pages, but tied to Relief Requests.
+
+Ensure all this navigation can be done via the top menu, role-specific dashboards, and consistent “Back” buttons (like the Needs List pages).
+
+7. IMPLEMENTATION NOTES
+
+DO NOT alter the Needs List pages or break existing functionality.
+
+It is OK to:
+
+Extract shared components into partial templates (e.g., common summaries, workflow sidebar).
+
+Create new helpers that are relief-specific but modeled on Needs List helpers.
+
+When in doubt, copy the Needs List pattern, then rename labels and bind to Relief Request data instead of inventing a new UI.
+
+Deliverables:
+
+New Relief Request templates (parallel to the Needs List templates) with fully wired navigation and actions.
+
+New routes in app.py (or the appropriate Flask module) for:
+
+Listing Relief Requests by role.
+
+Creating / editing Relief Requests.
+
+Viewing single Relief Requests.
+
+Reviewing eligibility (Relief Request Review).
+
+Any necessary fulfilment/dispatch/completed views (if applicable).
+
+Integration into the existing navigation (menus and dashboards) without breaking current Needs Lists.
+
+Remember:
+✅ Reuse the Needs List UX as the canonical reference.
+✅ No schema changes.
+✅ WCAG-aligned and easy to use.
+✅ Right-side workflow guide on key Relief Request pages.
