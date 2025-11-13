@@ -532,43 +532,43 @@
                     <tbody id="itemsTableBody">
                         {% for item in relief_request.items %}
                         <tr class="item-row" 
-                            data-item-id="{{ item.aiditem_id }}" 
-                            data-item-name="{{ item.aid_item.item_desc if item.aid_item else 'Unknown' }}"
-                            data-item-sku="{{ item.aid_item.sku_code if item.aid_item and item.aid_item.sku_code else '' }}">
+                            data-item-id="{{ item.item_id }}" 
+                            data-item-name="{{ item.item.item_desc if item.item else 'Unknown' }}"
+                            data-item-sku="{{ item.item.sku_code if item.item and item.item.sku_code else '' }}">
                             <td>
                                 <div class="item-info">
-                                    <span class="item-name">{{ item.aid_item.item_desc if item.aid_item else 'Unknown Item' }}</span>
-                                    {% if item.aid_item and item.aid_item.sku_code %}
-                                    <span class="item-sku">SKU: {{ item.aid_item.sku_code }}</span>
+                                    <span class="item-name">{{ item.item.item_desc if item.item else 'Unknown Item' }}</span>
+                                    {% if item.item and item.item.sku_code %}
+                                    <span class="item-sku">SKU: {{ item.item.sku_code }}</span>
                                     {% endif %}
                                 </div>
                             </td>
                             <td>
                                 <strong data-requested-qty="{{ item.request_qty }}">{{ item.request_qty }}</strong>
-                                {% if item.aid_item and item.aid_item.unit_of_measure %}
-                                <div class="item-sku">{{ item.aid_item.unit_of_measure }}</div>
+                                {% if item.item and item.item.default_uom %}
+                                <div class="item-sku">{{ item.item.default_uom.uom_desc }}</div>
                                 {% endif %}
                             </td>
                             <td>
                                 <div class="hub-allocation-inline">
                                     {% for warehouse in warehouses %}
-                                    {% set existing_value = existing_allocations.get(item.aiditem_id, {}).get(warehouse.warehouse_id, 0) %}
+                                    {% set existing_value = existing_allocations.get(item.item_id, {}).get(warehouse.warehouse_id, 0) %}
                                     <div>
                                         <label class="form-label mb-1" style="font-size: 0.8125rem; color: #6c757d;">{{ warehouse.warehouse_name }}</label>
                                         <div class="d-flex align-items-center gap-2">
                                             <input 
                                                 type="number" 
                                                 class="form-control form-control-sm qty-input allocation-input"
-                                                id="allocation_{{ item.aiditem_id }}_{{ warehouse.warehouse_id }}"
-                                                name="allocation_{{ item.aiditem_id }}_{{ warehouse.warehouse_id }}"
+                                                id="allocation_{{ item.item_id }}_{{ warehouse.warehouse_id }}"
+                                                name="allocation_{{ item.item_id }}_{{ warehouse.warehouse_id }}"
                                                 value="{{ existing_value }}"
                                                 min="0"
                                                 step="0.01"
-                                                data-item-id="{{ item.aiditem_id }}"
+                                                data-item-id="{{ item.item_id }}"
                                                 data-warehouse-id="{{ warehouse.warehouse_id }}"
                                                 data-requested-qty="{{ item.request_qty }}">
                                         </div>
-                                        <div class="stock-info" id="stock_{{ item.aiditem_id }}_{{ warehouse.warehouse_id }}">
+                                        <div class="stock-info" id="stock_{{ item.item_id }}_{{ warehouse.warehouse_id }}">
                                             <i class="bi bi-hourglass-split"></i> Loading stock...
                                         </div>
                                     </div>
@@ -576,14 +576,14 @@
                                 </div>
                             </td>
                             <td>
-                                <strong class="total-allocated" id="total_{{ item.aiditem_id }}">0</strong>
+                                <strong class="total-allocated" id="total_{{ item.item_id }}">0</strong>
                             </td>
                             <td>
-                                <strong class="remaining-qty" id="remaining_{{ item.aiditem_id }}">{{ item.request_qty }}</strong>
+                                <strong class="remaining-qty" id="remaining_{{ item.item_id }}">{{ item.request_qty }}</strong>
                             </td>
                             <td>
-                                <span class="status-badge-inline status-unallocated" id="status_badge_{{ item.aiditem_id }}">Unallocated</span>
-                                <input type="hidden" name="status_{{ item.aiditem_id }}" id="status_{{ item.aiditem_id }}" value="U">
+                                <span class="status-badge-inline status-unallocated" id="status_badge_{{ item.item_id }}">Unallocated</span>
+                                <input type="hidden" name="status_{{ item.item_id }}" id="status_{{ item.item_id }}" value="U">
                             </td>
                         </tr>
                         {% endfor %}
