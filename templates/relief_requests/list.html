@@ -105,7 +105,7 @@
                 <td>
                     {% if req.status_code == 1 %}
                     {# Awaiting Approval - Show Review Eligibility #}
-                    <a href="{{ url_for('eligibility.review', request_id=req.reliefrqst_id) }}" 
+                    <a href="{{ url_for('eligibility.review_request', request_id=req.reliefrqst_id) }}" 
                        class="btn-relief-primary btn-sm"
                        aria-label="Review eligibility for RR-{{ '%06d'|format(req.reliefrqst_id) }}">
                         <i class="bi bi-check-square"></i>
