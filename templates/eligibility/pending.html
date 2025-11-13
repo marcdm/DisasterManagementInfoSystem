@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% from 'relief_requests/_status_badge.html' import status_badge %}
+{% from 'relief_requests/_summary_cards.html' import render_summary_cards %}
 
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
@@ -25,6 +26,49 @@
         </div>
         <p class="page-subtitle">Review and approve/deny relief requests from agencies</p>
     </div>
+
+    <!-- Summary Metrics -->
+    {% set summary_metrics = [
+        {
+            'icon': 'hourglass-split',
+            'label': 'Pending Review',
+            'value': total_pending,
+            'variant': 'warning'
+        },
+        {
+            'icon': 'exclamation-triangle',
+            'label': 'High Priority',
+            'value': high_priority,
+            'variant': 'danger'
+        },
+        {
+            'icon': 'box-seam',
+            'label': 'Total Items',
+            'value': total_items,
+            'variant': 'info'
+        }
+    ] %}
+    {{ render_summary_cards(summary_metrics) }}
+
+    <!-- Filter Tabs -->
+    <nav class="filter-tabs" role="navigation" aria-label="Priority filters">
+        <a href="{{ url_for('eligibility.pending_list') }}" 
+           class="filter-tab {% if not current_filter or current_filter == 'all' %}active{% endif %}"
+           {% if not current_filter or current_filter == 'all' %}aria-current="page"{% endif %}>
+            All Pending
+            {% if total_pending > 0 %}
+            <span class="filter-tab-count" aria-label="{{ total_pending }} pending">{{ total_pending }}</span>
+            {% endif %}
+        </a>
+        <a href="{{ url_for('eligibility.pending_list', priority='high') }}" 
+           class="filter-tab {% if current_filter == 'high' %}active{% endif %}"
+           {% if current_filter == 'high' %}aria-current="page"{% endif %}>
+            High Priority
+            {% if high_priority > 0 %}
+            <span class="filter-tab-count" aria-label="{{ high_priority }} high priority">{{ high_priority }}</span>
+            {% endif %}
+        </a>
+    </nav>
 
     <!-- Requests Table -->
     {% if requests %}
@@ -96,17 +140,10 @@
             {% endfor %}
         </tbody>
     </table>
-    
-    <!-- Summary -->
-    <div class="mt-3">
-        <p class="text-muted">
-            <strong>{{ requests|length }}</strong> request{{ 's' if requests|length != 1 else '' }} pending review
-        </p>
-    </div>
     {% else %}
     <div class="text-center py-5">
         <i class="bi bi-inbox" style="font-size: 3rem; color: #6c757d;"></i>
-        <p class="mt-3 text-muted">No relief requests are currently pending eligibility review.</p>
+        <p class="mt-3 text-muted">No relief requests are currently pending eligibility review{% if current_filter == 'high' %} with high priority{% endif %}.</p>
     </div>
     {% endif %}
 </div>

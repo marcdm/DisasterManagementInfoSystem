@@ -23,8 +23,11 @@ def pending_list():
     from app.db.models import ReliefRqst
     from sqlalchemy.orm import joinedload
     
-    # Get pending requests with eager loading to prevent N+1 queries
-    pending_requests = ReliefRqst.query.filter_by(
+    # Get priority filter from query params
+    priority_filter = request.args.get('priority', 'all')
+    
+    # Base query for pending requests with eager loading
+    base_query = ReliefRqst.query.filter_by(
         status_code=rr_service.STATUS_AWAITING_APPROVAL
     ).filter(
         ReliefRqst.review_by_id.is_(None)
@@ -33,13 +36,31 @@ def pending_list():
         joinedload(ReliefRqst.items).joinedload('item').joinedload('default_uom'),
         joinedload(ReliefRqst.items).joinedload('item').joinedload('category'),
         joinedload(ReliefRqst.eligible_event)
-    ).order_by(
+    )
+    
+    # Get all pending for metrics
+    all_pending = base_query.order_by(
         ReliefRqst.request_date.asc(),
         ReliefRqst.urgency_ind.desc()
     ).all()
     
+    # Apply filter if specified
+    if priority_filter == 'high':
+        pending_requests = [req for req in all_pending if req.urgency_ind in ['C', 'H']]
+    else:
+        pending_requests = all_pending
+    
+    # Calculate metrics from all pending
+    total_pending = len(all_pending)
+    high_priority = sum(1 for req in all_pending if req.urgency_ind in ['C', 'H'])
+    total_items = sum(len(req.items) if req.items else 0 for req in all_pending)
+    
     return render_template('eligibility/pending.html',
-                         requests=pending_requests)
+                         requests=pending_requests,
+                         total_pending=total_pending,
+                         high_priority=high_priority,
+                         total_items=total_items,
+                         current_filter=priority_filter)
 
 
 @eligibility_bp.route('/review/<int:request_id>')
