@@ -602,17 +602,17 @@
                                             <i class="bi bi-hourglass-split"></i>
                                         </strong>
                                         <input 
-                                            type="number" 
+                                            type="text" 
+                                            inputmode="numeric"
+                                            pattern="[0-9]*"
                                             class="allocation-input"
                                             id="allocation_{{ item.item_id }}_{{ warehouse.warehouse_id }}"
                                             name="allocation_{{ item.item_id }}_{{ warehouse.warehouse_id }}"
-                                            min="0"
-                                            step="1"
+                                            value="0"
                                             autocomplete="off"
                                             data-item-id="{{ item.item_id }}"
                                             data-warehouse-id="{{ warehouse.warehouse_id }}"
                                             data-requested-qty="{{ item.request_qty }}"
-                                            placeholder="0"
                                             aria-label="Allocate from {{ warehouse.warehouse_name }}">
                                     </div>
                                     {% endfor %}
