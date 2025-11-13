@@ -1,0 +1,233 @@
+REPLIT PROMPT – CONVERT “CREATE RELIEF PACKAGE” TO MATCH PREPARE FULFILMENT UI
+
+You are working on the Disaster Relief Inventory Management System (DRIMS).
+
+Your task is to redesign the “Create Relief Package” page and its navigation so that:
+
+It looks and feels exactly like the existing “Prepare Fulfilment” page for Needs Lists (the reference screenshot).
+
+It supports relief requests / relief packages instead of needs lists.
+
+It shows all warehouses that have the requested item and lets the Logistics Officer select quantities from each warehouse.
+
+Remaining quantity and allocated totals update in real time as the user types.
+
+Important constraints
+
+Reuse the existing visual design system (layout, cards, fonts, buttons, colours) from the Prepare Fulfilment page.
+
+Do not change database tables except where they are already used for relief requests, warehouses and inventory quantities.
+
+Use the existing roles and permission system: Logistics Officer, Logistics Manager, etc.
+
+1. Navigation & Routing
+
+Add a navigation entry in the left sidebar under OPERATIONS:
+
+Label: Relief Packages
+
+Icon: reuse the same style as Needs Lists icon.
+
+From the Relief Requests “Awaiting to be Filled” queue (or equivalent), when the user selects a request:
+
+Route them to a Relief Package Prepare page, e.g.:
+/relief-requests/<reliefrqst_id>/prepare-package
+
+The Create / Prepare Relief Package page should:
+
+Use the same layout structure and breadcrumb/Back button as the Prepare Fulfilment page.
+
+Show the relief request tracking number and agency name in the header (like NL-000012 • Food for the Poor (AGENCY) but using the relief request reference).
+
+2. Page Layout – Match “Prepare Fulfilment”
+
+Make the Create Relief Package page visually match the attached Prepare Fulfilment screen:
+
+Page title area
+
+Title: Prepare Relief Package
+
+Sub-title: <Tracking Number> • <Agency Name>
+
+Lock banner
+
+Green info banner at the top saying the user is currently editing this request and showing lock expiry time.
+
+Reuse the same lock logic already used for Needs Lists Prepare Fulfilment.
+
+Summary cards row
+
+Exactly like screenshot:
+
+Total Items
+
+Fully Allocated
+
+Partial
+
+Unallocated
+
+These are calculated from the relief package lines, not needs-list lines.
+
+Search & filter row
+
+Search bar for item name or SKU.
+
+Dropdown filter (e.g. All Items / Fully Allocated / Partial / Unallocated).
+
+“Jump to First Unallocated” button on the right.
+
+Items table
+
+Column headers: Item, Requested, Allocate from Hubs (Warehouses), Allocated, Remaining, Status.
+
+Styling and spacing should match the Prepare Fulfilment items table exactly.
+
+Right-hand Workflow panel
+
+Same style as screenshot.
+
+Steps (example):
+
+Submitted (Relief Request)
+
+Prepare (Allocate stock)
+
+Approval (Manager review, if officer preparing)
+
+Execute / Dispatch
+
+Current step should be highlighted as in the screenshot.
+
+Notes panel & Save button
+
+On the right under Workflow, add Notes (Optional) textarea.
+
+At bottom of main panel, include:
+
+Save as Draft button.
+
+Submit for Approval or Send for Dispatch button depending on role, reusing existing button styles.
+
+3. Warehouse Display & Selection Logic
+
+For each relief request item (row):
+
+Show:
+
+Item name
+
+SKU / item code (small text under the name)
+
+Requested quantity
+
+Under “Requested Allocate from Hubs” create a nested inline layout like the Prepare Fulfilment screen:
+
+For each warehouse where that item has usable quantity ≥ 0:
+
+Show the warehouse name (e.g. “Pimento”, “Trelawny”).
+
+Show its current usable quantity as a pill (e.g. 189).
+
+Provide an input box (numeric) where the Logistics Officer can type how much to allocate from that warehouse.
+
+Real-time behaviour (front-end):
+
+When the user changes any warehouse allocation input:
+
+Recalculate the total allocated for that item = sum of all warehouse allocations.
+
+Update the Remaining column = requested_qty - total_allocated in real time.
+
+Update the per-warehouse usable quantity display = original_usable_qty - allocated_from_that_warehouse.
+
+If an allocation would make:
+
+warehouse allocation > warehouse usable quantity, or
+
+total allocated > requested quantity,
+
+show an inline validation error and prevent field from exceeding the allowed value (e.g. clamp or revert).
+
+Implement this with JavaScript (or the existing front-end framework in DRIMS). Keep the code modular so it can be reused.
+
+4. Item Status Dropdown Behaviour
+
+For each item row:
+
+Add a Status dropdown in the Status column:
+
+Populate options from the reliefrqstitem_status table (active statuses only).
+
+Automatic status updates (client-side & validated server-side):
+
+If total_allocated == 0 → default can be Requested or a neutral status.
+
+If 0 < total_allocated < requested_qty → automatically set Partly Filled.
+
+If total_allocated == requested_qty → automatically set Filled.
+
+Respect any business rules already defined for manual changes (e.g. allowed transitions between Denied / Unavailable / Awaiting Availability / Allowed Limit), but at minimum the UI must:
+
+Lock the status dropdown when the item is Filled.
+
+Allow status choice only from permitted statuses when total allocated is 0.
+
+5. Validation & Error Handling
+
+Implement both front-end and back-end validation consistent with DRIMS:
+
+Per-warehouse allocation must not exceed usable quantity.
+
+Sum of allocations must not exceed requested quantity.
+
+If any rule is broken:
+
+Show an error banner at the top of the page (same style as other DRIMS errors).
+
+Highlight the specific row and field with a small error message.
+
+Do not allow submission.
+
+6. Saving, Submission & Workflow Actions
+
+Save as Draft
+
+Persists current allocations, statuses and notes.
+
+Stays on the same page with a green success toast/banner.
+
+Submit for Approval (Logistics Officer)
+
+Only visible when a Logistics Officer is the fulfiller.
+
+On click, validate all allocations.
+
+Move package to “Awaiting Approval” state and reuse existing notification mechanism to alert Logistics Managers.
+
+Send for Dispatch (Logistics Manager)
+
+Only visible for Logistics Manager when package is ready.
+
+On click, validate and move to “Awaiting Dispatch”.
+
+Send notifications to Inventory Clerk and add package to “Awaiting Dispatch” queue.
+
+Use the same button placement, colour and icon patterns as in the Prepare Fulfilment screen.
+
+7. Accessibility & Responsiveness
+
+Preserve all existing accessibility patterns:
+
+Proper labels for inputs.
+
+Keyboard-accessible controls and focus outlines.
+
+On smaller screens:
+
+Items table should horizontally scroll rather than break layout.
+
+Right-hand sidebar can stack below the main content, as with other DRIMS pages.
+
+Deliverable:
+Updated route, controller, template(s), and JavaScript that transform the Create Relief Package experience into a page that visually and behaviourally matches the Prepare Fulfilment screen shown in the screenshot, with full warehouse allocation, real-time quantity updates, and role-based workflow actions.

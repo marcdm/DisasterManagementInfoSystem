@@ -122,7 +122,7 @@
                             </td>
                             <td data-label="Actions" class="text-end">
                                 <div class="btn-group" role="group" aria-label="Actions for request {{ req.tracking_no if req.tracking_no else req.reliefrqst_id }}">
-                                    <a href="{{ url_for('packages.create_package', request_id=req.reliefrqst_id) }}" 
+                                    <a href="{{ url_for('packaging.prepare_package', reliefrqst_id=req.reliefrqst_id) }}" 
                                        class="btn btn-sm btn-success-accessible"
                                        aria-label="Prepare package for request {{ req.tracking_no if req.tracking_no else req.reliefrqst_id }}">
                                         <i class="bi bi-box-seam" aria-hidden="true"></i> Prepare Package

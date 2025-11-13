@@ -1,6 +1,7 @@
 """
-Relief Packages (AIDMGMT Workflow - Step 2)
-Handles creation and management of relief packages from approved requests
+Relief Packages (AIDMGMT Workflow - Legacy)
+DEPRECATED: This blueprint now redirects to the modern packaging workflow.
+Use app.features.packaging for active development.
 """
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
@@ -15,17 +16,8 @@ packages_bp = Blueprint('packages', __name__, url_prefix='/packages')
 @packages_bp.route('/pending-fulfillment')
 @login_required
 def pending_fulfillment():
-    """
-    List all approved relief requests awaiting package preparation.
-    Shows SUBMITTED (3) and PART_FILLED (5) requests for LO/LM to fulfill.
-    """
-    # Get eligible requests (approved by ODPEM directors)
-    eligible_requests = ReliefRqst.query.filter(
-        ReliefRqst.status_code.in_([rr_service.STATUS_SUBMITTED, rr_service.STATUS_PART_FILLED])
-    ).order_by(ReliefRqst.reliefrqst_id.desc()).all()
-    
-    return render_template('packages/pending_fulfillment.html',
-                         requests=eligible_requests)
+    """Redirects to modern packaging pending fulfillment page"""
+    return redirect(url_for('packaging.pending_fulfillment'))
 
 
 @packages_bp.route('/')
@@ -49,10 +41,20 @@ def list_packages():
                          packages=packages,
                          status_filter=status_filter)
 
-@packages_bp.route('/create', methods=['GET', 'POST'])
+@packages_bp.route('/create', methods=['GET'])
 @login_required
 def create_package():
-    """Create a relief package from an approved request"""
+    """Redirects to modern packaging workflow"""
+    flash('Please use the modern packaging interface for creating relief packages.', 'info')
+    reliefrqst_id = request.args.get('request_id', type=int)
+    if reliefrqst_id:
+        return redirect(url_for('packaging.prepare_package', reliefrqst_id=reliefrqst_id))
+    return redirect(url_for('packaging.pending_fulfillment'))
+
+@packages_bp.route('/create-legacy', methods=['POST'])
+@login_required
+def create_package_legacy():
+    """Legacy POST handler - deprecated"""
     if request.method == 'POST':
         try:
             reliefrqst_id = int(request.form.get('reliefrqst_id'))

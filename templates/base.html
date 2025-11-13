@@ -474,7 +474,7 @@
             <span class="nav-label">Transfer Stock</span>
         </a>
         
-        <div class="nav-section-header">AIDMGMT</div>
+        <div class="nav-section-header">OPERATIONS</div>
         {% if current_user.agency_id %}
         {# Agency users see their own requests #}
         <a href="{{ url_for('requests.list_requests') }}" class="nav-item-link {% if active_page == 'agency_requests' %}active{% endif %}">
@@ -495,11 +495,11 @@
             <i class="bi bi-box-arrow-in-down"></i>
             <span class="nav-label">Pending Fulfillment</span>
         </a>
-        {% endif %}
-        <a href="{{ url_for('packages.list_packages') }}" class="nav-item-link {% if active_page == 'packages' %}active{% endif %}">
-            <i class="bi bi-box"></i>
-            <span class="nav-label">Packages</span>
+        <a href="{{ url_for('packages.list_packages') }}" class="nav-item-link {% if active_page == 'relief_packages' %}active{% endif %}">
+            <i class="bi bi-box-seam-fill"></i>
+            <span class="nav-label">Relief Packages</span>
         </a>
+        {% endif %}
         
         <div class="nav-section-header">Management</div>
         <a href="{{ url_for('events.list_events') }}" class="nav-item-link {% if active_page == 'events' %}active{% endif %}">

@@ -85,7 +85,21 @@ Preferred communication style: Simple, everyday language.
   - Dashboard includes summary metric cards, status badges, and role-appropriate action buttons (Review Eligibility for pending, View for others)
 - **Inventory Management**: Tracks stock by warehouse and item in the `inventory` table, including `usable_qty`, `reserved_qty`, `defective_qty`, `expired_qty`, with bin-level tracking via the `location` table.
 - **Eligibility Approval Workflow**: Integrated role-based access control (RBAC) with `has_permission` and `@permission_required` decorators. Service layer for eligibility decisions, notifications, and workflow enforcement. ODPEM directors access via `/eligibility/pending`.
-- **Package Fulfillment Workflow**: LO/LM access "Pending Fulfillment" list showing SUBMITTED (3) and PART_FILLED (5) requests, create relief packages from approved requests with real-time inventory checking.
+- **Package Fulfillment Workflow** (Modern UI): 
+  - **Primary Routes**: `/packaging/pending-fulfillment` (list), `/packaging/<id>/prepare` (modern preparation interface)
+  - **Friendly Alias**: `/relief-requests/<id>/prepare-package` redirects to packaging workflow
+  - **Legacy Routes**: `/packages/*` blueprint deprecated, redirects to modern `/packaging/*` endpoints
+  - **Modern UI Features**:
+    - 4 Summary metric cards (Total Items, Fully Allocated, Partial, Unallocated) with live updates
+    - Search and filter bar with "Jump to First Unallocated" functionality
+    - Multi-warehouse allocation: Shows all warehouses with stock for each item
+    - Real-time calculations: Allocated totals, remaining quantities, and status badges update automatically
+    - Inline inventory validation: Prevents over-allocation beyond available stock
+    - Allocation status tracking: Unallocated (U), Partially Allocated (P), Fully Allocated (F)
+    - 4-step workflow sidebar: Submitted → Prepare → Approval → Execute/Dispatch
+    - Lock management: Prevents concurrent editing with lock acquisition/release
+    - Role-based actions: Save Draft (all), Submit for Approval (LO), Send for Dispatch (LM)
+  - **Data Persistence**: Allocations saved to `ReliefPkg` and `ReliefPkgItem` tables, pre-populated on page load
 
 ## External Dependencies
 

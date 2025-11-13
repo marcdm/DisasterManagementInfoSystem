@@ -17,6 +17,13 @@ from app.services import relief_request_service as rr_service
 requests_bp = Blueprint('requests', __name__, url_prefix='/relief-requests')
 
 
+@requests_bp.route('/<int:reliefrqst_id>/prepare-package')
+@login_required
+def prepare_package_alias(reliefrqst_id):
+    """Friendly alias route that redirects to the modern packaging workflow"""
+    return redirect(url_for('packaging.prepare_package', reliefrqst_id=reliefrqst_id))
+
+
 @requests_bp.route('/')
 @login_required
 @agency_user_required
