@@ -1,0 +1,279 @@
+Goal:
+Rebuild the entire Relief Request workflow UI so that it looks exactly like the Needs Lists workflow screens shown in the reference images provided — including layout, spacing, colors, navigation, workflow sidebar, cards, form patterns, table patterns, status badges, confirmation banners, and page structure.
+
+You must follow modern UI/UX best practices AND WCAG accessibility standards.
+
+Do NOT change or modify the database schema or backend logic.
+Use the existing DRIMS database (reliefrqst, reliefrqst_item, etc.) exactly as they are.
+
+🎯 High-Level Requirements
+Replicate the Needs Lists UI for Relief Requests:
+
+You must replicate every UI/UX pattern used in the Needs Lists workflow, including:
+
+Top banner alerts (green success, blue info, yellow warning)
+
+Status badges ("Draft", "Submitted", "Completed", etc.)
+
+Summary cards (Total Items, Allocated, Partial, Unallocated, etc.)
+
+Right-hand Workflow Sidebar that shows the step the user is on
+(identical layout, icons, spacing, colors)
+
+Workflow Timeline UI (icons, vertical line, timestamps, user info)
+
+Tables with alternating row colors, sticky headers, SKU lines, badges
+
+Back button placement
+
+Consistent spacing / paddings
+
+Consistent card shadows, rounded corners, layout grid
+
+Lock banner at the top (e.g., “You are currently editing this…”)
+
+Exact left-side navigation pattern for the Relief Request module
+
+Your goal is to create a pixel-consistent Relief Request workflow to match the needs-lists UI shown.
+
+📌 Pages to Create (Mirror Needs-Lists)
+1. Relief Requests List Page
+
+Replicate the Needs Lists list page UI:
+
+Filter tabs (Submitted, Draft, Awaiting Approval, Approved)
+
+Table with:
+
+Request Number
+
+Requesting Agency
+
+Priority badge
+
+Items count
+
+Submitted timestamp
+
+Action button (e.g., “Review Eligibility”, “Prepare Fulfillment”)
+
+Navigation title: Relief Requests
+
+Consistent green header strip and breadcrumb/back button behavior
+
+2. Create / Edit Relief Request Page
+
+Replicate the “Review Your Needs List (Draft)” screen:
+
+Summary cards (Total items, Allocated, Partial, etc.)
+
+Draft status pill
+
+Blue info panel at top describing “Next Steps”
+
+Editable item table with:
+
+Item name
+
+SKU text line
+
+Quantity requested
+
+Status (Draft / Awaiting Submission)
+
+Right-side workflow sidebar with 4 steps:
+
+Create Request
+
+Submit to ODPEM
+
+ODPEM Processing
+
+Receive Items
+
+Ensure a Save Draft button is present (WCAG-compliant button)
+
+3. Relief Request Details Page
+
+Replicate the Completed Needs Lists page shown:
+
+Large green “Completed” badge
+
+Request number formatting (e.g., RR-000012)
+
+Requesting hub/agency name beneath
+
+Workflow Completed message with icon
+
+Summary metric cards (Total, Fulfilled, Rate, Shortfall, Dispatched, Received)
+
+Green “Confirmed By” panel
+
+Workflow Timeline:
+
+Full visual vertical timeline with icons, timestamps, and status text
+
+Workflow Sidebar:
+
+Each step marked with ✓ when completed
+
+Highlight the current step
+
+Use the same spacing, borders, and typography
+
+4. Fulfillment / Allocation Page
+
+Mirror “Prepare Fulfillment” UI:
+
+Lock banner with expiration timer
+
+Summary metrics cards (Total items, Fully Allocated, Unallocated)
+
+Search & filter controls exactly as in Needs Lists
+
+Item rows:
+
+Item name
+
+SKU
+
+Requested quantity
+
+Allocation dropdown
+
+Remaining quantity
+
+Status badges
+
+Right-side workflow sidebar with 3 steps (Submitted → Prepare → Approval → Execute)
+
+Notes panel with textarea
+
+Save as Draft button at bottom
+
+♿ WCAG 2.1 AA Requirements (Mandatory)
+
+You must apply WCAG best practices to every element:
+
+Keyboard Accessibility
+
+Every button, tab, row, and sidebar item must be reachable via keyboard.
+
+Focus outline must be visible and meet 3:1 contrast minimum.
+
+Color & Contrast
+
+All text and icons must meet WCAG contrast ratios.
+
+Do not rely on color alone to convey meaning — use icons + labels.
+
+ARIA & Semantic Structure
+
+Use real <h1>, <h2>, <h3> hierarchy.
+
+Add aria-current="step" to the active workflow sidebar item.
+
+Add role="region" to summary card sections with aria-label.
+
+Form Accessibility
+
+Every input must have a <label>
+
+Required fields must announce requirements with aria-required="true"
+
+Error messages must be tied via aria-describedby
+
+Responsive Behavior
+
+Pages must be fully responsive:
+
+Sidebar stacks under main content on mobile
+
+Metric cards wrap gracefully
+
+Tables become scrollable rather than overflowing
+
+🔧 Technical Implementation Rules
+Do NOT modify:
+
+Database schema
+
+Table names
+
+Column names
+
+Backend logic for creating or updating data
+
+Allowed:
+
+Create new templates
+
+Create new routes that use existing backend logic
+
+Create new partials/components (sidebar, summary cards, status badges)
+
+Add helper functions for formatting UI
+
+Template Naming Convention
+
+Use naming mirroring needs-lists:
+
+templates/relief_requests/
+    list.html
+    edit.html
+    details.html
+    prepare.html
+    review.html
+    completed.html
+    _workflow_sidebar.html
+    _summary_cards.html
+    _timeline.html
+
+🧭 Navigation Update
+
+Add a new sidebar item:
+
+Relief Requests
+with icon identical style to Needs Lists icon.
+
+Placement:
+Under OPERATIONS
+just below Needs Lists.
+
+🎨 Visual Consistency Requirements
+
+Replicate exactly:
+
+Card shadows
+
+Border radius
+
+Font sizes
+
+Font family
+
+Iconography
+
+Spacing system (margin-xl, padding-lg, etc.)
+
+Table structure
+
+Pill/Badge styling
+
+Notification system (flash messages)
+
+Button size and color
+
+The UI for Relief Requests must be indistinguishable from Needs Lists, aside from wording.
+
+📄 Deliverables
+
+Fully implemented UI pages for the Relief Request workflow
+
+All sidebar and navigation integrations
+
+Reusable WCAG-compliant components
+
+Zero changes to database schema
+
+Pages visually identical to screenshot reference
