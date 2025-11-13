@@ -107,7 +107,7 @@ def create_draft_request(agency_id: int, urgency_ind: str, eligible_event_id: Op
 
 def add_or_update_request_item(reliefrqst_id: int, item_id: int, request_qty: Decimal,
                                 urgency_ind: str, rqst_reason_desc: Optional[str],
-                                item_notes_text: Optional[str], user_email: str,
+                                required_by_date: Optional[date], user_email: str,
                                 current_version: Optional[int] = None) -> ReliefRqstItem:
     """
     Add or update an item on a draft relief request.
@@ -118,8 +118,8 @@ def add_or_update_request_item(reliefrqst_id: int, item_id: int, request_qty: De
         item_id: Item ID from catalog
         request_qty: Requested quantity
         urgency_ind: Item-level urgency (H/M/L)
-        rqst_reason_desc: Justification for requesting this item
-        item_notes_text: Additional item notes
+        rqst_reason_desc: Justification for requesting this item (required for High urgency)
+        required_by_date: Date when item must be delivered (YYYY-MM-DD format)
         user_email: User performing the action
         current_version: Current version number for optimistic locking (if updating)
         
@@ -145,7 +145,7 @@ def add_or_update_request_item(reliefrqst_id: int, item_id: int, request_qty: De
         existing_item.request_qty = request_qty
         existing_item.urgency_ind = urgency_ind
         existing_item.rqst_reason_desc = rqst_reason_desc
-        # Note: item_notes_text is not in the schema, we'll use rqst_reason_desc for notes
+        existing_item.required_by_date = required_by_date
         existing_item.version_nbr += 1
         
         return existing_item
@@ -158,6 +158,7 @@ def add_or_update_request_item(reliefrqst_id: int, item_id: int, request_qty: De
         request_item.issue_qty = Decimal('0.00')  # Initially 0, filled by ODPEM
         request_item.urgency_ind = urgency_ind
         request_item.rqst_reason_desc = rqst_reason_desc
+        request_item.required_by_date = required_by_date
         request_item.status_code = ITEM_STATUS_REQUESTED  # Requested (default 'R')
         request_item.version_nbr = 1
         

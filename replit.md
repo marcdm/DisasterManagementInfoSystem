@@ -21,6 +21,23 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### November 13, 2025 - Required By Date Field and Date Format Standardization
+- **Required By Date Field**: Added optional date field for relief request items
+  - **UI Enhancement**: Added date input field to both `requests/edit_items.html` and `agency_requests/edit_items.html` templates
+  - **Field Label**: "Required By Date (Optional)" with clear YYYY-MM-DD format guidance
+  - **Backend Integration**: Updated `add_or_update_request_item()` service function to accept and store `required_by_date`
+  - **Form Validation**: Backend parses and validates date format (YYYY-MM-DD) with user-friendly error messages
+  - **Database Constraint**: Existing `c_reliefrqst_item_5` constraint allows optional `required_by_date` for Low/Medium urgency items
+- **Date Format Standardization**: Established YYYY-MM-DD (ISO 8601) as system-wide date format
+  - **Jinja2 Filter**: Added `format_date` filter to `app.py` for consistent date rendering in templates
+  - **HTML5 Date Inputs**: All date input fields use `type="date"` with YYYY-MM-DD format
+  - **Backend Parsing**: All date parsing uses `strptime(date_str, '%Y-%m-%d')` for consistency
+  - **Benefits**: ISO 8601 format ensures unambiguous dates, international compatibility, and proper sorting
+- **Justification Field**: Confirmed existing implementation enforces High urgency justification requirement
+  - **JavaScript Validation**: Dynamic required/optional indicator based on urgency selection
+  - **Database Constraint**: `c_reliefrqst_item_4` enforces non-empty justification for High urgency items
+  - **UI Guidance**: Helper text clearly indicates "Required for High urgency items only"
+
 ### November 13, 2025 - Relief Request Item Referential Integrity Enhancement
 - **Critical Business Logic Constraint**: Replaced simple `c_reliefrqst_item_2` with enhanced `c_reliefrqst_item_2a` to enforce workflow semantics
   - **Old Constraint**: Only checked `issue_qty <= request_qty` (allowed illogical states like status='R' with issue_qty>0)

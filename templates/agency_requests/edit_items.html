@@ -57,10 +57,17 @@
                     </select>
                 </div>
             </div>
-            <div class="mb-3">
-                <label for="rqst_reason_desc" class="form-label">Justification / Notes <span id="justification_required_indicator" class="text-danger" style="display: none;">*</span></label>
-                <textarea class="form-control" id="rqst_reason_desc" name="rqst_reason_desc" rows="2" placeholder="Explain why this item is needed and how it will be used..."></textarea>
-                <small class="text-muted" id="justification_hint">Required for High urgency items only</small>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="rqst_reason_desc" class="form-label">Justification / Notes <span id="justification_required_indicator" class="text-danger" style="display: none;">*</span></label>
+                    <textarea class="form-control" id="rqst_reason_desc" name="rqst_reason_desc" rows="2" placeholder="Explain why this item is needed and how it will be used..."></textarea>
+                    <small class="text-muted" id="justification_hint">Required for High urgency items only</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="required_by_date" class="form-label">Required By Date <span id="required_date_indicator" class="text-muted">(Optional)</span></label>
+                    <input type="date" class="form-control" id="required_by_date" name="required_by_date" placeholder="YYYY-MM-DD">
+                    <small class="text-muted">Date when this item must be delivered (format: YYYY-MM-DD)</small>
+                </div>
             </div>
             <button type="submit" class="btn btn-goj">
                 <i class="bi bi-plus-circle"></i> Add Item to Request
@@ -89,6 +96,7 @@
                         <th>SKU</th>
                         <th class="text-end">Quantity</th>
                         <th>Urgency</th>
+                        <th>Required By</th>
                         <th>Justification</th>
                         <th class="text-end">Actions</th>
                     </tr>
@@ -109,6 +117,13 @@
                                 <span class="badge bg-warning text-dark">Medium</span>
                             {% elif item.urgency_ind == 'L' %}
                                 <span class="badge bg-info text-dark">Low</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.required_by_date %}
+                                <span class="text-muted"><i class="bi bi-calendar-event"></i> {{ item.required_by_date|format_date }}</span>
+                            {% else %}
+                                <span class="text-muted">—</span>
                             {% endif %}
                         </td>
                         <td>

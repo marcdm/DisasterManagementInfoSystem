@@ -231,6 +231,16 @@ def edit_items(request_id):
             request_qty = Decimal(request.form.get('request_qty', '0'))
             urgency_ind = request.form.get('urgency_ind', 'M')
             rqst_reason_desc = request.form.get('rqst_reason_desc', '').strip()
+            required_by_date_str = request.form.get('required_by_date', '').strip()
+            
+            # Parse required_by_date (YYYY-MM-DD format)
+            required_by_date = None
+            if required_by_date_str:
+                try:
+                    required_by_date = datetime.strptime(required_by_date_str, '%Y-%m-%d').date()
+                except ValueError:
+                    flash('Invalid date format. Please use YYYY-MM-DD format.', 'danger')
+                    return redirect(url_for('requests.edit_items', request_id=request_id))
             
             # Validate item is active
             item = Item.query.get_or_404(item_id)
@@ -249,7 +259,7 @@ def edit_items(request_id):
                 request_qty=request_qty,
                 urgency_ind=urgency_ind,
                 rqst_reason_desc=rqst_reason_desc,
-                item_notes_text=None,  # Not used
+                required_by_date=required_by_date,
                 user_email=current_user.email
             )
             

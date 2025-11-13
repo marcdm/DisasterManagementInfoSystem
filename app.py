@@ -63,6 +63,15 @@ app.jinja_env.globals.update(
     has_permission=has_permission
 )
 
+@app.template_filter('format_date')
+def format_date_filter(date_val, format_str='%Y-%m-%d'):
+    """Format date to YYYY-MM-DD (or custom format)"""
+    if date_val is None:
+        return ''
+    if isinstance(date_val, str):
+        return date_val
+    return date_val.strftime(format_str)
+
 app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
 app.register_blueprint(events_bp)
 app.register_blueprint(warehouses_bp)
