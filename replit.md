@@ -32,6 +32,15 @@ Preferred communication style: Simple, everyday language.
 - **Responsive Design**: Fixed header, collapsible sidebar, dynamic content margins, and touch-friendly interactions.
 - **Branding**: Utilizes GOJ branding with primary green (`#009639`) and gold accent (`#FDB913`), including official logos on login, navigation, and footer with accessibility features.
 - **User Experience**: Icon-based empty states and professional eligibility review interfaces.
+- **Needs Lists Design Pattern**: Unified modern UI across Relief Requests and Eligibility workflows:
+  - **Summary Metric Cards**: 3-card dashboard showing key metrics (total, high priority, items)
+  - **Filter Tabs**: Functional tabs with live count badges for filtering by priority
+  - **Workflow Sidebar**: 4-step visual progress indicator on review/detail pages
+  - **Status Badges**: Color-coded badges for status and priority levels
+  - **Standardized Tables**: `relief-requests-table` class with consistent styling, row hover states
+  - **Action Buttons**: `btn-relief-primary` and `btn-relief-secondary` for consistent CTA styling
+  - **Shared Components**: Jinja2 macros (`_status_badge.html`, `_summary_cards.html`, `_workflow_sidebar.html`)
+  - **Shared Stylesheet**: `relief-requests-ui.css` for unified styling across both workflows
 
 ### Database Architecture
 - **Schema**: Based on the authoritative ODPEM `aidmgmt-3.sql` schema, comprising 40 tables.

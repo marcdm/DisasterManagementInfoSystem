@@ -20,7 +20,7 @@ def pending_list():
     List all relief requests pending eligibility review.
     Only accessible to users with reliefrqst.approve_eligibility permission.
     """
-    from app.db.models import ReliefRqst
+    from app.db.models import ReliefRqst, ReliefRqstItem, Item
     from sqlalchemy.orm import joinedload
     
     # Get priority filter from query params
@@ -33,8 +33,8 @@ def pending_list():
         ReliefRqst.review_by_id.is_(None)
     ).options(
         joinedload(ReliefRqst.agency),
-        joinedload(ReliefRqst.items).joinedload('item').joinedload('default_uom'),
-        joinedload(ReliefRqst.items).joinedload('item').joinedload('category'),
+        joinedload(ReliefRqst.items).joinedload(ReliefRqstItem.item).joinedload(Item.default_uom),
+        joinedload(ReliefRqst.items).joinedload(ReliefRqstItem.item).joinedload(Item.category),
         joinedload(ReliefRqst.eligible_event)
     )
     
@@ -70,15 +70,15 @@ def review_request(request_id):
     """
     View full details of a relief request for eligibility review.
     """
-    from app.db.models import ReliefRqst
+    from app.db.models import ReliefRqst, ReliefRqstItem, Item
     from sqlalchemy.orm import joinedload
     from flask import abort
     
     # Get request with eager loading to prevent N+1 queries
     relief_request = ReliefRqst.query.options(
         joinedload(ReliefRqst.agency),
-        joinedload(ReliefRqst.items).joinedload('item').joinedload('default_uom'),
-        joinedload(ReliefRqst.items).joinedload('item').joinedload('category'),
+        joinedload(ReliefRqst.items).joinedload(ReliefRqstItem.item).joinedload(Item.default_uom),
+        joinedload(ReliefRqst.items).joinedload(ReliefRqstItem.item).joinedload(Item.category),
         joinedload(ReliefRqst.eligible_event),
         joinedload(ReliefRqst.status)
     ).get(request_id)
