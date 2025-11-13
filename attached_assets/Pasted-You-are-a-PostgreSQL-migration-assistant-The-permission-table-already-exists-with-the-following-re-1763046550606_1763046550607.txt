@@ -1,0 +1,78 @@
+You are a PostgreSQL migration assistant.
+
+The permission table already exists with the following relevant columns:
+
+perm_id (IDENTITY, PK)
+
+resource (VARCHAR)
+
+action (VARCHAR)
+
+create_by_id (VARCHAR)
+
+update_by_id (VARCHAR)
+
+version_nbr (INTEGER)
+
+Unique constraint on (resource, action)
+
+Your task is to seed the permission catalogue for relief requests and core operations.
+
+Requirements:
+
+Do NOT drop any tables or truncate data.
+
+Use idempotent SQL — safe to run multiple times.
+
+Use ON CONFLICT (resource, action) DO NOTHING so existing permissions are not duplicated.
+
+Use create_by_id = 'system', update_by_id = 'system', version_nbr = 1.
+
+Execute exactly this SQL:
+
+INSERT INTO permission (resource, action, create_by_id, update_by_id, version_nbr)
+VALUES
+  -- Relief request header (reliefrqst)
+  ('reliefrqst', 'create',              'system', 'system', 1),  -- create draft
+  ('reliefrqst', 'submit',              'system', 'system', 1),  -- move to “Awaiting approval”
+  ('reliefrqst', 'cancel',              'system', 'system', 1),  -- cancel own request
+  ('reliefrqst', 'view',                'system', 'system', 1),  -- view details
+  ('reliefrqst', 'view_all',            'system', 'system', 1),  -- view all requests
+  ('reliefrqst', 'approve_eligibility', 'system', 'system', 1),  -- Dir-PEOD/DDG/DG
+  ('reliefrqst', 'fill_plan_edit',      'system', 'system', 1),  -- LO/LM edit operational fill
+  ('reliefrqst', 'fill_plan_approve',   'system', 'system', 1),  -- LM approve final fill
+  ('reliefrqst', 'close',               'system', 'system', 1),  -- close after dispatch
+
+  -- Relief request items (reliefrqst_item)
+  ('reliefrqst_item', 'view',           'system', 'system', 1),
+  ('reliefrqst_item', 'edit_fill',      'system', 'system', 1),  -- LO/LM edit issue_qty, item status
+
+  -- Relief package / dispatch (reliefpkg & reliefpkg_item)
+  ('reliefpkg', 'create',               'system', 'system', 1),  -- create package for approved request
+  ('reliefpkg', 'dispatch',             'system', 'system', 1),  -- mark as dispatched / dispatch records
+  ('reliefpkg', 'receive',              'system', 'system', 1),  -- agency marks received
+  ('reliefpkg', 'verify',               'system', 'system', 1),  -- LM verifies receipt/dispatch
+
+  -- Inventory / reservation
+  ('inventory', 'view',                 'system', 'system', 1),
+  ('inventory', 'reserve_for_request',  'system', 'system', 1),  -- LM only
+  ('inventory', 'reconcile_dispatch',   'system', 'system', 1),  -- IC only
+
+  -- Admin / account (agency accounts)
+  ('agency_account', 'request',         'system', 'system', 1),  -- public/agency request account
+  ('agency_account', 'review',          'system', 'system', 1),  -- Dir-PEOD
+  ('agency_account', 'approve',         'system', 'system', 1),  -- Dir-PEOD/DDG/DG
+  ('agency_account', 'deny',            'system', 'system', 1),  -- Dir-PEOD/DDG/DG
+  ('agency_account', 'provision',       'system', 'system', 1),  -- SysAdmin provisioning users
+
+  -- User management
+  ('users', 'manage',                   'system', 'system', 1),  -- SysAdmin only
+
+  -- Reporting
+  ('reports', 'view_own',               'system', 'system', 1),  -- agency dashboards
+  ('reports', 'view_ops',               'system', 'system', 1),  -- LO/LM/IC
+  ('reports', 'view_exec',              'system', 'system', 1)   -- Dir-PEOD/DDG/DG
+ON CONFLICT (resource, action) DO NOTHING;
+
+
+Do not modify any other tables or data.
