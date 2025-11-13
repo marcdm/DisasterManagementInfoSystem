@@ -63,6 +63,13 @@ Preferred communication style: Simple, everyday language.
   3. **Package Preparation** (logistics officers/managers) - Status: SUBMITTED (3) → PART_FILLED (5) → FILLED (7)
   4. **Distribution & Intake** (agencies receive goods)
 - **Agency User Interface**: Simplified view showing only Edit (drafts) and View (all other statuses) actions. No access to eligibility review or fulfillment actions.
+- **ODPEM Director Dashboard**: Unified view at `/director/dashboard` for DG/DDG/Dir/PEOD roles showing all relief requests with 5 filter tabs:
+  - **Pending Review**: Requests awaiting eligibility review (STATUS_AWAITING_APPROVAL)
+  - **Pending Fulfillment**: Approved requests being fulfilled by logistics (STATUS_SUBMITTED, STATUS_PART_FILLED)
+  - **In Progress**: All active requests (STATUS_AWAITING_APPROVAL, STATUS_SUBMITTED, STATUS_PART_FILLED)
+  - **Completed**: Fully fulfilled requests (STATUS_FILLED)
+  - **All**: Complete historical view of all requests
+  - Dashboard includes summary metric cards, status badges, and role-appropriate action buttons (Review Eligibility for pending, View for others)
 - **Inventory Management**: Tracks stock by warehouse and item in the `inventory` table, including `usable_qty`, `reserved_qty`, `defective_qty`, `expired_qty`, with bin-level tracking via the `location` table.
 - **Eligibility Approval Workflow**: Integrated role-based access control (RBAC) with `has_permission` and `@permission_required` decorators. Service layer for eligibility decisions, notifications, and workflow enforcement. ODPEM directors access via `/eligibility/pending`.
 - **Package Fulfillment Workflow**: LO/LM access "Pending Fulfillment" list showing SUBMITTED (3) and PART_FILLED (5) requests, create relief packages from approved requests with real-time inventory checking.
