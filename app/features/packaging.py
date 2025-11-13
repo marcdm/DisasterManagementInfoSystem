@@ -195,14 +195,14 @@ def _save_draft(relief_request):
 
 
 def _submit_for_approval(relief_request):
-    """Submit package for Logistics Manager approval (LO only)"""
+    """Submit package for Logistics Manager approval (LO only) - allows partial allocations"""
     from app.core.rbac import is_logistics_officer
     if not is_logistics_officer():
         flash('Only Logistics Officers can submit for approval', 'danger')
         return redirect(url_for('packaging.prepare_package', reliefrqst_id=relief_request.reliefrqst_id))
     
     try:
-        _process_allocations(relief_request, validate_complete=True)
+        _process_allocations(relief_request, validate_complete=False)
         
         relief_request.action_by_id = current_user.email[:20]
         relief_request.action_dtime = datetime.now()
