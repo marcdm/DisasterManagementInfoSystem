@@ -730,6 +730,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.allocation-input').forEach(input => {
         input.addEventListener('input', function() {
             const itemId = this.dataset.itemId;
+            const warehouseId = this.dataset.warehouseId;
+            
+            // Update warehouse stock display in real-time
+            updateWarehouseStock(itemId, warehouseId);
+            
+            // Update item calculations and metrics
             updateItemCalculations(itemId);
             updateMetrics();
         });
@@ -771,16 +777,11 @@ function loadInventory(itemId, warehouseId) {
         .then(response => response.json())
         .then(data => {
             const usable = parseFloat(data.usable_qty || 0);
-            stockElement.textContent = usable.toFixed(0);
             stockElement.dataset.usableQty = usable;
+            stockElement.dataset.originalQty = usable;
             
-            if (usable === 0) {
-                stockElement.style.color = '#dc3545';
-                stockElement.title = 'No stock available';
-            } else {
-                stockElement.style.color = '#212529';
-                stockElement.title = '';
-            }
+            // Update display with current allocation
+            updateWarehouseStock(itemId, warehouseId);
         })
         .catch(error => {
             stockElement.textContent = '?';
@@ -788,6 +789,28 @@ function loadInventory(itemId, warehouseId) {
             stockElement.title = 'Error loading stock';
             console.error('Inventory load error:', error);
         });
+}
+
+function updateWarehouseStock(itemId, warehouseId) {
+    const stockElement = document.getElementById(`stock_${itemId}_${warehouseId}`);
+    const allocationInput = document.getElementById(`allocation_${itemId}_${warehouseId}`);
+    
+    const originalQty = parseFloat(stockElement.dataset.originalQty || 0);
+    const allocated = parseFloat(allocationInput.value || 0);
+    const remaining = Math.max(0, originalQty - allocated);
+    
+    stockElement.textContent = remaining.toFixed(0);
+    
+    if (remaining === 0) {
+        stockElement.style.color = '#dc3545';
+        stockElement.title = `No stock remaining (${allocated} allocated from ${originalQty} available)`;
+    } else if (allocated > 0) {
+        stockElement.style.color = '#f57c00';
+        stockElement.title = `${remaining} remaining (${allocated} allocated from ${originalQty} available)`;
+    } else {
+        stockElement.style.color = '#212529';
+        stockElement.title = '';
+    }
 }
 
 function updateItemCalculations(itemId) {
