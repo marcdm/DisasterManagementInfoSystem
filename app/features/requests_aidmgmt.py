@@ -106,25 +106,61 @@ def create_request():
 
 @requests_bp.route('/<int:request_id>')
 @login_required
-@agency_user_required
 def view_request(request_id):
-    """View relief request details"""
+    """
+    View relief request details.
+    - Agency users: View their own agency's requests (read/edit if draft)
+    - Directors: View all requests, with eligibility review capability
+    """
+    from app.core.rbac import is_director_level, has_permission
+    
     relief_request = ReliefRqst.query.get_or_404(request_id)
     
-    # Verify request belongs to current agency
-    if relief_request.agency_id != current_user.agency_id:
-        flash('You do not have permission to view this request.', 'danger')
+    # Check permissions
+    is_director = is_director_level()
+    # Directors are never treated as agency users (even if they have an agency_id)
+    is_agency_user = not is_director and current_user.agency_id is not None
+    
+    # Verify access rights (directors bypass agency restriction)
+    if is_director:
+        # Directors can view all requests regardless of agency
+        pass
+    elif is_agency_user:
+        # Agency users can only view their own agency's requests
+        if relief_request.agency_id != current_user.agency_id:
+            flash('You do not have permission to view this request.', 'danger')
+            abort(403)
+    else:
+        # Non-agency, non-director users cannot view requests
+        flash('You do not have permission to view relief requests.', 'danger')
         abort(403)
     
     # Add workflow metadata
     relief_request.workflow_step = rr_service.get_workflow_steps(relief_request.status_code)
+    
+    # Determine eligibility review context (for directors only)
+    can_review_eligibility = False
+    eligibility_decision_made = False
+    
+    if is_director and has_permission('reliefrqst', 'approve_eligibility'):
+        # Check if eligibility decision is needed
+        if relief_request.status_code == rr_service.STATUS_SUBMITTED and relief_request.review_by_id is None:
+            can_review_eligibility = True
+        # Check if decision has already been made
+        if relief_request.review_by_id is not None or relief_request.status_code == rr_service.STATUS_INELIGIBLE:
+            eligibility_decision_made = True
     
     return render_template('requests/view.html',
                          request=relief_request,
                          STATUS_DRAFT=rr_service.STATUS_DRAFT,
                          STATUS_SUBMITTED=rr_service.STATUS_SUBMITTED,
                          STATUS_CLOSED=rr_service.STATUS_CLOSED,
-                         STATUS_FILLED=rr_service.STATUS_FILLED)
+                         STATUS_FILLED=rr_service.STATUS_FILLED,
+                         STATUS_INELIGIBLE=rr_service.STATUS_INELIGIBLE,
+                         is_director=is_director,
+                         is_agency_user=is_agency_user,
+                         can_edit=can_review_eligibility,
+                         decision_made=eligibility_decision_made)
 
 
 @requests_bp.route('/<int:request_id>/edit', methods=['GET', 'POST'])
