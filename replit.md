@@ -58,12 +58,13 @@ Preferred communication style: Simple, everyday language.
 
 ### Data Flow Patterns
 - **AIDMGMT Relief Workflow**: Complete end-to-end workflow covering:
-  1. **Relief Request Creation** (agencies) - Status: DRAFT (0) → AWAITING_APPROVAL (1)
+  1. **Relief Request Creation** (agencies) - Create and edit drafts via `/relief-requests/create`, Status: DRAFT (0) → AWAITING_APPROVAL (1)
   2. **Eligibility Review** (ODPEM directors) - Status: AWAITING_APPROVAL (1) → SUBMITTED (3) or INELIGIBLE (8)
   3. **Package Preparation** (logistics officers/managers) - Status: SUBMITTED (3) → PART_FILLED (5) → FILLED (7)
   4. **Distribution & Intake** (agencies receive goods)
+- **Agency User Interface**: Simplified view showing only Edit (drafts) and View (all other statuses) actions. No access to eligibility review or fulfillment actions.
 - **Inventory Management**: Tracks stock by warehouse and item in the `inventory` table, including `usable_qty`, `reserved_qty`, `defective_qty`, `expired_qty`, with bin-level tracking via the `location` table.
-- **Eligibility Approval Workflow**: Integrated role-based access control (RBAC) with `has_permission` and `@permission_required` decorators. Service layer for eligibility decisions, notifications, and workflow enforcement.
+- **Eligibility Approval Workflow**: Integrated role-based access control (RBAC) with `has_permission` and `@permission_required` decorators. Service layer for eligibility decisions, notifications, and workflow enforcement. ODPEM directors access via `/eligibility/pending`.
 - **Package Fulfillment Workflow**: LO/LM access "Pending Fulfillment" list showing SUBMITTED (3) and PART_FILLED (5) requests, create relief packages from approved requests with real-time inventory checking.
 
 ## External Dependencies
