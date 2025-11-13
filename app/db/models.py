@@ -30,8 +30,6 @@ class User(UserMixin, db.Model):
     last_login_at = db.Column(db.DateTime)
     create_dtime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     update_dtime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    create_by_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
-    update_by_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     
     mfa_enabled = db.Column(db.Boolean, nullable=False, default=False)
     mfa_secret = db.Column(db.String(64))
