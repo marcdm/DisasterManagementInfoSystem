@@ -206,7 +206,7 @@ def _create_odpem_notifications(relief_request: ReliefRqst) -> None:
     
     for admin_user in admin_users:
         notification = Notification(
-            user_id=admin_user.id,
+            user_id=admin_user.user_id,
             reliefrqst_id=relief_request.reliefrqst_id,
             title='New Relief Request Submitted',
             message=f'Agency {agency_name} submitted relief request #{relief_request.reliefrqst_id} for event: {event_name}',
@@ -238,7 +238,7 @@ def create_dispatch_notifications(relief_request: ReliefRqst) -> None:
     for user in agency_users:
         # Create in-app notification
         notification = Notification(
-            user_id=user.id,
+            user_id=user.user_id,
             reliefrqst_id=relief_request.reliefrqst_id,
             title='Relief Goods Dispatched by ODPEM',
             message=f'ODPEM has dispatched goods for relief request #{relief_request.reliefrqst_id} (Event: {event_name}). Please confirm receipt when delivered.',
@@ -337,7 +337,7 @@ def _create_closure_notification(relief_request: ReliefRqst) -> None:
     
     for user in agency_users:
         notification = Notification(
-            user_id=user.id,
+            user_id=user.user_id,
             reliefrqst_id=relief_request.reliefrqst_id,
             title='Relief Request Fully Received and Closed',
             message=f'Relief request #{relief_request.reliefrqst_id} has been fully received and automatically closed. All allocated goods have been confirmed.',

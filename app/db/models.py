@@ -11,7 +11,7 @@ class User(UserMixin, db.Model):
     """User authentication model with MFA and lockout support"""
     __tablename__ = 'user'
     
-    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(200), unique=True, nullable=False)
     username = db.Column(db.String(60), unique=True)
     password_hash = db.Column(db.String(256), nullable=False)
@@ -19,12 +19,19 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
     full_name = db.Column(db.String(200))
-    role = db.Column(db.String(50))
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     organization = db.Column(db.String(200))
     job_title = db.Column(db.String(200))
     phone = db.Column(db.String(50))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    timezone = db.Column(db.String(50), nullable=False, default='America/Jamaica')
+    language = db.Column(db.String(10), nullable=False, default='en')
+    notification_preferences = db.Column(db.Text)
+    assigned_warehouse_id = db.Column(db.Integer, db.ForeignKey('warehouse.warehouse_id'))
+    last_login_at = db.Column(db.DateTime)
+    create_dtime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    update_dtime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    create_by_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
+    update_by_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     
     mfa_enabled = db.Column(db.Boolean, nullable=False, default=False)
     mfa_secret = db.Column(db.String(64))
@@ -39,6 +46,10 @@ class User(UserMixin, db.Model):
     roles = db.relationship('Role', secondary='user_role', back_populates='users')
     warehouses = db.relationship('Warehouse', secondary='user_warehouse', back_populates='users')
     agency = db.relationship('Agency', foreign_keys=[agency_id], backref='users')
+    
+    def get_id(self):
+        """Override UserMixin get_id to use user_id instead of id"""
+        return str(self.user_id)
 
 class Role(db.Model):
     """Role definitions for RBAC"""
@@ -56,17 +67,24 @@ class UserRole(db.Model):
     """User-Role assignment (many-to-many)"""
     __tablename__ = 'user_role'
     
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), primary_key=True)
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'), primary_key=True)
     assigned_at = db.Column(db.DateTime, default=datetime.utcnow)
+    assigned_by = db.Column(db.Integer, db.ForeignKey('user.user_id'))
+    create_by_id = db.Column(db.String(20), nullable=False, default='system')
+    create_dtime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    update_by_id = db.Column(db.String(20), nullable=False, default='system')
+    update_dtime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    version_nbr = db.Column(db.Integer, nullable=False, default=1)
 
 class UserWarehouse(db.Model):
     """User-Warehouse access control"""
     __tablename__ = 'user_warehouse'
     
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), primary_key=True)
     warehouse_id = db.Column(db.Integer, db.ForeignKey('warehouse.warehouse_id'), primary_key=True)
     assigned_at = db.Column(db.DateTime, default=datetime.utcnow)
+    assigned_by = db.Column(db.Integer, db.ForeignKey('user.user_id'))
 
 class Event(db.Model):
     """Disaster Event (from aidmgmt-3.sql)"""
@@ -525,9 +543,9 @@ class TransferRequest(db.Model):
     item_id = db.Column(db.Integer, db.ForeignKey('item.item_id'), nullable=False)
     quantity = db.Column(db.Numeric(12,2), nullable=False)
     status = db.Column(db.String(20), nullable=False, default='PENDING')
-    requested_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    requested_by = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     requested_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    reviewed_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    reviewed_by = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     reviewed_at = db.Column(db.DateTime)
     notes = db.Column(db.Text)
     
@@ -780,14 +798,14 @@ class AgencyAccountRequest(db.Model):
     reason_text = db.Column(db.String(255), nullable=False)
     
     agency_id = db.Column(db.Integer, db.ForeignKey('agency.agency_id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     
     status_code = db.Column(db.CHAR(1), nullable=False)
     status_reason = db.Column(db.String(255))
     
-    created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    updated_by_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
     
@@ -804,7 +822,7 @@ class AgencyAccountRequestAudit(db.Model):
     request_id = db.Column(db.Integer, db.ForeignKey('agency_account_request.request_id'), nullable=False)
     event_type = db.Column(db.String(24), nullable=False)
     event_notes = db.Column(db.String(255))
-    actor_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    actor_user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
     event_dtime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
     
@@ -816,7 +834,7 @@ class Notification(db.Model):
     __tablename__ = 'notification'
     
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
     warehouse_id = db.Column(db.Integer, db.ForeignKey('warehouse.warehouse_id'))
     reliefrqst_id = db.Column(db.Integer, db.ForeignKey('reliefrqst.reliefrqst_id'))
     title = db.Column(db.String(200), nullable=False)

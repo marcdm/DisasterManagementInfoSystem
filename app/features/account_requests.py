@@ -34,7 +34,7 @@ def create_request():
             flash('An active request already exists for this email address.', 'warning')
             return redirect(url_for('account_requests.submit_form'))
         
-        actor_id = current_user.id if current_user.is_authenticated else 1
+        actor_id = current_user.user_id if current_user.is_authenticated else 1
         
         new_request = AgencyAccountRequest(
             agency_name=agency_name,
@@ -119,13 +119,13 @@ def start_review(request_id):
             return redirect(url_for('account_requests.view_request', request_id=request_id))
         
         account_request.status_code = 'R'
-        account_request.updated_by_id = current_user.id
+        account_request.updated_by_id = current_user.user_id
         
         audit = AgencyAccountRequestAudit(
             request_id=request_id,
             event_type='moved_to_review',
             event_notes='Request moved to review',
-            actor_user_id=current_user.id
+            actor_user_id=current_user.user_id
         )
         db.session.add(audit)
         db.session.commit()
@@ -158,13 +158,13 @@ def approve_request(request_id):
         
         account_request.status_code = 'A'
         account_request.status_reason = notes
-        account_request.updated_by_id = current_user.id
+        account_request.updated_by_id = current_user.user_id
         
         audit = AgencyAccountRequestAudit(
             request_id=request_id,
             event_type='approved',
             event_notes=notes or 'Request approved',
-            actor_user_id=current_user.id
+            actor_user_id=current_user.user_id
         )
         db.session.add(audit)
         db.session.commit()
@@ -201,13 +201,13 @@ def deny_request(request_id):
         
         account_request.status_code = 'D'
         account_request.status_reason = reason
-        account_request.updated_by_id = current_user.id
+        account_request.updated_by_id = current_user.user_id
         
         audit = AgencyAccountRequestAudit(
             request_id=request_id,
             event_type='denied',
             event_notes=reason,
-            actor_user_id=current_user.id
+            actor_user_id=current_user.user_id
         )
         db.session.add(audit)
         db.session.commit()

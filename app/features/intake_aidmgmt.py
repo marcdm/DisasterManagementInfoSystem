@@ -57,7 +57,7 @@ def create_intake():
                 flash('At least one item with positive quantity is required', 'danger')
                 return redirect(url_for('intake.create_intake'))
             
-            user_id_upper = str(current_user.id).upper()
+            user_id_upper = str(current_user.user_id).upper()
             now = datetime.utcnow()
             
             first_inventory_id = None
@@ -242,7 +242,7 @@ def complete_intake(reliefpkg_id, inventory_id):
         return redirect(url_for('intake.view_intake', reliefpkg_id=reliefpkg_id, inventory_id=inventory_id))
     
     intake.status_code = 'C'
-    intake.update_by_id = str(current_user.id).upper()
+    intake.update_by_id = str(current_user.user_id).upper()
     intake.update_dtime = datetime.utcnow()
     intake.version_nbr += 1
     

@@ -135,12 +135,12 @@ def create():
             
             role_ids = request.form.getlist('roles')
             for role_id in role_ids:
-                user_role = UserRole(user_id=new_user.id, role_id=int(role_id))
+                user_role = UserRole(user_id=new_user.user_id, role_id=int(role_id))
                 db.session.add(user_role)
             
             warehouse_ids = request.form.getlist('warehouses')
             for warehouse_id in warehouse_ids:
-                user_warehouse = UserWarehouse(user_id=new_user.id, warehouse_id=int(warehouse_id))
+                user_warehouse = UserWarehouse(user_id=new_user.user_id, warehouse_id=int(warehouse_id))
                 db.session.add(user_warehouse)
             
             db.session.commit()
@@ -374,21 +374,21 @@ def edit(user_id):
             if password:
                 user.password_hash = generate_password_hash(password)
             
-            UserRole.query.filter_by(user_id=user.id).delete()
+            UserRole.query.filter_by(user_id=user.user_id).delete()
             role_ids = request.form.getlist('roles')
             for role_id in role_ids:
-                user_role = UserRole(user_id=user.id, role_id=int(role_id))
+                user_role = UserRole(user_id=user.user_id, role_id=int(role_id))
                 db.session.add(user_role)
             
-            UserWarehouse.query.filter_by(user_id=user.id).delete()
+            UserWarehouse.query.filter_by(user_id=user.user_id).delete()
             warehouse_ids = request.form.getlist('warehouses')
             for warehouse_id in warehouse_ids:
-                user_warehouse = UserWarehouse(user_id=user.id, warehouse_id=int(warehouse_id))
+                user_warehouse = UserWarehouse(user_id=user.user_id, warehouse_id=int(warehouse_id))
                 db.session.add(user_warehouse)
             
             db.session.commit()
             flash(f'User {user.email} updated successfully.', 'success')
-            return redirect(url_for('user_admin.view', user_id=user.id))
+            return redirect(url_for('user_admin.view', user_id=user.user_id))
         
         except Exception as e:
             db.session.rollback()
@@ -447,7 +447,7 @@ def edit(user_id):
 @role_required('SYSTEM_ADMINISTRATOR', 'SYS_ADMIN')
 def deactivate(user_id):
     
-    if user_id == current_user.id:
+    if user_id == current_user.user_id:
         flash('You cannot deactivate your own account.', 'danger')
         return redirect(url_for('user_admin.view', user_id=user_id))
     
