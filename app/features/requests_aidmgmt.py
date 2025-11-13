@@ -354,7 +354,13 @@ def submit_request(request_id):
         abort(403)
     
     try:
-        current_version = int(request.form.get('version_nbr'))
+        # Get version_nbr from form, with defensive handling
+        version_nbr_str = request.form.get('version_nbr')
+        if not version_nbr_str:
+            # Fallback to current request version if not provided in form
+            current_version = relief_request.version_nbr
+        else:
+            current_version = int(version_nbr_str)
         
         success, message = rr_service.submit_request(
             reliefrqst_id=request_id,
