@@ -338,8 +338,6 @@ def prepare_package(reliefrqst_id):
                 'total_allocated': float(total_allocated)
             }
         
-        from app.core.rbac import is_logistics_officer, is_logistics_manager
-        
         return render_template('packaging/prepare.html',
                              relief_request=relief_request,
                              warehouses=warehouses,
@@ -349,8 +347,6 @@ def prepare_package(reliefrqst_id):
                              blocking_user=blocking_user,
                              lock=lock,
                              is_locked_by_me=(lock and lock.fulfiller_user_id == current_user.user_id),
-                             is_logistics_officer=is_logistics_officer(),
-                             is_logistics_manager=is_logistics_manager(),
                              status_map=status_map,
                              item_status_options=item_status_options)
     

@@ -727,13 +727,13 @@
                         <i class="bi bi-save"></i>
                         Save Draft
                     </button>
-                    {% if is_logistics_officer %}
+                    {% if is_logistics_officer() %}
                     <button type="submit" name="action" value="submit_for_approval" class="btn-relief-primary" id="submitForApprovalBtn">
                         <i class="bi bi-check-circle"></i>
                         Submit for LM Approval
                     </button>
                     {% endif %}
-                    {% if is_logistics_manager %}
+                    {% if is_logistics_manager() %}
                     <button type="submit" name="action" value="send_for_dispatch" class="btn-relief-primary" id="sendForDispatchBtn">
                         <i class="bi bi-truck"></i>
                         Send for Dispatch
