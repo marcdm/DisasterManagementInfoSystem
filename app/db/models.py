@@ -56,6 +56,43 @@ class User(UserMixin, db.Model):
     def get_id(self):
         """Override UserMixin get_id to use user_id instead of id"""
         return str(self.user_id)
+    
+    @property
+    def is_locked(self):
+        """Check if user account is currently locked"""
+        if self.lock_until_at is None:
+            return False
+        return datetime.utcnow() < self.lock_until_at
+    
+    @property
+    def last_login_dtime(self):
+        """Alias for last_login_at for backward compatibility"""
+        return self.last_login_at
+    
+    @property
+    def password_changed_dtime(self):
+        """Alias for password_changed_at for backward compatibility"""
+        return self.password_changed_at
+    
+    @property
+    def failed_login_attempts(self):
+        """Alias for failed_login_count for backward compatibility"""
+        return self.failed_login_count
+    
+    @property
+    def last_login_ip(self):
+        """IP address placeholder (not in database)"""
+        return None
+    
+    @property
+    def login_count(self):
+        """Login count placeholder (not in database)"""
+        return 0
+    
+    @property
+    def lockout_reason(self):
+        """Lockout reason placeholder (not in database)"""
+        return "Multiple failed login attempts" if self.failed_login_count > 5 else None
 
 class Role(db.Model):
     """Role definitions for RBAC"""
