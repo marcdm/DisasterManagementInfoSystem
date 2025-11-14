@@ -328,18 +328,40 @@ def _process_allocations(relief_request, validate_complete=False):
     """
     new_allocations = []
     
+    # Get or create ReliefPkg for this relief request
+    relief_pkg = ReliefPkg.query.filter_by(reliefrqst_id=relief_request.reliefrqst_id).first()
+    if not relief_pkg:
+        # Create a new relief package for tracking allocations
+        relief_pkg = ReliefPkg(
+            reliefrqst_id=relief_request.reliefrqst_id,
+            to_inventory_id=1,  # Placeholder, will be updated on dispatch
+            start_date=date.today(),
+            status_code='P',  # Preparing
+            create_by_id=current_user.email[:20],
+            create_dtime=datetime.now(),
+            update_by_id=current_user.email[:20],
+            update_dtime=datetime.now(),
+            verify_by_id=current_user.email[:20],
+            received_by_id=current_user.email[:20],
+            version_nbr=1
+        )
+        db.session.add(relief_pkg)
+        db.session.flush()  # Get the reliefpkg_id
+    
     # CRITICAL: Capture existing allocations BEFORE deletion for reservation delta calculation
-    existing_pkg_items = ReliefPkgItem.query.filter_by(reliefrqst_id=relief_request.reliefrqst_id).all()
-    existing_allocations_map = {
-        (pkg_item.item_id, pkg_item.warehouse_id): pkg_item.issue_qty
-        for pkg_item in existing_pkg_items
-    }
+    existing_pkg_items = ReliefPkgItem.query.filter_by(reliefpkg_id=relief_pkg.reliefpkg_id).all()
+    existing_allocations_map = {}
+    for pkg_item in existing_pkg_items:
+        # Get warehouse_id from inventory
+        inv = Inventory.query.get(pkg_item.fr_inventory_id)
+        if inv:
+            existing_allocations_map[(pkg_item.item_id, inv.warehouse_id)] = pkg_item.item_qty
     
     # Store old allocations on relief_request object for access in save/submit functions
     relief_request._old_allocations = existing_allocations_map
     
     # Now clear existing package items to rebuild from form data
-    ReliefPkgItem.query.filter_by(reliefrqst_id=relief_request.reliefrqst_id).delete()
+    ReliefPkgItem.query.filter_by(reliefpkg_id=relief_pkg.reliefpkg_id).delete()
     
     for item in relief_request.items:
         item_id = item.item_id
@@ -413,18 +435,29 @@ def _process_allocations(relief_request, validate_complete=False):
         item.action_dtime = datetime.now()
         item.version_nbr += 1
         
-        # Create/update ReliefPkgItem records for each warehouse allocation
+        # Create ReliefPkgItem records for each warehouse allocation
         for warehouse_id, allocated_qty in warehouse_allocations:
-            pkg_item = ReliefPkgItem(
-                reliefrqst_id=relief_request.reliefrqst_id,
-                item_id=item_id,
+            # Get inventory record to get inventory_id
+            inventory = Inventory.query.filter_by(
                 warehouse_id=warehouse_id,
-                issue_qty=allocated_qty,
-                create_by_id=current_user.email[:20],
-                create_dtime=datetime.now(),
-                version_nbr=1
-            )
-            db.session.add(pkg_item)
+                item_id=item_id,
+                status_code='A'
+            ).first()
+            
+            if inventory and allocated_qty > 0:
+                pkg_item = ReliefPkgItem(
+                    reliefpkg_id=relief_pkg.reliefpkg_id,
+                    fr_inventory_id=inventory.inventory_id,
+                    item_id=item_id,
+                    item_qty=allocated_qty,
+                    uom_code=item.item.default_uom_code if item.item and item.item.default_uom_code else 'EA',
+                    create_by_id=current_user.email[:20],
+                    create_dtime=datetime.now(),
+                    update_by_id=current_user.email[:20],
+                    update_dtime=datetime.now(),
+                    version_nbr=1
+                )
+                db.session.add(pkg_item)
     
     return new_allocations
 

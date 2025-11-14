@@ -1,0 +1,81 @@
+InvalidRequestError
+
+sqlalchemy.exc.InvalidRequestError: Entity namespace for "reliefpkg_item" has no property "reliefrqst_id"
+Traceback (most recent call last)
+
+    File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/sql/base.py", line 2181, in _entity_namespace_key
+
+    return getattr(ns, key)  # type: ignore
+           ^^^^^^^^^^^^^^^^
+
+    The above exception was the direct cause of the following exception:
+    File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1498, in __call__
+
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1476, in wsgi_app
+
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1473, in wsgi_app
+
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 882, in full_dispatch_request
+
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 880, in full_dispatch_request
+
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 865, in dispatch_request
+
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "/home/runner/workspace/app/features/packaging.py", line 202, in prepare_package
+
+    return _submit_for_approval(relief_request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "/home/runner/workspace/app/features/packaging.py", line 248, in _submit_for_approval
+
+    new_allocations = _process_allocations(relief_request, validate_complete=False)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "/home/runner/workspace/app/features/packaging.py", line 332, in _process_allocations
+
+    existing_pkg_items = ReliefPkgItem.query.filter_by(reliefrqst_id=relief_request.reliefrqst_id).all()
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 1983, in filter_by
+
+    clauses = [
+              
+
+    File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 1984, in <listcomp>
+
+    _entity_namespace_key(from_entity, key) == value
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/sql/base.py", line 2183, in _entity_namespace_key
+
+    raise exc.InvalidRequestError(
+    ^^^^^^^^^^
+
+    sqlalchemy.exc.InvalidRequestError: Entity namespace for "reliefpkg_item" has no property "reliefrqst_id"
+
+The debugger caught an exception in your WSGI application. You can now look at the traceback which led to the error.
+
+To switch between the interactive traceback and the plaintext one, you can click on the "Traceback" headline. From the text traceback you can also create a paste of it.
