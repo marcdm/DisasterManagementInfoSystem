@@ -535,21 +535,21 @@
     </div>
 
     <div class="offcanvas offcanvas-end" tabindex="-1" id="notificationPanel" style="width: 400px;">
-        <div class="offcanvas-header border-bottom">
-            <h5 class="offcanvas-title">
+        <div class="offcanvas-header border-bottom" style="padding: 1rem 1.5rem;">
+            <h5 class="offcanvas-title mb-0">
                 <i class="bi bi-bell-fill me-2" aria-hidden="true"></i>Notifications
             </h5>
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 ms-auto">
                 <button type="button" 
-                        class="btn btn-sm btn-outline-danger" 
+                        class="btn btn-sm btn-outline-danger rounded-pill px-3" 
                         id="clearAllNotifications" 
-                        style="display: none;" 
+                        style="display: none; font-size: 0.85rem; font-weight: 500;" 
                         data-bs-toggle="modal" 
                         data-bs-target="#clearAllBellModal"
                         aria-label="Clear all notifications">
-                    <i class="bi bi-trash-fill" aria-hidden="true"></i> Clear All
+                    <i class="bi bi-trash-fill me-1" aria-hidden="true"></i>Clear All
                 </button>
-                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close notifications panel"></button>
+                <button type="button" class="btn-close ms-2" data-bs-dismiss="offcanvas" aria-label="Close notifications panel"></button>
             </div>
         </div>
         <div class="offcanvas-body p-0">
