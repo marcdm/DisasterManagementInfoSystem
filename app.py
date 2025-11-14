@@ -50,6 +50,7 @@ from app.core.rbac import (
     is_admin, is_logistics_manager, is_logistics_officer, is_director_level,
     can_manage_users, can_view_reports, has_permission
 )
+from app.core.feature_registry import FeatureRegistry
 
 app.jinja_env.globals.update(
     has_role=has_role,
@@ -61,7 +62,12 @@ app.jinja_env.globals.update(
     is_director_level=is_director_level,
     can_manage_users=can_manage_users,
     can_view_reports=can_view_reports,
-    has_permission=has_permission
+    has_permission=has_permission,
+    has_feature=lambda feature_key: FeatureRegistry.has_access(current_user, feature_key),
+    get_dashboard_features=lambda: FeatureRegistry.get_dashboard_features(current_user),
+    get_navigation_features=lambda group=None: FeatureRegistry.get_navigation_features(current_user, group),
+    get_user_primary_role=lambda: FeatureRegistry.get_primary_role(current_user),
+    get_role_display_name=FeatureRegistry.get_role_display_name
 )
 
 @app.template_filter('format_date')
