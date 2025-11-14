@@ -180,15 +180,18 @@ class NotificationService:
         
         notifications = []
         for user in recipient_users:
-            # Different deep-links for different user types
-            if user.agency_id:
-                # Agency users: Link to request details
-                link_url = url_for('requests.view_request', request_id=relief_request.reliefrqst_id, _external=False)
-                message = f'Your relief request {tracking_no} for {event_name} has been approved by {approver_name}. Click to view details.'
-            else:
+            # Different deep-links for different user types based on role
+            user_role_codes = [role.code for role in user.roles]
+            is_logistics_user = any(code in ['LO', 'LM'] for code in user_role_codes)
+            
+            if is_logistics_user:
                 # Logistics users: Link to package preparation
                 link_url = url_for('packaging.prepare_package', reliefrqst_id=relief_request.reliefrqst_id, _external=False)
                 message = f'{tracking_no} from {agency_name} (Event: {event_name}) approved by {approver_name}. Click to prepare fulfillment package.'
+            else:
+                # Agency users: Link to request details
+                link_url = url_for('requests.view_request', request_id=relief_request.reliefrqst_id, _external=False)
+                message = f'Your relief request {tracking_no} for {event_name} has been approved by {approver_name}. Click to view details.'
             
             notification = NotificationService.create_notification(
                 user_id=user.user_id,
@@ -308,14 +311,18 @@ class NotificationService:
         
         notifications = []
         for user in recipient_users:
-            if user.agency_id:
-                # Agency users: Link to request tracking
-                link_url = url_for('requests.view_request', request_id=relief_request.reliefrqst_id, _external=False)
-                message = f'Your relief request {tracking_no} has been prepared and approved by {approver_name}. Package is ready for dispatch.'
-            else:
+            # Different deep-links for different user types based on role
+            user_role_codes = [role.code for role in user.roles]
+            is_logistics_user = any(code in ['LO', 'LM'] for code in user_role_codes)
+            
+            if is_logistics_user:
                 # Logistics/warehouse users: Link to package details
                 link_url = url_for('packaging.prepare_package', reliefrqst_id=relief_request.reliefrqst_id, _external=False)
                 message = f'Package for {tracking_no} from {agency_name} approved by {approver_name}. Ready for dispatch.'
+            else:
+                # Agency users: Link to request tracking
+                link_url = url_for('requests.view_request', request_id=relief_request.reliefrqst_id, _external=False)
+                message = f'Your relief request {tracking_no} has been prepared and approved by {approver_name}. Package is ready for dispatch.'
             
             notification = NotificationService.create_notification(
                 user_id=user.user_id,
