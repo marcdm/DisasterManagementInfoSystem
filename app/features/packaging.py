@@ -163,13 +163,31 @@ def review_approval(reliefrqst_id):
             relief_request.status_code = rr_service.STATUS_PART_FILLED
             relief_request.version_nbr += 1
             
-            # Send dispatch notification to inventory clerks (if notification system exists)
+            # Notify logistics officers and agency users about package approval
             try:
-                if hasattr(rr_service, 'create_dispatch_notifications'):
-                    rr_service.create_dispatch_notifications(relief_request)
+                from app.services.notification_service import NotificationService
+                
+                # Notify logistics officers
+                lo_users = NotificationService.get_active_users_by_role_codes(['LOGISTICS_OFFICER'])
+                
+                # Notify agency users
+                agency_users = []
+                if relief_request.agency_id:
+                    agency_users = NotificationService.get_agency_active_users(relief_request.agency_id)
+                
+                all_recipients = lo_users + agency_users
+                approver_name = f"{current_user.first_name} {current_user.last_name}" if current_user.first_name else current_user.email.split('@')[0]
+                
+                NotificationService.create_package_approved_notification(
+                    relief_pkg=relief_pkg,
+                    recipient_users=all_recipients,
+                    approver_name=approver_name
+                )
             except Exception as e:
                 # Don't fail dispatch if notification fails
-                print(f'Warning: Failed to send dispatch notification: {str(e)}')
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f'Failed to send approval notification: {str(e)}')
             
             db.session.commit()
             
@@ -439,7 +457,19 @@ def _submit_for_approval(relief_request):
             raise ValueError(f'Reservation failed: {error_msg}')
         
         # Notify all Logistics Managers about the pending approval
-        _notify_logistics_managers_for_approval(relief_request, current_user.email)
+        try:
+            from app.services.notification_service import NotificationService
+            lm_users = NotificationService.get_active_users_by_role_codes(['LOGISTICS_MANAGER'])
+            preparer_name = f"{current_user.first_name} {current_user.last_name}" if current_user.first_name else current_user.email.split('@')[0]
+            NotificationService.create_package_ready_for_approval_notification(
+                relief_pkg=relief_pkg,
+                recipient_users=lm_users,
+                preparer_name=preparer_name
+            )
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f'Failed to send LM approval notification: {str(e)}')
         
         db.session.commit()
         
@@ -496,6 +526,32 @@ def _send_for_dispatch(relief_request):
         relief_request.action_dtime = datetime.now()
         relief_request.status_code = rr_service.STATUS_PART_FILLED
         relief_request.version_nbr += 1
+        
+        # Notify agency users and logistics managers about dispatch
+        try:
+            from app.services.notification_service import NotificationService
+            
+            # Notify agency users
+            agency_users = []
+            if relief_request.agency_id:
+                agency_users = NotificationService.get_agency_active_users(relief_request.agency_id)
+            
+            # Optionally notify logistics managers
+            lm_users = NotificationService.get_active_users_by_role_codes(['LOGISTICS_MANAGER'])
+            
+            all_recipients = agency_users + lm_users
+            dispatcher_name = f"{current_user.first_name} {current_user.last_name}" if current_user.first_name else current_user.email.split('@')[0]
+            
+            NotificationService.create_package_dispatched_notification(
+                relief_pkg=relief_pkg,
+                recipient_users=all_recipients,
+                dispatcher_name=dispatcher_name
+            )
+        except Exception as e:
+            # Don't fail dispatch if notification fails
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f'Failed to send dispatch notification: {str(e)}')
         
         db.session.commit()
         
@@ -677,30 +733,6 @@ def _process_allocations(relief_request, validate_complete=False):
     return new_allocations
 
 
-def _notify_logistics_managers_for_approval(relief_request, submitted_by_email):
-    """
-    Send notification to all Logistics Managers when an LO submits a package for approval.
-    """
-    try:
-        # Find all users with LOGISTICS_MANAGER role
-        lm_role = Role.query.filter_by(role_code='LOGISTICS_MANAGER').first()
-        if not lm_role:
-            return  # No LM role configured
-        
-        lm_users = User.query.filter_by(role_code='LOGISTICS_MANAGER', status_code='A').all()
-        
-        for lm_user in lm_users:
-            notification = Notification(
-                user_id=lm_user.user_id,
-                message=f'Relief Request #{relief_request.reliefrqst_id} (Tracking: {relief_request.tracking_no}) has been submitted by {submitted_by_email} and is awaiting your approval for dispatch.',
-                link=url_for('packaging.pending_approval', _external=False),
-                is_read=False,
-                create_dtime=datetime.now()
-            )
-            db.session.add(notification)
-    except Exception as e:
-        # Don't fail the submission if notification fails
-        print(f'Warning: Failed to send LM approval notification: {str(e)}')
 
 
 @packaging_bp.route('/<int:reliefrqst_id>/cancel', methods=['POST'])

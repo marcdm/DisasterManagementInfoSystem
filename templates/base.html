@@ -649,6 +649,90 @@
                 })
                 .catch(error => console.error('Error loading notifications:', error));
         }
+        
+        function loadNotificationList() {
+            const notificationList = document.getElementById('notificationList');
+            notificationList.innerHTML = '<div class="text-center"><span class="spinner-border spinner-border-sm"></span> Loading...</div>';
+            
+            fetch('{{ url_for("notifications.notification_list") }}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.notifications && data.notifications.length > 0) {
+                        let listHtml = '<div class="list-group list-group-flush">';
+                        
+                        data.notifications.forEach(notif => {
+                            const iconClass = getNotificationIcon(notif.type);
+                            const unreadBadge = notif.is_unread ? '<span class="badge bg-primary ms-2">New</span>' : '';
+                            const boldClass = notif.is_unread ? 'fw-bold' : '';
+                            
+                            // Escape user-generated content to prevent XSS
+                            const safeTitle = escapeHtml(notif.title);
+                            const safeMessage = escapeHtml(notif.message);
+                            const safeCreatedAt = escapeHtml(notif.created_at);
+                            
+                            listHtml += `
+                                <form method="POST" action="/notifications/${notif.id}/mark-read" style="display: inline;">
+                                    <button type="submit" class="list-group-item list-group-item-action text-start ${boldClass}" style="border: none; width: 100%;">
+                                        <div class="d-flex w-100 justify-content-between align-items-start">
+                                            <div class="d-flex align-items-start">
+                                                <div class="me-3">
+                                                    ${iconClass}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-1">${safeTitle}</h6>
+                                                    <p class="mb-1 text-muted small">${safeMessage}</p>
+                                                    <small class="text-muted">${safeCreatedAt}</small>
+                                                    ${unreadBadge}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <i class="bi bi-chevron-right"></i>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </form>
+                            `;
+                        });
+                        
+                        listHtml += '</div>';
+                        listHtml += '<a href="{{ url_for("notifications.index") }}" class="btn btn-sm btn-outline-primary w-100 mt-3">View All</a>';
+                        notificationList.innerHTML = listHtml;
+                    } else {
+                        notificationList.innerHTML = '<p class="text-muted text-center">No new notifications</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading notification list:', error);
+                    notificationList.innerHTML = '<p class="text-danger text-center">Failed to load notifications</p>';
+                });
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function getNotificationIcon(type) {
+            if (type.includes('denied') || type.includes('ineligible')) {
+                return '<i class="bi bi-x-circle text-danger" style="font-size: 2rem;"></i>';
+            } else if (type.includes('approved') || type.includes('dispatched')) {
+                return '<i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>';
+            } else if (type.includes('submitted') || type.includes('ready')) {
+                return '<i class="bi bi-info-circle text-info" style="font-size: 2rem;"></i>';
+            } else if (type === 'low_stock') {
+                return '<i class="bi bi-exclamation-triangle text-warning" style="font-size: 2rem;"></i>';
+            } else {
+                return '<i class="bi bi-bell text-primary" style="font-size: 2rem;"></i>';
+            }
+        }
+        
+        const notificationPanel = document.getElementById('notificationPanel');
+        if (notificationPanel) {
+            notificationPanel.addEventListener('show.bs.offcanvas', function() {
+                loadNotificationList();
+            });
+        }
         {% endif %}
         
         document.querySelectorAll('.table-clickable tbody tr[data-href]').forEach(row => {

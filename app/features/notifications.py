@@ -1,28 +1,45 @@
-from flask import Blueprint, render_template, jsonify
-from flask_login import login_required
+from flask import Blueprint, render_template, jsonify, request, redirect, url_for
+from flask_login import login_required, current_user
 from sqlalchemy import func
-from app.db.models import db, Inventory, Item
+from app.db.models import db, Inventory, Item, Notification
+from app.services.notification_service import NotificationService
 
 notifications_bp = Blueprint('notifications', __name__)
 
 @notifications_bp.route('/api/unread_count')
 @login_required
 def unread_count():
-    low_stock_count = db.session.query(
-        func.count(Item.item_id)
-    ).join(Inventory).filter(
-        Item.status_code == 'A'
-    ).group_by(Item.item_id).having(
-        func.sum(Inventory.usable_qty) <= Item.reorder_qty
-    ).count()
+    """Get count of unread notifications for current user"""
+    unread_count = NotificationService.get_unread_count(current_user.user_id)
+    return jsonify({'count': unread_count})
+
+@notifications_bp.route('/api/list')
+@login_required
+def notification_list():
+    """Get notifications as JSON for offcanvas panel"""
+    notifications = NotificationService.get_recent_notifications(current_user.user_id, limit=10)
     
-    total_count = low_stock_count
-    
-    return jsonify({'count': total_count})
+    return jsonify({
+        'notifications': [{
+            'id': n.id,
+            'title': n.title,
+            'message': n.message,
+            'type': n.type,
+            'status': n.status,
+            'link_url': n.link_url or url_for('notifications.index'),
+            'created_at': n.created_at.strftime('%b %d, %Y at %I:%M %p') if n.created_at else 'Just now',
+            'is_unread': n.status == 'unread'
+        } for n in notifications]
+    })
 
 @notifications_bp.route('/')
 @login_required
 def index():
+    """Display all notifications for current user"""
+    # Get actual notifications from database
+    user_notifications = NotificationService.get_recent_notifications(current_user.user_id, limit=50)
+    
+    # Also get low stock items (legacy feature)
     low_stock_items = db.session.query(
         Item.item_id, 
         Item.item_name,
@@ -36,17 +53,25 @@ def index():
         func.sum(Inventory.usable_qty) <= Item.reorder_qty
     ).all()
     
-    notifications = []
+    return render_template('notifications/index.html', 
+                         notifications=user_notifications,
+                         low_stock_items=low_stock_items)
+
+@notifications_bp.route('/<int:notification_id>/mark-read', methods=['POST'])
+@login_required
+def mark_read(notification_id):
+    """Mark a notification as read and redirect to its link"""
+    notification = Notification.query.get_or_404(notification_id)
     
-    if low_stock_items:
-        for item in low_stock_items:
-            notifications.append({
-                'type': 'warning',
-                'icon': 'exclamation-triangle-fill',
-                'title': 'Low Stock Alert',
-                'message': f'{item.item_name} is below reorder level ({item.total_qty:.2f} / {item.reorder_qty:.2f})',
-                'link': f'/items/{item.item_id}',
-                'timestamp': 'Just now'
-            })
+    # Verify user owns this notification
+    if notification.user_id != current_user.user_id:
+        return redirect(url_for('notifications.index')), 403
     
-    return render_template('notifications/index.html', notifications=notifications)
+    # Mark as read
+    NotificationService.mark_as_read(notification_id, current_user.user_id)
+    
+    # Redirect to the notification's link if it exists
+    if notification.link_url:
+        return redirect(notification.link_url)
+    else:
+        return redirect(url_for('notifications.index'))
