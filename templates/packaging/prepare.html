@@ -652,7 +652,7 @@
                                     {% for warehouse in warehouses %}
                                     <div class="warehouse-allocation-row">
                                         <strong class="warehouse-stock" id="stock_{{ item.item_id }}_{{ warehouse.warehouse_id }}" data-usable-qty="0">0</strong>
-                                        <span class="warehouse-name">{{ warehouse.warehouse_name }}</span>
+                                        <span class="warehouse-name" title="{{ warehouse.warehouse_name }}">{{ warehouse.warehouse_name }}</span>
                                         <input 
                                             type="text" 
                                             inputmode="numeric"
