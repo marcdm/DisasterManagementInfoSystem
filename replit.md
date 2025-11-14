@@ -44,7 +44,7 @@ All pages maintain a modern, consistent UI matching Relief Package preparation p
 - **Responsiveness**: Fixed header, collapsible sidebar, dynamic content margins.
 - **Branding**: GOJ branding with primary green and gold accent, official logos, and accessibility features.
 - **Workflows**: Standardized 5-step workflow patterns for Agency Relief Requests and Eligibility Approval.
-- **Package Fulfillment Workflow**: Modern UI with real-time calculations, multi-warehouse allocation, dynamic item status validation, and inventory reservation.
+- **Package Fulfillment Workflow**: Modern UI with real-time calculations, multi-warehouse allocation (filtered to show only warehouses with active stock for each item), dynamic item status validation, and inventory reservation.
 - **Dashboard System**: 6 role-specific dashboards with consistent modern UI, filter tabs, summary cards, and optimized queries.
 
 ### Database Architecture
