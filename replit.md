@@ -46,7 +46,7 @@ All pages maintain a modern, consistent UI matching Relief Package preparation p
 - **Workflows**: Standardized 5-step workflow patterns for Agency Relief Requests and Eligibility Approval.
 - **Package Fulfillment Workflow**: Modern UI with real-time calculations, multi-warehouse allocation (filtered to show only warehouses with active stock for each item), dynamic item status validation, and inventory reservation.
 - **Dashboard System**: 6 role-specific dashboards with consistent modern UI, filter tabs, summary cards, and optimized queries.
-- **User Management**: Modern redesigned UI with metrics dashboard, filter tabs, real-time search, tabbed user profiles, security indicators, compliance alerts, and WCAG 2.1 AA accessibility features.
+- **User Management**: Complete modern redesign with metrics dashboard (6 summary cards), filter tabs (All/Active/Inactive/Locked/No MFA/Admin), real-time search, sortable tables, tabbed user profiles (Identity/Roles/Security/Activity), single-page create/edit forms with validation, security indicators, compliance alerts, and WCAG 2.1 AA accessibility features. Uses efficient single-page form pattern for experienced administrators.
 
 ### Database Architecture
 - **Schema**: Based on the authoritative ODPEM `aidmgmt-3.sql` schema (40 tables).
