@@ -435,18 +435,68 @@ class NotificationService:
         ).count()
     
     @staticmethod
-    def get_recent_notifications(user_id: int, limit: int = 10) -> List[Notification]:
+    def get_recent_notifications(user_id: int, limit: int = None) -> List[Notification]:
         """
         Get recent notifications for a user.
         
         Args:
             user_id: ID of the user
-            limit: Maximum number of notifications to return
+            limit: Maximum number of notifications to return (None = all)
             
         Returns:
             List of Notification objects, newest first
         """
-        return Notification.query.filter_by(
+        query = Notification.query.filter_by(
             user_id=user_id,
             is_archived=False
-        ).order_by(Notification.created_at.desc()).limit(limit).all()
+        ).order_by(Notification.created_at.desc())
+        
+        if limit is not None:
+            query = query.limit(limit)
+        
+        return query.all()
+    
+    @staticmethod
+    def delete_notification(notification_id: int, user_id: int) -> bool:
+        """
+        Delete a specific notification.
+        Verifies that the notification belongs to the user before deleting.
+        
+        Args:
+            notification_id: ID of the notification to delete
+            user_id: ID of the user (for permission check)
+            
+        Returns:
+            True if successfully deleted, False if not found or permission denied
+        """
+        notification = Notification.query.filter_by(
+            id=notification_id,
+            user_id=user_id
+        ).first()
+        
+        if not notification:
+            return False
+        
+        db.session.delete(notification)
+        db.session.commit()
+        return True
+    
+    @staticmethod
+    def clear_all_notifications(user_id: int) -> int:
+        """
+        Delete all notifications for a user.
+        
+        Args:
+            user_id: ID of the user
+            
+        Returns:
+            Number of notifications deleted
+        """
+        notifications = Notification.query.filter_by(user_id=user_id).all()
+        count = len(notifications)
+        
+        for notification in notifications:
+            db.session.delete(notification)
+        
+        db.session.commit()
+        return count

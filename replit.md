@@ -11,6 +11,7 @@ DRIMS (Disaster Relief Inventory Management System) is a web-based platform for 
 - ✅ Backend security decorators for route protection
 - ✅ Complete testing infrastructure with test accounts and documentation
 - ✅ Consistent modern UI across all pages matching GOJ branding
+- ✅ Notification management with clear all and individual delete functionality
 
 ## User Preferences
 - **Communication style**: Simple, everyday language.

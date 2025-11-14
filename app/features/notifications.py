@@ -36,8 +36,8 @@ def notification_list():
 @login_required
 def index():
     """Display all notifications for current user"""
-    # Get actual notifications from database
-    user_notifications = NotificationService.get_recent_notifications(current_user.user_id, limit=50)
+    # Get actual notifications from database (no limit - show all)
+    user_notifications = NotificationService.get_recent_notifications(current_user.user_id, limit=None)
     
     # Also get low stock items (legacy feature)
     low_stock_items = db.session.query(
@@ -75,3 +75,33 @@ def mark_read(notification_id):
         return redirect(notification.link_url)
     else:
         return redirect(url_for('notifications.index'))
+
+@notifications_bp.route('/<int:notification_id>/delete', methods=['POST'])
+@login_required
+def delete_notification(notification_id):
+    """Delete a specific notification"""
+    from flask import flash
+    
+    success = NotificationService.delete_notification(notification_id, current_user.user_id)
+    
+    if success:
+        flash('Notification deleted successfully.', 'success')
+    else:
+        flash('Notification not found or access denied.', 'danger')
+    
+    return redirect(url_for('notifications.index'))
+
+@notifications_bp.route('/clear-all', methods=['POST'])
+@login_required
+def clear_all():
+    """Delete all notifications for the current user"""
+    from flask import flash
+    
+    count = NotificationService.clear_all_notifications(current_user.user_id)
+    
+    if count > 0:
+        flash(f'Successfully cleared {count} notification{"s" if count != 1 else ""}.', 'success')
+    else:
+        flash('No notifications to clear.', 'info')
+    
+    return redirect(url_for('notifications.index'))
