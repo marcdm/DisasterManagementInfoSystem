@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% from 'relief_requests/_status_badge.html' import status_badge %}
-{% from 'relief_requests/_workflow_sidebar.html' import render_workflow_sidebar %}
+{% from 'components/_workflow_progress.html' import render_workflow_progress %}
 
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
@@ -259,27 +259,20 @@
 
         <!-- Workflow Sidebar Column -->
         <div class="col-lg-3">
-            {% set workflow_steps = [
-                {'number': 1, 'title': 'Create Request', 'description': 'Provide basic request details and disaster event information', 'completed': True},
-                {'number': 2, 'title': 'Add Items', 'description': 'Add items with quantities, urgency levels, and justifications', 'completed': request.items|length > 0},
-                {'number': 3, 'title': 'Review & Submit', 'description': 'Review your request and submit to ODPEM for processing', 'completed': request.status_code >= 1},
-                {'number': 4, 'title': 'Eligibility Review', 'description': 'ODPEM reviews eligibility and makes approval decision', 'completed': request.status_code >= 3 and request.status_code != 2},
-                {'number': 5, 'title': 'Fulfillment & Delivery', 'description': 'ODPEM logistics prepares and delivers approved items', 'completed': request.status_code in [6, 7]}
-            ] %}
-            {% if request.status_code in [2, 4, 6, 7, 8] %}
-                {# Terminal states - no active step #}
-                {% set current_step = None %}
-            {% elif request.status_code in [3, 5] %}
-                {# Approved/partial fulfillment - Step 5 active #}
-                {% set current_step = 5 %}
-            {% elif request.status_code == 1 %}
-                {# Awaiting approval - Step 4 active #}
-                {% set current_step = 4 %}
-            {% else %}
-                {# Draft - Step 2 active #}
-                {% set current_step = 2 %}
-            {% endif %}
-            {{ render_workflow_sidebar(current_step, workflow_steps) }}
+            {{ render_workflow_progress([
+                {'title': 'Create Request', 'description': 'Provide basic request details and disaster event information', 'status': 'completed'},
+                {'title': 'Add Items', 'description': 'Add items with quantities, urgency levels, and justifications', 'status': 
+                    'completed' if request.items|length > 0 and request.status_code >= 1 else 
+                    ('active' if request.status_code == 0 else 'completed' if request.items|length > 0 else 'pending')},
+                {'title': 'Review & Submit', 'description': 'Review your request and submit to ODPEM for processing', 'status': 
+                    'completed' if request.status_code >= 1 else 'pending'},
+                {'title': 'Eligibility Review', 'description': 'ODPEM reviews eligibility and makes approval decision', 'status': 
+                    'completed' if request.status_code >= 3 and request.status_code != 2 else 
+                    ('active' if request.status_code == 1 else 'pending')},
+                {'title': 'Fulfillment & Delivery', 'description': 'ODPEM logistics prepares and delivers approved items', 'status': 
+                    'completed' if request.status_code in [6, 7] else 
+                    ('active' if request.status_code in [3, 5] else 'pending')}
+            ]) }}
         </div>
     </div>
 </div>

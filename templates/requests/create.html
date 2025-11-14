@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% from 'relief_requests/_workflow_sidebar.html' import render_workflow_sidebar %}
+{% from 'components/_workflow_progress.html' import render_workflow_progress %}
 
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
@@ -104,14 +104,13 @@
 
         <!-- Workflow Sidebar Column -->
         <div class="col-lg-3">
-            {% set workflow_steps = [
-                {'number': 1, 'title': 'Create Request', 'description': 'Provide basic request details and disaster event information', 'completed': False},
-                {'number': 2, 'title': 'Add Items', 'description': 'Add items with quantities, urgency levels, and justifications', 'completed': False},
-                {'number': 3, 'title': 'Review & Submit', 'description': 'Review your request and submit to ODPEM for processing', 'completed': False},
-                {'number': 4, 'title': 'Eligibility Review', 'description': 'ODPEM reviews eligibility and makes approval decision', 'completed': False},
-                {'number': 5, 'title': 'Fulfillment & Delivery', 'description': 'ODPEM logistics prepares and delivers approved items', 'completed': False}
-            ] %}
-            {{ render_workflow_sidebar(1, workflow_steps) }}
+            {{ render_workflow_progress([
+                {'title': 'Create Request', 'description': 'Provide basic request details and disaster event information', 'status': 'active'},
+                {'title': 'Add Items', 'description': 'Add items with quantities, urgency levels, and justifications', 'status': 'pending'},
+                {'title': 'Review & Submit', 'description': 'Review your request and submit to ODPEM for processing', 'status': 'pending'},
+                {'title': 'Eligibility Review', 'description': 'ODPEM reviews eligibility and makes approval decision', 'status': 'pending'},
+                {'title': 'Fulfillment & Delivery', 'description': 'ODPEM logistics prepares and delivers approved items', 'status': 'pending'}
+            ]) }}
         </div>
     </div>
 </div>

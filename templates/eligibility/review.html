@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% from 'relief_requests/_status_badge.html' import status_badge %}
-{% from 'relief_requests/_workflow_sidebar.html' import render_workflow_sidebar %}
+{% from 'components/_workflow_progress.html' import render_workflow_progress %}
 
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
@@ -240,13 +240,12 @@
 
         <!-- Workflow Sidebar -->
         <div class="col-lg-3">
-            {% set workflow_steps = [
-                {'number': 1, 'title': 'Agency Submits', 'description': 'Request received', 'completed': True},
-                {'number': 2, 'title': 'ODPEM Review', 'description': 'Eligibility evaluation', 'completed': decision_made},
-                {'number': 3, 'title': 'Decision Made', 'description': 'Approve or deny', 'completed': decision_made},
-                {'number': 4, 'title': 'Next Steps', 'description': 'Package fulfillment', 'completed': False}
-            ] %}
-            {{ render_workflow_sidebar(2 if not decision_made else 3, workflow_steps, completed=decision_made) }}
+            {{ render_workflow_progress([
+                {'title': 'Agency Submits', 'description': 'Request received', 'status': 'completed'},
+                {'title': 'ODPEM Review', 'description': 'Eligibility evaluation', 'status': 'completed' if decision_made else 'active'},
+                {'title': 'Decision Made', 'description': 'Approve or deny', 'status': 'completed' if decision_made else 'pending'},
+                {'title': 'Next Steps', 'description': 'Package fulfillment', 'status': 'pending'}
+            ]) }}
             
             <!-- Details Section -->
             <div class="card mt-3">
