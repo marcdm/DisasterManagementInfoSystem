@@ -32,6 +32,7 @@ Preferred communication style: Simple, everyday language.
 - **Responsive Design**: Fixed header, collapsible sidebar, dynamic content margins, and touch-friendly interactions.
 - **Branding**: Utilizes GOJ branding with primary green (`#009639`) and gold accent (`#FDB913`), including official logos on login, navigation, and footer with accessibility features.
 - **User Experience**: Icon-based empty states and professional eligibility review interfaces.
+- **Unified Workflow Sidebar**: All workflow progress sidebars across the application use a single reusable component (`templates/components/_workflow_progress.html`) with consistent "Workflow Progress" header, blue title bar, green vertical timeline, and color-coded step indicators (green checkmarks for completed, blue circle for active, green outline for pending). Shared styling in `static/css/workflow-sidebar.css` loaded globally.
 - **Needs Lists Design Pattern**: Unified modern UI across Relief Requests and Eligibility workflows:
   - **Summary Metric Cards**: 3-card dashboard showing key metrics (total, high priority, items)
   - **Filter Tabs**: Functional tabs with live count badges for filtering by priority
@@ -45,8 +46,8 @@ Preferred communication style: Simple, everyday language.
   - **Status Badges**: Color-coded badges for status and priority levels
   - **Standardized Tables**: `relief-requests-table` class with consistent styling, row hover states
   - **Action Buttons**: `btn-relief-primary` and `btn-relief-secondary` for consistent CTA styling
-  - **Shared Components**: Jinja2 macros (`_status_badge.html`, `_summary_cards.html`, `_workflow_sidebar.html`)
-  - **Shared Stylesheet**: `relief-requests-ui.css` for unified styling across both workflows
+  - **Shared Components**: Jinja2 macros (`_status_badge.html`, `_summary_cards.html`, `_workflow_progress.html`)
+  - **Shared Stylesheets**: `relief-requests-ui.css` for unified styling, `workflow-sidebar.css` for workflow progress components loaded globally in base.html
 - **Agency Relief Request Workflow (5 Steps)**:
   1. **Create Request** - Provide basic request details and disaster event (status=0)
   2. **Add Items** - Add items with quantities, urgency levels, and justifications (status=0)
