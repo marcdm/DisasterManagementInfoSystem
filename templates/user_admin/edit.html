@@ -1,147 +1,428 @@
 {% extends "base.html" %}
-{% block title %}Edit User - DRIMS{% endblock %}
+{% from 'user_admin/_macros.html' import status_badge, mfa_status_badge, password_strength_indicator %}
+
+{% block title %}Edit User - {{ user.full_name or user.email }}{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user-management-ui.css') }}">
+{% endblock %}
 
 {% block content %}
-<h2><i class="bi bi-pencil"></i> Edit User: {{ user.email }}</h2>
-<a href="{{ url_for('user_admin.view', user_id=user.user_id) }}" class="btn btn-secondary mb-3">
-    <i class="bi bi-arrow-left"></i> Back to User Details
-</a>
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      </div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
-
-<form method="POST" class="needs-validation" novalidate>
-    <div class="card mb-3">
-        <div class="card-header">
-            <h5 class="mb-0">Account Information</h5>
+<div class="user-management-container">
+    <!-- Page Header -->
+    <div class="page-header-modern">
+        <div class="page-title-group">
+            <h1>
+                <i class="bi bi-pencil"></i>
+                Edit User
+            </h1>
+            <p class="subtitle">{{ user.email }}</p>
         </div>
-        <div class="card-body">
-            <div class="mb-3">
-                <label class="form-label"><strong>Email:</strong></label>
-                <p class="form-control-plaintext">{{ user.email }}</p>
-                <small class="text-muted">Email cannot be changed</small>
-            </div>
-            
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="first_name" class="form-label">First Name</label>
-                    <input type="text" name="first_name" id="first_name" class="form-control" value="{{ user.first_name or '' }}">
-                </div>
-                <div class="col-md-6">
-                    <label for="last_name" class="form-label">Last Name</label>
-                    <input type="text" name="last_name" id="last_name" class="form-control" value="{{ user.last_name or '' }}">
-                </div>
-            </div>
-            
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="organization" class="form-label">Organization</label>
-                    <select name="organization" id="organization" class="form-select">
-                        <option value="">-- Select Organization --</option>
-                        <optgroup label="Agencies">
-                            {% for agency in agencies %}
-                            <option value="AGENCY:{{ agency.agency_id }}" 
-                                    {% if current_org_value == 'AGENCY:' ~ agency.agency_id %}selected{% endif %}>
-                                {{ agency.agency_name }}
-                            </option>
-                            {% endfor %}
-                        </optgroup>
-                        <optgroup label="Custodians">
-                            {% for custodian in custodians %}
-                            <option value="CUSTODIAN:{{ custodian.custodian_id }}"
-                                    {% if current_org_value == 'CUSTODIAN:' ~ custodian.custodian_id %}selected{% endif %}>
-                                {{ custodian.custodian_name }}
-                            </option>
-                            {% endfor %}
-                        </optgroup>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label for="job_title" class="form-label">Job Title</label>
-                    <input type="text" name="job_title" id="job_title" class="form-control" value="{{ user.job_title or '' }}">
-                </div>
-            </div>
-            
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="phone" class="form-label">Phone</label>
-                    <input type="text" name="phone" id="phone" class="form-control" value="{{ user.phone or '' }}">
-                </div>
-                <div class="col-md-6">
-                    <label for="password" class="form-label">New Password (optional)</label>
-                    <input type="password" name="password" id="password" class="form-control" minlength="8">
-                    <small class="text-muted">Leave blank to keep current password</small>
-                </div>
-            </div>
-            
-            <div class="form-check">
-                <input type="checkbox" name="is_active" id="is_active" class="form-check-input" {% if user.is_active %}checked{% endif %}>
-                <label for="is_active" class="form-check-label">Active</label>
-            </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('user_admin.view', user_id=user.user_id) }}" class="btn-user-action">
+                <i class="bi bi-arrow-left"></i> Back to Profile
+            </a>
         </div>
     </div>
-    
-    <div class="card mb-3">
-        <div class="card-header">
-            <h5 class="mb-0">Role Assignment</h5>
-        </div>
-        <div class="card-body">
-            <p class="text-muted">Select one or more roles for this user:</p>
-            <div class="row">
-                {% for role in roles %}
-                <div class="col-md-6 mb-2">
-                    <div class="form-check">
-                        <input type="checkbox" name="roles" value="{{ role.id }}" id="role_{{ role.id }}" 
-                               class="form-check-input" {% if role.id in user_role_ids %}checked{% endif %}>
-                        <label for="role_{{ role.id }}" class="form-check-label">
-                            <strong>{{ role.name }}</strong>
-                            {% if role.description %}
-                            <br><small class="text-muted">{{ role.description }}</small>
-                            {% endif %}
-                        </label>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" class="needs-validation" novalidate id="editUserForm">
+        <div class="row g-4">
+            <!-- Main Form Column -->
+            <div class="col-lg-8">
+                <!-- Account Information -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <h3 class="info-card-title">
+                            <i class="bi bi-person-badge"></i> Account Information
+                        </h3>
+                        {{ status_badge('active' if user.is_active else ('locked' if user.is_locked else 'inactive')) }}
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Email Address</label>
+                            <div class="alert alert-light mb-0">
+                                <i class="bi bi-envelope-fill"></i> {{ user.email }}
+                                <small class="d-block text-muted mt-1">
+                                    <i class="bi bi-lock-fill"></i> Email cannot be changed for security reasons
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" 
+                                   name="first_name" 
+                                   id="first_name" 
+                                   class="form-control" 
+                                   value="{{ user.first_name or '' }}"
+                                   placeholder="First name">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" 
+                                   name="last_name" 
+                                   id="last_name" 
+                                   class="form-control" 
+                                   value="{{ user.last_name or '' }}"
+                                   placeholder="Last name">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="job_title" class="form-label">Job Title</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-briefcase"></i></span>
+                                <input type="text" 
+                                       name="job_title" 
+                                       id="job_title" 
+                                       class="form-control" 
+                                       value="{{ user.job_title or '' }}"
+                                       placeholder="e.g., Logistics Coordinator">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                <input type="tel" 
+                                       name="phone" 
+                                       id="phone" 
+                                       class="form-control" 
+                                       value="{{ user.phone or '' }}"
+                                       placeholder="e.g., +1-876-555-0123">
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="organization" class="form-label">Organization</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-building"></i></span>
+                                <select name="organization" id="organization" class="form-select">
+                                    <option value="">-- Select Organization --</option>
+                                    <optgroup label="Agencies">
+                                        {% for agency in agencies %}
+                                        <option value="AGENCY:{{ agency.agency_id }}" 
+                                                {% if current_org_value == 'AGENCY:' ~ agency.agency_id %}selected{% endif %}>
+                                            {{ agency.agency_name }}
+                                        </option>
+                                        {% endfor %}
+                                    </optgroup>
+                                    <optgroup label="Custodians">
+                                        {% for custodian in custodians %}
+                                        <option value="CUSTODIAN:{{ custodian.custodian_id }}"
+                                                {% if current_org_value == 'CUSTODIAN:' ~ custodian.custodian_id %}selected{% endif %}>
+                                            {{ custodian.custodian_name }}
+                                        </option>
+                                        {% endfor %}
+                                    </optgroup>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    
-    <div class="card mb-3">
-        <div class="card-header">
-            <h5 class="mb-0">Warehouse Access</h5>
-        </div>
-        <div class="card-body">
-            <p class="text-muted">Select warehouses this user can access (leave empty for all):</p>
-            <div class="row">
-                {% for warehouse in warehouses %}
-                <div class="col-md-6 mb-2">
-                    <div class="form-check">
-                        <input type="checkbox" name="warehouses" value="{{ warehouse.warehouse_id }}" 
-                               id="warehouse_{{ warehouse.warehouse_id }}" class="form-check-input"
-                               {% if warehouse.warehouse_id in user_warehouse_ids %}checked{% endif %}>
-                        <label for="warehouse_{{ warehouse.warehouse_id }}" class="form-check-label">
-                            {{ warehouse.warehouse_name }}
-                        </label>
+
+                <!-- Password Reset -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <h3 class="info-card-title">
+                            <i class="bi bi-key"></i> Password Management
+                        </h3>
+                        <span class="badge bg-warning">Optional</span>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Password Change</strong>
+                        <p class="mb-0 small">Only fill this field if you want to reset the user's password</p>
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="password" class="form-label">New Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-key"></i></span>
+                                <input type="password" 
+                                       name="password" 
+                                       id="password" 
+                                       class="form-control" 
+                                       minlength="8"
+                                       placeholder="Leave blank to keep current password"
+                                       aria-describedby="passwordHelp">
+                                <button class="btn btn-outline-secondary" 
+                                        type="button" 
+                                        id="togglePassword"
+                                        aria-label="Toggle password visibility">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <small id="passwordHelp" class="form-text text-muted">
+                                <i class="bi bi-info-circle"></i> Leave blank to keep existing password
+                            </small>
+                            <div id="passwordStrength" class="mt-2" style="display: none;">
+                                {{ password_strength_indicator() }}
+                            </div>
+                        </div>
                     </div>
                 </div>
-                {% endfor %}
+
+                <!-- Role Assignment -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <h3 class="info-card-title">
+                            <i class="bi bi-shield-lock"></i> Role Assignment
+                        </h3>
+                        <span class="badge bg-info" id="roleCount">{{ user_role_ids|length }} selected</span>
+                    </div>
+                    <p class="text-muted mb-3">
+                        <i class="bi bi-info-circle"></i> Modify user permissions by selecting or deselecting roles
+                    </p>
+                    
+                    <div class="role-selection-grid">
+                        {% for role in roles %}
+                        <div class="role-option">
+                            <input type="checkbox" 
+                                   name="roles" 
+                                   value="{{ role.id }}" 
+                                   id="role_{{ role.id }}" 
+                                   class="role-checkbox"
+                                   {% if role.id in user_role_ids %}checked{% endif %}>
+                            <label for="role_{{ role.id }}" class="role-label">
+                                <div class="role-header">
+                                    <i class="bi bi-shield-fill-check"></i>
+                                    <strong>{{ role.name }}</strong>
+                                </div>
+                                {% if role.role_desc %}
+                                <small class="role-description">{{ role.role_desc }}</small>
+                                {% endif %}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Warehouse Access -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <h3 class="info-card-title">
+                            <i class="bi bi-building-check"></i> Warehouse Access
+                        </h3>
+                        <span class="badge bg-secondary" id="warehouseCount">
+                            {% if user_warehouse_ids|length == 0 %}All warehouses{% else %}{{ user_warehouse_ids|length }} selected{% endif %}
+                        </span>
+                    </div>
+                    <p class="text-muted mb-3">
+                        <i class="bi bi-info-circle"></i> Leave empty to grant access to all warehouses
+                    </p>
+                    
+                    <div class="warehouse-selection-grid">
+                        {% for warehouse in warehouses %}
+                        <div class="warehouse-option">
+                            <input type="checkbox" 
+                                   name="warehouses" 
+                                   value="{{ warehouse.warehouse_id }}" 
+                                   id="warehouse_{{ warehouse.warehouse_id }}" 
+                                   class="warehouse-checkbox"
+                                   {% if warehouse.warehouse_id in user_warehouse_ids %}checked{% endif %}>
+                            <label for="warehouse_{{ warehouse.warehouse_id }}" class="warehouse-label">
+                                <i class="bi bi-building"></i>
+                                <span>{{ warehouse.warehouse_name }}</span>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Account Status -->
+                <div class="info-card sticky-top" style="top: 1rem;">
+                    <div class="info-card-header">
+                        <h3 class="info-card-title">
+                            <i class="bi bi-toggle-on"></i> Account Status
+                        </h3>
+                    </div>
+                    
+                    <div class="form-check form-switch mb-3">
+                        <input type="checkbox" 
+                               name="is_active" 
+                               id="is_active" 
+                               class="form-check-input" 
+                               {% if user.is_active %}checked{% endif %}
+                               role="switch"
+                               aria-describedby="activeHelp">
+                        <label for="is_active" class="form-check-label">
+                            <strong>Active Account</strong>
+                        </label>
+                    </div>
+                    <small id="activeHelp" class="form-text text-muted d-block mb-3">
+                        {% if user.is_active %}
+                            Deactivate to prevent user login
+                        {% else %}
+                            Activate to allow user login
+                        {% endif %}
+                    </small>
+
+                    {% if user.is_locked %}
+                    <div class="alert alert-danger">
+                        <i class="bi bi-lock-fill"></i>
+                        <strong>Account Locked</strong>
+                        <p class="mb-0 small">This account is currently locked due to security policy</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="info-card">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn-user-action warning">
+                            <i class="bi bi-save"></i> Save Changes
+                        </button>
+                        <a href="{{ url_for('user_admin.view', user_id=user.user_id) }}" class="btn-user-action">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </div>
+
+                <!-- User Info -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <h3 class="info-card-title">
+                            <i class="bi bi-info-circle"></i> Account Info
+                        </h3>
+                    </div>
+                    <div class="small text-muted">
+                        <div class="mb-2">
+                            <i class="bi bi-calendar-plus"></i>
+                            <strong>Created:</strong><br>
+                            {{ user.create_dtime.strftime('%Y-%m-%d %H:%M') if user.create_dtime else 'Unknown' }}
+                        </div>
+                        <div class="mb-2">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            <strong>Last Login:</strong><br>
+                            {{ user.last_login_dtime.strftime('%Y-%m-%d %H:%M') if user.last_login_dtime else 'Never' }}
+                        </div>
+                        <div>
+                            {{ mfa_status_badge(user.mfa_enabled, user.mfa_secret is not none) }}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('editUserForm');
+    const passwordInput = document.getElementById('password');
+    const togglePasswordBtn = document.getElementById('togglePassword');
+    const roleCheckboxes = document.querySelectorAll('.role-checkbox');
+    const warehouseCheckboxes = document.querySelectorAll('.warehouse-checkbox');
+    const roleCountBadge = document.getElementById('roleCount');
+    const warehouseCountBadge = document.getElementById('warehouseCount');
     
-    <div class="mb-3">
-        <button type="submit" class="btn btn-warning">
-            <i class="bi bi-save"></i> Update User
-        </button>
-        <a href="{{ url_for('user_admin.view', user_id=user.user_id) }}" class="btn btn-secondary">Cancel</a>
-    </div>
-</form>
+    // Toggle password visibility
+    if (togglePasswordBtn) {
+        togglePasswordBtn.addEventListener('click', function() {
+            const type = passwordInput.type === 'password' ? 'text' : 'password';
+            passwordInput.type = type;
+            const icon = this.querySelector('i');
+            icon.classList.toggle('bi-eye');
+            icon.classList.toggle('bi-eye-slash');
+        });
+    }
+    
+    // Password strength indicator
+    if (passwordInput) {
+        passwordInput.addEventListener('input', function() {
+            const strengthDiv = document.getElementById('passwordStrength');
+            if (this.value.length > 0) {
+                strengthDiv.style.display = 'block';
+                const strength = calculatePasswordStrength(this.value);
+                updatePasswordStrength(strength);
+            } else {
+                strengthDiv.style.display = 'none';
+            }
+        });
+    }
+    
+    function calculatePasswordStrength(password) {
+        let strength = 0;
+        if (password.length >= 8) strength++;
+        if (password.length >= 12) strength++;
+        if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+        if (/\d/.test(password)) strength++;
+        if (/[^a-zA-Z0-9]/.test(password)) strength++;
+        return strength;
+    }
+    
+    function updatePasswordStrength(strength) {
+        const bar = document.querySelector('.password-strength-bar');
+        const text = document.querySelector('.password-strength-text');
+        if (!bar || !text) return;
+        
+        bar.className = 'password-strength-bar';
+        if (strength <= 2) {
+            bar.classList.add('weak');
+            text.textContent = 'Weak';
+        } else if (strength <= 3) {
+            bar.classList.add('fair');
+            text.textContent = 'Fair';
+        } else if (strength <= 4) {
+            bar.classList.add('good');
+            text.textContent = 'Good';
+        } else {
+            bar.classList.add('strong');
+            text.textContent = 'Strong';
+        }
+        bar.style.width = (strength * 20) + '%';
+    }
+    
+    // Update role count
+    function updateRoleCount() {
+        const count = document.querySelectorAll('.role-checkbox:checked').length;
+        roleCountBadge.textContent = count + ' selected';
+    }
+    
+    roleCheckboxes.forEach(cb => {
+        cb.addEventListener('change', updateRoleCount);
+    });
+    
+    // Update warehouse count
+    function updateWarehouseCount() {
+        const count = document.querySelectorAll('.warehouse-checkbox:checked').length;
+        warehouseCountBadge.textContent = count === 0 ? 'All warehouses' : count + ' selected';
+    }
+    
+    warehouseCheckboxes.forEach(cb => {
+        cb.addEventListener('change', updateWarehouseCount);
+    });
+    
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script>
 {% endblock %}
