@@ -1,63 +1,125 @@
 {% extends 'base.html' %}
 
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
+{% endblock %}
+
 {% block title %}Create Event{% endblock %}
 
 {% block content %}
-<div class="page-container">
-    <div class="page-header-modern">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h2 class="text-goj-green mb-1">
-                    <i class="bi bi-plus-circle"></i> Create Disaster Event
-                </h2>
-                <p class="text-muted mb-0">Register a new disaster event in the system</p>
-            </div>
-        </div>
+<div class="container-fluid py-4">
+    <!-- Back Button -->
+    <div class="mb-3">
+        <a href="{{ url_for('events.list_events') }}" class="btn-back">
+            <i class="bi bi-arrow-left"></i>
+            Back
+        </a>
     </div>
 
+    <!-- Page Header -->
+    <div class="page-header mb-4">
+        <div class="page-title">
+            <i class="bi bi-plus-circle page-title-icon"></i>
+            <h1 class="page-title-text">Create Disaster Event</h1>
+        </div>
+        <p class="page-subtitle">Register a new disaster event in the system</p>
+    </div>
+
+    <!-- Form Card -->
     <div class="card">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Event Information</h5>
+        </div>
         <div class="card-body">
             <form method="POST" id="eventForm">
+                <!-- Row 1: Event Type and Start Date -->
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <label for="event_type" class="form-label">Event Type *</label>
                         <select class="form-select" id="event_type" name="event_type" required>
                             <option value="">Select type...</option>
                             {% for type in event_types %}
-                            <option value="{{ type }}">{{ type }}</option>
+                            <option value="{{ type }}" {% if form_data and form_data.get('event_type') == type %}selected{% endif %}>
+                                {{ type }}
+                            </option>
                             {% endfor %}
                         </select>
+                        {% if errors and errors.get('event_type') %}
+                        <div class="text-danger small mt-1">{{ errors.get('event_type') }}</div>
+                        {% endif %}
                     </div>
                     <div class="col-md-6">
                         <label for="start_date" class="form-label">Start Date *</label>
-                        <input type="date" class="form-control" id="start_date" name="start_date" max="{{ today }}" required>
+                        <input type="date" 
+                               class="form-control" 
+                               id="start_date" 
+                               name="start_date" 
+                               max="{{ today }}" 
+                               value="{{ form_data.get('start_date') if form_data else '' }}"
+                               required>
+                        <small class="text-muted">Cannot be in the future</small>
+                        {% if errors and errors.get('start_date') %}
+                        <div class="text-danger small mt-1">{{ errors.get('start_date') }}</div>
+                        {% endif %}
                     </div>
                 </div>
 
+                <!-- Row 2: Event Name -->
                 <div class="mb-4">
                     <label for="event_name" class="form-label">Event Name *</label>
-                    <input type="text" class="form-control" id="event_name" name="event_name" maxlength="60" required>
-                    <small class="text-muted">Will be converted to UPPERCASE</small>
+                    <input type="text" 
+                           class="form-control" 
+                           id="event_name" 
+                           name="event_name" 
+                           maxlength="60" 
+                           value="{{ form_data.get('event_name') if form_data else '' }}"
+                           required 
+                           placeholder="e.g., Hurricane Gilbert 1988">
+                    <small class="text-muted">Maximum 60 characters (will be converted to UPPERCASE)</small>
+                    {% if errors and errors.get('event_name') %}
+                    <div class="text-danger small mt-1">{{ errors.get('event_name') }}</div>
+                    {% endif %}
                 </div>
 
+                <!-- Row 3: Event Description -->
                 <div class="mb-4">
                     <label for="event_desc" class="form-label">Event Description *</label>
-                    <textarea class="form-control" id="event_desc" name="event_desc" rows="3" maxlength="255" required></textarea>
+                    <textarea class="form-control" 
+                              id="event_desc" 
+                              name="event_desc" 
+                              rows="3" 
+                              maxlength="255" 
+                              required 
+                              placeholder="Brief description of the event">{{ form_data.get('event_desc') if form_data else '' }}</textarea>
+                    <small class="text-muted">Maximum 255 characters</small>
+                    {% if errors and errors.get('event_desc') %}
+                    <div class="text-danger small mt-1">{{ errors.get('event_desc') }}</div>
+                    {% endif %}
                 </div>
 
+                <!-- Row 4: Impact Description -->
                 <div class="mb-4">
                     <label for="impact_desc" class="form-label">Impact Description *</label>
-                    <textarea class="form-control" id="impact_desc" name="impact_desc" rows="8" required placeholder="Describe the impact of this disaster event..."></textarea>
+                    <textarea class="form-control" 
+                              id="impact_desc" 
+                              name="impact_desc" 
+                              rows="8" 
+                              required 
+                              placeholder="Describe the impact of this disaster event on affected communities, infrastructure, and resources...">{{ form_data.get('impact_desc') if form_data else '' }}</textarea>
                     <small class="text-muted">Provide a detailed description of the disaster's impact</small>
+                    {% if errors and errors.get('impact_desc') %}
+                    <div class="text-danger small mt-1">{{ errors.get('impact_desc') }}</div>
+                    {% endif %}
                 </div>
 
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-goj">
+                <!-- Action Buttons -->
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="{{ url_for('events.list_events') }}" class="btn-relief-secondary">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn-relief-primary">
                         <i class="bi bi-check-circle"></i> Create Event
                     </button>
-                    <a href="{{ url_for('events.list_events') }}" class="btn btn-secondary">
-                        Cancel
-                    </a>
                 </div>
             </form>
         </div>

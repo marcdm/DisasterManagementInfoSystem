@@ -130,28 +130,39 @@ def validate_event_data(form_data, is_update=False):
 @login_required
 @feature_required('event_management')
 def list_events():
-    """List all events with filtering"""
+    """List all events with filtering and summary counts"""
     # Get filter parameters
-    event_type_filter = request.args.get('event_type', '').strip()
-    status_filter = request.args.get('status', '').strip()
+    current_filter = request.args.get('filter', 'all').strip().lower()
     search_query = request.args.get('search', '').strip()
     
-    # Build query
+    # Calculate summary counts
+    total_count = Event.query.count()
+    active_count = Event.query.filter_by(status_code='A').count()
+    closed_count = Event.query.filter_by(status_code='C').count()
+    
+    counts = {
+        'total': total_count,
+        'active': active_count,
+        'closed': closed_count
+    }
+    
+    # Build query based on filter
     query = Event.query
     
-    # Apply filters
-    if event_type_filter:
-        query = query.filter_by(event_type=event_type_filter)
+    if current_filter == 'active':
+        query = query.filter_by(status_code='A')
+    elif current_filter == 'closed':
+        query = query.filter_by(status_code='C')
+    # else 'all' - no filter
     
-    if status_filter:
-        query = query.filter_by(status_code=status_filter)
-    
+    # Apply search if provided
     if search_query:
         search_pattern = f'%{search_query}%'
         query = query.filter(
             or_(
                 Event.event_name.ilike(search_pattern),
-                Event.event_desc.ilike(search_pattern)
+                Event.event_desc.ilike(search_pattern),
+                Event.impact_desc.ilike(search_pattern)
             )
         )
     
@@ -162,8 +173,8 @@ def list_events():
         'events/list.html',
         events=events,
         event_types=EVENT_TYPES,
-        event_type_filter=event_type_filter,
-        status_filter=status_filter,
+        counts=counts,
+        current_filter=current_filter,
         search_query=search_query
     )
 

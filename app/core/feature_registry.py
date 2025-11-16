@@ -259,14 +259,14 @@ class FeatureRegistry:
             'priority': 3
         },
         'event_management': {
-            'name': 'Manage Events',
+            'name': 'Disaster Events',
             'description': 'Manage disaster events and their lifecycle',
             'roles': ['SYSTEM_ADMINISTRATOR', 'CUSTODIAN', 'ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD'],
             'route': 'events.list_events',
             'url': '/events',
             'icon': 'bi-calendar-event',
             'category': 'master_data',
-            'navigation_group': 'master_data',
+            'navigation_group': 'relief_requests',
             'priority': 8
         },
         'agency_management': {

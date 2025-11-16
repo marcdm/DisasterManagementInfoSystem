@@ -1,0 +1,234 @@
+You are working in the existing DRIMS codebase.
+Do NOT modify any database schemas, roles, permissions, or existing Event logic.
+These are already implemented.
+
+Your task is to update and standardize the UI and navigation for the Event Management module so that it is fully aligned with the look, feel, patterns, and workflow templates used in the Relief Request and Relief Package modules.
+
+🎯 Primary Objective
+
+Ensure the entire Event module (view, create, update, list, filter, and detail pages) matches the UI templates, navigation structure, layout patterns, and user experience used in the Relief Request & Package Workflow.
+
+This includes:
+
+Page layout
+
+Form layout
+
+Sidebar navigation
+
+Workflow indicators
+
+Tabs, breadcrumbs, buttons, spacing, styling, typography, and responsive behaviour
+
+UX standards and interaction patterns
+
+WCAG accessibility requirements
+
+Mobile responsiveness for phones & tablets
+
+Visual hierarchy and component use consistency
+
+All redesign must be consistent with the established DRIMS UI system.
+
+🧭 UI & Navigation Requirements
+1. Add Event Module to Sidebar Navigation
+
+Position must match the hierarchy and style of the Relief Request / Package modules.
+
+Use the same sidebar styling, active-state behaviour, icons, and hover effects.
+
+Ensure the active menu highlighting follows the existing pattern.
+
+2. Use the Same Page Templates
+
+All Event module pages must use the same UI layout template used in:
+
+Create Relief Request
+
+Edit Relief Request
+
+Package Creation Workflow
+
+Fulfillment workflow
+
+Summary & Detail screens
+
+Including:
+
+Top heading bar
+
+Left-aligned title
+
+Right-aligned action buttons (if applicable)
+
+Page-wide container width rules
+
+Section headers and spacing
+
+Consistent card layouts
+
+Consistent table formatting
+
+📄 Event Pages to Update
+
+You must update these Event module screens to match the DRIMS templates:
+
+Event List Page
+
+Must use the same table design as Relief Requests:
+
+Table header styling
+
+Row spacing
+
+Hover behaviour
+
+Pagination style
+
+Include filters positioned exactly like the Relief Request filters.
+
+Create Event Page
+
+Must use the same form layout:
+
+Two-column form layout where appropriate
+
+Section grouping with section headers
+
+Consistent button placement (“Save”, “Cancel”)
+
+Apply required field markers and validation messages matching the DRIMS standard.
+
+Update Event Page
+
+Match the Relief Request “Edit” screen templates.
+
+Include:
+
+Audit data placement (created by, updated by)
+
+Version conflict messaging consistent with the DRIMS pattern
+
+Event Detail / View Page
+
+Use the same “details card” layout as the Relief Request detail view.
+
+Display:
+
+Event name
+
+Event type
+
+Status (with same badge style as requests)
+
+Start date / Closed date
+
+Reason for closure (if applicable)
+
+Descriptions (with rich text rendering)
+
+Follow the same spacing, grouping, and fonts.
+
+🧩 Workflow Consistency Requirements
+
+Even though the Event module does not follow a multi-step workflow like Relief Packaging, it MUST visually appear consistent with DRIMS workflow standards:
+
+1. Workflow bar (if applicable)
+
+If Events contain state changes (Active → Closed):
+
+Show a workflow-like indicator styled the same as the fulfillment flow but simplified.
+
+Use the same badge or progress style for statuses.
+
+2. Button Placement
+
+All page action buttons must replicate the Relief Request pattern:
+
+Primary actions on right (blue buttons)
+
+Secondary on left (gray outline)
+
+Confirmation modals with same styles + language
+
+3. Field-Level Validation
+
+Messages must appear:
+
+Under field
+
+In red text (#d9534f or equivalent DRIMS color)
+
+Same font size
+
+Same icon (if used in other modules)
+
+4. Success & Error Notifications
+
+Use the same toast/alert notification component used in the Relief Request workflow.
+
+📱 Mobile & Tablet Responsiveness
+
+Make the Event module responsive using the same breakpoints and layout rules used in:
+
+Relief Request workflow
+
+Fulfillment workflow
+
+Dashboard views
+
+This includes:
+
+Form fields stacking correctly
+
+Tables transforming into mobile-friendly list cards
+
+Buttons repositioning for small screens
+
+Ensuring no horizontal scroll on mobile
+
+🛡 Accessibility Requirements (WCAG / DRIMS Standard)
+
+Apply the same WCAG 2.1 AA compliance rules used in Relief Requests:
+
+High-contrast text
+
+Keyboard navigability
+
+Proper ARIA labels
+
+Error messages announced by screen reader
+
+Focus management on page load and field errors
+
+🔄 Do Not Modify Back-End Logic
+
+The following MUST NOT be changed:
+
+Custodian role
+
+Permissions
+
+Existing Event CRUD logic
+
+Database tables
+
+API endpoints already implemented
+
+Existing creation/update validation logic
+
+This prompt is strictly for UI, UX, navigation, and interaction consistency.
+
+✔️ Deliverables
+
+You must output:
+
+Updated frontend components/pages for all Event module screens
+
+Updated navigation/sidebar integration
+
+Updated styling to align with DRIMS templates
+
+Responsive and WCAG-compliant UI
+
+No backend changes except minimal additions needed for UI rendering (e.g., new routes pointing to existing backend logic)
