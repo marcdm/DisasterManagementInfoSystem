@@ -81,7 +81,15 @@
             const oldLength = oldValue.length;
             
             // Get only digits
-            const digits = this.value.replace(/\D/g, '');
+            let digits = this.value.replace(/\D/g, '');
+            
+            // Remove the country code "1" if it's at the beginning
+            // This prevents the "1" from "+1" being counted as a user digit
+            if (digits.startsWith('1') && digits.length > 1) {
+                digits = digits.substring(1);
+            } else if (digits === '1') {
+                digits = '';
+            }
             
             // Format the number
             const newValue = formatPhoneNumber(digits);
