@@ -1051,6 +1051,10 @@
             });
         });
     </script>
-    {% block scripts %}{% endblock %}
+    
+    <!-- Page-specific scripts -->
+    {% block scripts %}
+    {% block extra_scripts %}{% endblock %}
+    {% endblock %}
 </body>
 </html>
