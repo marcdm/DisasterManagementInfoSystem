@@ -228,7 +228,7 @@ class FeatureRegistry:
         'warehouse_management': {
             'name': 'Manage Warehouses',
             'description': 'Create and manage warehouse locations',
-            'roles': ['SYSTEM_ADMINISTRATOR', 'LOGISTICS_MANAGER'],
+            'roles': ['CUSTODIAN'],  # Restricted to CUSTODIAN only - master data table
             'route': 'warehouses.list_warehouses',
             'url': '/warehouses',
             'icon': 'bi-building',

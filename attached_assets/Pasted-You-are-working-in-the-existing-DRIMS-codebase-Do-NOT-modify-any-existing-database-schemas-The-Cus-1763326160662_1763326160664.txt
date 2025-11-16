@@ -1,0 +1,359 @@
+You are working in the existing DRIMS codebase.
+Do NOT modify any existing database schemas.
+The Custodian role, Event CRUD, and Event permissions are already implemented.
+
+Your task is to implement Warehouse Management using the Custodian role.
+Only users assigned to the Custodian role must be able to create, view, update, and manage warehouse records.
+
+Use the existing warehouse table schema exactly as defined in the database.
+
+0. General System Rules (Same Standards as Event & Relief Modules)
+
+Before implementing Warehouse CRUD, ensure all UI and backend behaviours follow these global DRIMS rules:
+
+0.1 Master Table Dropdowns
+
+Any field that references a master table (e.g., parish_code, custodian_id) must use a dropdown populated from that master table.
+
+If the master table has more than 10 values, implement a searchable dropdown:
+
+No search text → show all values.
+
+With search text → filter results.
+
+0.2 Mandatory Fields
+
+Mandatory fields must be validated on both the UI and backend before saving.
+
+0.3 Database Constraint Enforcement
+
+The application must validate:
+
+NOT NULL constraints
+
+CHECK constraints
+
+Length limits
+
+Allowed value lists
+
+Foreign key references
+
+0.4 Deactivated Master Data
+
+Deactivated master fields must:
+
+Not appear in new transactions.
+
+Remain fully visible in historical records.
+
+0.5 Numeric Validation
+
+All numeric fields must:
+
+Reject non-numeric input.
+
+Respect database constraints.
+
+1. General CRUD for Warehouses (Custodian Role Only)
+
+Implement full CRUD functionality:
+
+Create Warehouse
+
+View Warehouse
+
+Update Warehouse
+
+Delete Warehouse (restricted)
+
+1.1 Mandatory Fields Required Before Save
+
+A warehouse must not be saved unless the following are valid:
+
+warehouse_name
+
+warehouse_type
+
+address1_text
+
+parish_code
+
+contact_name
+
+phone_no
+
+custodian_id
+
+status_code
+
+create_by_id
+
+create_dtime
+
+update_by_id
+
+update_dtime
+
+version_nbr
+
+1.2 Delete Restrictions
+
+Warehouse may be deleted only if it is not referenced in any hub, stock, dispatch, or transaction tables.
+
+If referenced → block deletion and show error:
+
+“This warehouse cannot be deleted because it is referenced by other records.”
+
+2. Warehouse Type & Status Controls
+2.1 Warehouse Type
+
+Allowed values:
+
+MAIN
+
+HUB
+
+SUB-HUB
+
+AGENCY
+
+UI must:
+
+Show a controlled dropdown.
+
+Prevent saving any value outside this fixed list.
+
+2.2 Status Code (Active / Inactive)
+
+Allowed values:
+
+A = Active
+
+I = Inactive
+
+Validation rules:
+
+When status_code = 'A' → reason_desc must be null.
+
+When status_code = 'I' → reason_desc must be required (non-empty).
+
+System must block any violation.
+
+3. Warehouse Identification & Address Rules
+3.1 Warehouse Name
+
+Mandatory.
+
+Must not be blank or whitespace.
+
+Trim leading/trailing spaces before validation.
+
+Must be unique per organization.
+
+If duplicate:
+
+“A warehouse with this name already exists.”
+
+3.2 Address Fields
+
+address1_text is mandatory.
+
+address2_text is optional.
+
+Both fields must:
+
+Not exceed 255 characters.
+
+Reject values longer than 255.
+
+3.3 Parish Code
+
+parish_code is mandatory.
+
+Must reference an existing record in the Parish master table.
+
+UI: dropdown populated from valid parishes.
+
+Backend: reject invalid parish_code submissions (API or UI bypass attempts).
+
+4. Custodian & Master Data References
+4.1 Custodian
+
+custodian_id is mandatory.
+
+Must reference an existing record in the Custodian master table.
+
+UI: dropdown with search.
+
+4.2 Master Data Integrity
+
+Any referenced master values must:
+
+Come from master tables only.
+
+Not allow invalid or deactivated values.
+
+Prevent saving if the referenced master record is invalid.
+
+5. Contact Information & Format Rules
+5.1 Contact Name
+
+Mandatory.
+
+Max 50 characters.
+
+Must be converted to UPPERCASE before saving
+
+OR automatically rejected if not uppercase (follow DRIMS pattern).
+
+Reject values > 50 characters.
+
+5.2 Phone Number
+
+Mandatory.
+
+Max 20 characters.
+
+Must validate:
+
+Not blank.
+
+Contains only allowed characters (0–9, +, -, space).
+
+5.3 Email
+
+Optional.
+
+Max 100 characters.
+
+If provided, must pass strict email format validation.
+
+Reject > 100 characters.
+
+6. Audit Fields & Versioning (Optimistic Locking)
+6.1 Create Audit
+
+On creation:
+
+create_by_id = current user ID.
+
+create_dtime = current timestamp.
+
+These must be locked after creation.
+
+6.2 Update Audit
+
+On update:
+
+update_by_id = current user ID.
+
+update_dtime = current timestamp.
+
+6.3 Versioning
+
+version_nbr = 1 on creation.
+
+Increment by 1 on each successful update.
+
+Implement optimistic locking:
+
+If submitted version_nbr < DB version:
+
+“This warehouse record was updated by another user. Please reload and try again.”
+
+7. Querying & Display Requirements
+7.1 Filters/Search
+
+System must support filtering by:
+
+warehouse_name (full or partial)
+
+warehouse_type
+
+parish_code
+
+status_code
+
+custodian_id
+
+7.2 Warehouse List View
+
+List view must display:
+
+warehouse_name
+
+warehouse_type
+
+parish_code
+
+status_code
+
+contact_name
+
+phone_no
+
+7.3 Detail View
+
+Detail screen must show:
+
+All warehouse fields
+
+Full address information
+
+Status with proper badge styling
+
+Audit fields:
+
+create_by_id
+
+create_dtime
+
+update_by_id
+
+update_dtime
+
+version_nbr
+
+7.4 Status Visual Indicators
+
+Active warehouses → green badge
+
+Inactive warehouses → grey/orange badge
+(or the DRIMS standard)
+
+8. UI/Navigation Alignment (Same Requirement as Event Module)
+
+All Warehouse Management screens must follow the same UI structure, navigation flow, and component template as:
+
+Relief Request module
+
+Relief Package workflow
+
+Event module (recently implemented)
+
+This includes:
+
+Sidebar integration
+
+Page layouts
+
+Form spacing & grouping
+
+Label alignment
+
+Validation message style
+
+Toast notifications
+
+Mobile responsiveness
+
+WCAG accessibility
+
+Button placement (primary right, secondary left)
+
+Table formatting identical to the Relief Request list tables
+
+9. Authorization Rules
+
+All Warehouse CRUD actions must be restricted to the Custodian role only, using the existing permissions and role-permission mappings already implemented for Custodian.
