@@ -22,7 +22,8 @@ DRIMS (Disaster Relief Inventory Management System) is a web-based platform for 
 - ✅ User model enhanced with `is_locked` property and compatibility aliases for template field names
 - ✅ **Event Management Module Complete** (November 16, 2025): Full CRUD operations for disaster events with CUSTODIAN role support, 5 EVENT permissions (CREATE/VIEW/UPDATE/DELETE/CLOSE), comprehensive validation (8 event types, date constraints, status transitions), optimistic locking with `version_nbr` and row-level locking (`with_for_update()`), closed event immutability enforcement, FK deletion checks, audit trail tracking, and WCAG 2.1 AA accessibility compliance
 - ✅ **Event Management UI Standardization** (November 16, 2025): Complete UI redesign matching Relief Request/Package workflow templates - all 4 Event templates (list/create/edit/view) now use `relief-requests-ui.css`, summary metric cards (Total/Active/Closed), filter tabs (All/Active/Closed), integrated search bar, modern table design, card-based form layouts, btn-relief-* button classes throughout, audit sidebar in detail view, empty states with contextual CTAs, and navigation placement under OPERATIONS category for consistency with relief workflows
-- ✅ **Audit Trail Enhancement with user_name Field** (November 16, 2025): System-wide `user_name` field (varchar(20), NOT NULL) for consistent audit trail tracking - replaces email truncation with dedicated user identifier, auto-generated from email during user creation, server-side validation with [:20] truncation enforcement, real-time character counter (0/20) with visual feedback, integrated across all add_audit_fields calls (events, items, warehouses, custom UOMs, etc.), and database migration completed for all 13 existing users
+- ✅ **Audit Trail Enhancement with user_name Field** (November 16, 2025): System-wide `user_name` field (varchar(20), NOT NULL) for consistent audit trail tracking - replaces email truncation with dedicated user identifier, auto-generated from email during user creation, server-side validation with [:20] truncation enforcement, real-time character counter (0/20) with visual feedback, integrated across all add_audit_fields calls (events, items, warehouses, custom UOMs, etc.), database migration completed for all 13 existing users, and audit helpers now enforce fail-fast validation with no email fallback
+- ✅ **Event Table RBAC Restriction** (November 16, 2025): Event management restricted to CUSTODIAN role only via feature registry - removes general CRUD privileges from SYSTEM_ADMINISTRATOR, ODPEM_DG/DDG/DIR_PEOD roles, enforced via @feature_required decorator on all 6 event routes, navigation menu auto-hides for unauthorized roles, and direct URL access blocked by backend security
 
 ## User Preferences
 - **Communication style**: Simple, everyday language.
@@ -86,8 +87,9 @@ All pages maintain a modern, consistent UI with a comprehensive design system:
 - **Dynamic Navigation System**: Role-based dynamic navigation (`templates/components/_dynamic_navigation.html`) adapts to user permissions, showing only accessible features.
 - **Security Decorators**: Backend route protection decorators (`app/core/decorators.py`) for single, any, or all feature access control.
 - **Smart Routing**: Automatic dashboard routing based on user's primary role.
-- **Role Priority**: SYSTEM_ADMINISTRATOR > ODPEM_DG/DDG/DIR_PEOD > LOGISTICS_MANAGER > LOGISTICS_OFFICER > INVENTORY_CLERK > AGENCY_DISTRIBUTOR/SHELTER.
-- **Verified Database Roles**: SYSTEM_ADMINISTRATOR, LOGISTICS_MANAGER, LOGISTICS_OFFICER, ODPEM_DG, ODPEM_DDG, ODPEM_DIR_PEOD, INVENTORY_CLERK, AGENCY_DISTRIBUTOR, AGENCY_SHELTER, AUDITOR.
+- **Role Priority**: SYSTEM_ADMINISTRATOR > ODPEM_DG/DDG/DIR_PEOD > CUSTODIAN > LOGISTICS_MANAGER > LOGISTICS_OFFICER > INVENTORY_CLERK > AGENCY_DISTRIBUTOR/SHELTER.
+- **Verified Database Roles**: SYSTEM_ADMINISTRATOR, LOGISTICS_MANAGER, LOGISTICS_OFFICER, ODPEM_DG, ODPEM_DDG, ODPEM_DIR_PEOD, INVENTORY_CLERK, AGENCY_DISTRIBUTOR, AGENCY_SHELTER, AUDITOR, CUSTODIAN.
+- **Master Data RBAC Restrictions** (November 16, 2025): Event table CRUD operations restricted to CUSTODIAN role only. This prevents unauthorized modifications to disaster event records. Similar restrictions planned for warehouse, itemcatg, unitofmeasure, item, and custodian tables.
 
 ## External Dependencies
 

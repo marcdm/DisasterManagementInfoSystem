@@ -261,7 +261,7 @@ class FeatureRegistry:
         'event_management': {
             'name': 'Disaster Events',
             'description': 'Manage disaster events and their lifecycle',
-            'roles': ['SYSTEM_ADMINISTRATOR', 'CUSTODIAN', 'ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD'],
+            'roles': ['CUSTODIAN'],  # Restricted to CUSTODIAN only - other master tables will follow later
             'route': 'events.list_events',
             'url': '/events',
             'icon': 'bi-calendar-event',
