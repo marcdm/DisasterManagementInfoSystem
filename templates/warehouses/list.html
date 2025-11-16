@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% from 'relief_requests/_status_badge.html' import status_badge %}
 {% from 'relief_requests/_summary_cards.html' import render_summary_cards %}
 
 {% block extra_styles %}
@@ -142,9 +141,13 @@
                             <td>{{ warehouse.phone_no }}</td>
                             <td class="text-center">
                                 {% if warehouse.status_code == 'A' %}
-                                    {{ status_badge('Active', 'success') }}
+                                    <span class="status-badge status-badge-success">
+                                        <i class="bi bi-check-circle"></i> Active
+                                    </span>
                                 {% elif warehouse.status_code == 'I' %}
-                                    {{ status_badge('Inactive', 'warning') }}
+                                    <span class="status-badge status-badge-warning">
+                                        <i class="bi bi-x-circle"></i> Inactive
+                                    </span>
                                 {% endif %}
                             </td>
                             <td class="text-end">
