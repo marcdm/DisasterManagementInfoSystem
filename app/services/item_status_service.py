@@ -94,6 +94,10 @@ def validate_status_transition(
     Returns:
         Tuple of (is_valid, error_message)
     """
+    # Allow no-op transitions (status staying the same)
+    if current_status == new_status:
+        return True, ""
+    
     auto_status, allowed_statuses = compute_allowed_statuses(
         current_status, total_allocated, requested_qty
     )
