@@ -21,7 +21,7 @@ def stock_check():
         return jsonify({'error': 'Missing warehouse_id or item_id'}), 400
     
     inventory = Inventory.query.filter_by(
-        warehouse_id=warehouse_id,
+        inventory_id=warehouse_id,
         item_id=item_id,
         status_code='A'
     ).first()
@@ -53,7 +53,7 @@ def list_inventory():
     ).join(Item).join(Warehouse)
     
     if warehouse_id:
-        query = query.filter(Inventory.warehouse_id == warehouse_id)
+        query = query.filter(Inventory.inventory_id == warehouse_id)
     
     inventory_items = query.filter(Inventory.status_code == 'A').all()
     warehouses = Warehouse.query.filter_by(status_code='A').order_by(Warehouse.warehouse_name).all()

@@ -194,7 +194,7 @@ def list_intakes():
     ).join(
         Inventory, DBIntake.inventory_id == Inventory.inventory_id
     ).join(
-        Warehouse, Inventory.warehouse_id == Warehouse.warehouse_id
+        Warehouse, Inventory.inventory_id == Warehouse.warehouse_id
     ).all()
     
     return render_template('intake/list.html', intakes=intakes)
@@ -209,8 +209,8 @@ def view_intake(reliefpkg_id, inventory_id):
     ).first_or_404()
     
     package = ReliefPkg.query.get(reliefpkg_id)
-    inventory = Inventory.query.get(inventory_id)
-    warehouse = Warehouse.query.get(inventory.warehouse_id)
+    inventory = Inventory.query.get((inventory_id, package.items[0].item_id if package.items else 1))
+    warehouse = Warehouse.query.get(inventory_id)
     
     items = db.session.query(
         DBIntakeItem,

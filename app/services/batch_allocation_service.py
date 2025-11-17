@@ -40,7 +40,7 @@ class BatchAllocationService:
         )
         
         if warehouse_id:
-            query = query.filter(Inventory.warehouse_id == warehouse_id)
+            query = query.filter(Inventory.inventory_id == warehouse_id)
         
         return query.all()
     
@@ -135,7 +135,7 @@ class BatchAllocationService:
                 allocations.append({
                     'batch_id': batch.batch_id,
                     'batch_no': batch.batch_no,
-                    'warehouse_id': batch.inventory.warehouse_id,
+                    'warehouse_id': batch.inventory.inventory_id,
                     'warehouse_name': batch.inventory.warehouse.warehouse_name,
                     'inventory_id': batch.inventory_id,
                     'batch_date': batch.batch_date,
@@ -175,7 +175,7 @@ class BatchAllocationService:
         return {
             'batch_id': batch.batch_id,
             'batch_no': batch.batch_no,
-            'warehouse_id': batch.inventory.warehouse_id,
+            'warehouse_id': batch.inventory.inventory_id,
             'warehouse_name': batch.inventory.warehouse.warehouse_name,
             'inventory_id': batch.inventory_id,
             'item_id': batch.item_id,
@@ -254,7 +254,7 @@ class BatchAllocationService:
         
         warehouse_batches = {}
         for batch in batches:
-            wh_id = batch.inventory.warehouse_id
+            wh_id = batch.inventory.inventory_id
             if wh_id not in warehouse_batches:
                 warehouse_batches[wh_id] = []
             warehouse_batches[wh_id].append(batch)

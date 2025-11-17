@@ -656,7 +656,7 @@ def _process_allocations(relief_request, validate_complete=False):
                     new_allocations.append({
                         'item_id': item_id,
                         'batch_id': batch_id,
-                        'warehouse_id': batch.inventory.warehouse_id,
+                        'warehouse_id': batch.inventory.inventory_id,
                         'allocated_qty': allocated_qty
                     })
         

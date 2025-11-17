@@ -24,7 +24,7 @@ def inventory_summary():
         func.sum(Inventory.defective_qty).label('defective'),
         func.sum(Inventory.expired_qty).label('expired')
     ).join(
-        Inventory, Warehouse.warehouse_id == Inventory.warehouse_id
+        Inventory, Warehouse.warehouse_id == Inventory.inventory_id
     ).join(
         Item, Inventory.item_id == Item.item_id
     ).group_by(
@@ -44,7 +44,7 @@ def export_inventory():
         func.sum(Inventory.defective_qty).label('defective'),
         func.sum(Inventory.expired_qty).label('expired')
     ).join(
-        Inventory, Warehouse.warehouse_id == Inventory.warehouse_id
+        Inventory, Warehouse.warehouse_id == Inventory.inventory_id
     ).join(
         Item, Inventory.item_id == Item.item_id
     ).group_by(

@@ -35,9 +35,9 @@ def get_current_reservations(reliefrqst_id: int) -> Dict[Tuple[int, int], Decima
     reservations = {}
     for pkg_item in pkg_items:
         if pkg_item.item_qty and pkg_item.item_qty > 0:
-            # Get warehouse_id from the inventory relationship
+            # Get warehouse_id from the inventory relationship (inventory_id IS the warehouse_id)
             if pkg_item.from_inventory:
-                key = (pkg_item.item_id, pkg_item.from_inventory.warehouse_id)
+                key = (pkg_item.item_id, pkg_item.from_inventory.inventory_id)
                 reservations[key] = pkg_item.item_qty
     
     return reservations
