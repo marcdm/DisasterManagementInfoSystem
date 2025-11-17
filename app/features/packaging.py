@@ -704,8 +704,15 @@ def _process_allocations(relief_request, validate_complete=False):
             # Clear reason for other statuses
             item.status_reason_desc = None
         
-        item.action_by_id = current_user.user_name
-        item.action_dtime = datetime.now()
+        # Only set action_by_id when status is NOT 'R' (per constraint c_reliefrqst_item_7)
+        if requested_status != 'R':
+            item.action_by_id = current_user.user_name
+            item.action_dtime = datetime.now()
+        else:
+            # When status is 'R', action_by_id must be NULL
+            item.action_by_id = None
+            item.action_dtime = None
+        
         item.version_nbr += 1
         
         # Create ReliefPkgItem records for each batch allocation
