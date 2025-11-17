@@ -107,8 +107,13 @@ def create_draft_request(agency_id: int, urgency_ind: str, eligible_event_id: Op
     relief_request.status_code = STATUS_DRAFT
     relief_request.version_nbr = 1
     
-    # Audit fields
-    relief_request.create_by_id = user_email[:20]
+    # Audit fields - get user by email to retrieve user_name
+    user = User.query.filter_by(email=user_email).first()
+    if not user:
+        db.session.rollback()
+        raise ValueError(f"User with email {user_email} not found")
+    
+    relief_request.create_by_id = user.user_name
     relief_request.create_dtime = datetime.now()
     
     db.session.add(relief_request)
@@ -500,8 +505,13 @@ def submit_eligibility_decision(reliefrqst_id: int, decision: str, reason: Optio
     if decision == 'N' and (not reason or not reason.strip()):
         return False, "Reason is required when marking a request as ineligible."
     
-    # Record the decision
-    relief_request.review_by_id = reviewer_email[:20]
+    # Get the reviewer user object
+    reviewer = User.query.filter_by(email=reviewer_email).first()
+    if not reviewer:
+        return False, f"Reviewer with email {reviewer_email} not found."
+    
+    # Record the decision using user_name field
+    relief_request.review_by_id = reviewer.user_name
     relief_request.review_dtime = datetime.now()
     
     if decision == 'N':
@@ -509,15 +519,15 @@ def submit_eligibility_decision(reliefrqst_id: int, decision: str, reason: Optio
         # Constraint c_reliefrqst_5a requires action_by_id when status_code >= 4
         # Constraint c_reliefrqst_5b requires action_dtime when action_by_id is set
         relief_request.status_code = STATUS_INELIGIBLE
-        relief_request.status_reason_desc = reason.strip()
-        relief_request.action_by_id = reviewer_email[:20]
+        relief_request.status_reason_desc = reason.strip() if reason else None
+        relief_request.action_by_id = reviewer.user_name
         relief_request.action_dtime = datetime.now()
         relief_request.version_nbr += 1
         
         db.session.flush()
         
         # Notify the requester (agency)
-        _create_ineligible_notification(relief_request, reason.strip())
+        _create_ineligible_notification(relief_request, reason.strip() if reason else '')
         
         return True, f"Request #{reliefrqst_id} marked as INELIGIBLE. Requester has been notified."
     
@@ -529,7 +539,6 @@ def submit_eligibility_decision(reliefrqst_id: int, decision: str, reason: Optio
         db.session.flush()
         
         # Notify logistics team (LO and LM) that request is eligible and ready for fulfillment
-        reviewer = User.query.get(review_by_id)
         approver_name = f"{reviewer.first_name} {reviewer.last_name}" if reviewer and reviewer.first_name else "ODPEM Director"
         _create_eligible_notification(relief_request, approver_name)
         
