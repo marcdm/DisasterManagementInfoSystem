@@ -1,0 +1,357 @@
+You are a senior full-stack engineer working on an existing Disaster Relief Inventory Management System (DRIMS) hosted in Replit. The app, database schema, and existing “request packaging” workflow are already implemented.
+
+Important constraints:
+
+Do NOT change the existing database schema or table definitions.
+
+Reuse the existing itembatch / inventory / reliefrqst / allocation structures and optimistic locking (version_nbr) logic already in the codebase.
+
+Update the current implementation of the “Select batches” side drawer workflow to match the UPDATED requirements below.
+
+Context
+
+On the Request Packaging (fulfillment) screen, a Logistics Officer/Manager views a relief request with multiple items and can click “Select batches” for a given item. This opens a side drawer that allows allocating inventory from one or more warehouses and batches.
+
+You must replace/adjust the current drawer behavior to match the following rules, while keeping the overall page layout and navigation as close as possible to what exists now.
+
+1. Main Request Packaging Screen (Keep as is)
+
+Keep the main Request Packaging screen structure as currently implemented.
+
+For each item row, there is a “Select batches” action that opens a side drawer to allocate inventory.
+
+After allocation, the row should show:
+
+Requested quantity
+
+Total allocated quantity
+
+A short summary of allocations by warehouse, e.g. WH1: 20 / WH3: 10
+
+If this behavior already exists, preserve it and only adjust logic/behaviour as needed to conform with the new rules below.
+
+2. Opening the Side Drawer
+
+When the user clicks “Select batches” in an item row:
+
+Open a side drawer that focuses only on that one item (one item_id) across all warehouses.
+
+In the drawer header / summary area, display:
+
+Item description
+
+Requested quantity for this item
+
+Total already allocated (if any)
+
+Remaining quantity to be allocated: R = requested_qty − already_allocated
+
+The drawer must always focus on one item at a time, even if that item exists in multiple warehouses.
+
+3. Loading Candidate Batches Across Warehouses
+
+When the drawer opens for an item:
+
+Load candidate itembatch rows for that item (item_id) from all warehouses (inventory_id) that meet all of the following:
+
+status_code = 'A' (“Available”).
+
+usable_qty > 0.00.
+
+uom_code matches the requested item’s required UOM.
+
+For expiring items:
+
+If item.can_expire_flag = TRUE, only include batches where expiry_date >= current_date.
+
+For non-expiring items:
+
+If item.can_expire_flag = FALSE, allow expiry_date to be null and include such batches as eligible.
+
+Use the existing tables and relationships (e.g. item, itembatch, inventory/warehouse) already defined in the schema. Do not add or change columns.
+
+4. Sorting & Forced Pick Order (FEFO/FIFO)
+
+Across all warehouses, sort the candidate batches in a single list using this priority:
+
+Earliest expiry_date first (for non-expiring items with null expiry, treat null as “furthest in the future” so they appear after any dated batches).
+
+For rows with the same expiry_date, sort by earlier batch_date first.
+
+For rows still tied, order by highest usable_qty DESC to ensure deterministic ordering.
+
+UI requirements for the drawer:
+
+Display a table/grid of batches exactly in that sorted order.
+
+Each row should show at least:
+
+Warehouse name (via inventory_id → warehouse)
+
+Batch number (batch_no)
+
+Batch date
+
+Expiry date
+
+Available quantity (see definition below)
+
+UOM
+
+Input field for “Picked quantity”
+
+Available quantity definition:
+
+For each batch in this session, available_to_allocate should be computed as:
+
+available_to_allocate = usable_qty - reserved_qty - already_picked_in_this_session_for_this_batch
+
+(Reuse any existing logic you have for in-session picks vs persisted allocations. Do not change the schema; only adjust calculations.)
+
+Pick order enforcement:
+
+The user must not be allowed to pick from a later batch in the sorted list while an earlier batch (with higher priority) still has available quantity unless they are in the same FEFO priority group (see section 7).
+
+The UI should enforce this by either:
+
+Disabling the input field for later batches when earlier, higher-priority batches still have available quantity and are not in the same priority group, or
+
+Validating on change/submit and returning an error if the rule is broken.
+
+5. Limit the Displayed Batches to Just Enough to Fulfil the Request
+
+Let:
+
+R = remaining quantity to be fulfilled for this item (requested − already allocated).
+
+Ai = available_to_allocate for each candidate batch i after applying the above filters.
+
+Behavior:
+
+Walk the sorted candidate batch list in order, summing Ai.
+
+Find the minimum prefix of batches where cumulative available ≥ R.
+
+Only display that prefix of batches in the drawer.
+
+If the total available across all candidate batches is less than R:
+
+Display all candidate batches.
+
+Clearly show:
+
+Maximum quantity that can be fulfilled (total available)
+
+The shortfall: shortfall = R − total_available
+
+Allow partial fulfilment but indicate that the request cannot be fully fulfilled.
+
+6. Manual Allocation by User (Per Warehouse / Batch)
+
+For each displayed batch row, the user must be able to:
+
+See:
+
+Warehouse name
+
+Batch number
+
+Batch date
+
+Expiry date
+
+Available quantity (as defined above)
+
+UOM
+
+Enter a “Picked quantity” for that batch.
+
+Input rules:
+
+For each batch row, the picked quantity must:
+
+Be >= 0
+
+Be <= available_to_allocate for that batch
+
+For the sum of picked quantities across displayed batches:
+
+The total picked for this item in this drawer session must not exceed R (remaining requested quantity), unless existing business rules explicitly allow overpicking. Assume no overpicking allowed.
+
+Validation behavior:
+
+If the user over-allocates from a single batch, show a row-level validation error and prevent saving.
+
+If the user over-allocates in total (sum picked > R), show a global error (e.g. “Total allocated exceeds remaining requested quantity”) and prevent saving.
+
+7. Pick Order Enforcement + Same-Priority (Tied) Batches
+Overall rule:
+
+The user must follow the sorted FEFO/FIFO order across all warehouses.
+
+They cannot skip an earlier-priority batch and pick only from a later-priority batch while earlier ones still have available quantity.
+
+However, if batches are in the same priority group, the user has freedom:
+
+Same priority group = same:
+
+expiry_date
+
+batch_date
+
+And effectively the same FEFO priority
+
+For batches in the same group (even if they are from different warehouses):
+
+The user may freely split quantities between them.
+
+Example: Two batches with the same batch_no, expiry, and batch_date in WH1 and WH3 can be picked in any proportion (10 from WH1 and 20 from WH3, 0 and 30, etc.)
+
+Implementation suggestion:
+
+When building the sorted list, compute a “priority key” for each row: (expiry_date_group, batch_date_group) and group rows by this.
+
+Enforce strict order between groups, but allow flexibility within the same group.
+
+Validation must fail if:
+
+Any non-zero pick appears in a later priority group while an earlier group still has remaining available_to_allocate.
+
+8. Submitting / Confirming Allocation in the Drawer
+
+Add or update the drawer’s “Complete” / “Confirm” button logic:
+
+When the user clicks Complete for an item:
+
+Validate:
+
+All picked quantities are >= 0.
+
+No picked quantity exceeds that batch’s available_to_allocate.
+
+Total picked for the item is <= R (remaining requested quantity).
+
+Pick order rules are respected (no skipping higher-priority groups).
+
+If validation fails:
+
+Keep the drawer open.
+
+Display clear error messages (row-level and/or global).
+
+If validation passes:
+
+Persist the allocations for this item + batches using existing tables and patterns.
+
+Apply your existing inventory update behavior, e.g. for each batch:
+
+usable_qty = usable_qty - picked_qty
+
+reserved_qty = reserved_qty + picked_qty
+
+Update update_by_id, update_dtime, version_nbr for optimistic locking.
+
+Close the drawer.
+
+Refresh the main Request Packaging screen row for that item to show:
+
+Requested quantity
+
+Total allocated quantity
+
+Summary string of allocations by warehouse (e.g. WH1: 20 / WH3: 15)
+
+9. Reopening the Drawer for the Same Item
+
+If the user reopens the drawer for an item that already has allocations:
+
+Load the previously saved allocations per batch/warehouse for that item.
+
+Pre-fill the picked quantities in the UI accordingly.
+
+Recompute R as: requested_qty − already_allocated (or maintain a consistent definition if you treat existing allocations differently).
+
+Allow the user to adjust allocations, still respecting:
+
+Available_to_allocate (based on current inventory, not stale values)
+
+FEFO/FIFO pick order and priority groups
+
+The same validation rules
+
+On Complete, update allocations and inventory consistently using the existing schema and logic.
+
+If an optimistic locking conflict occurs (stale version_nbr or similar):
+
+Reject the confirm action.
+
+Show a message like:
+“These batches were updated by another process. Please review the refreshed quantities and try again.”
+
+Refresh the drawer with the latest available quantities.
+
+10. Error Handling & Edge Cases
+
+Implement / adjust the following behaviors:
+
+No candidate batches:
+
+If no batches meet the criteria (status_code, usable_qty, expiry rules, etc.), show a clear message:
+
+“No available stock found for this item that satisfies the pick rules.”
+
+Show no batch rows and prevent allocation.
+
+Inconsistent data:
+
+If you detect that reserved_qty > usable_qty or any other inconsistent state, do not allow allocation from that batch.
+
+Either exclude the batch from the candidate list or display a row-level warning and disable picking.
+
+User cancels drawer:
+
+If the user clicks a Cancel/Close button, do not persist any new changes from this session.
+
+Any uncommitted pick changes must be discarded.
+
+11. Frontend Implementation Notes
+
+Keep using the existing UI framework (HTML/JS/templating) already in the project.
+
+Ensure the side drawer is responsive and usable on tablet/mobile (respect basic accessibility and keyboard navigation).
+
+Maintain the current styling / look and feel of DRIMS as much as possible.
+
+Where necessary, refactor the existing JavaScript and backend endpoints to support:
+
+Fetching candidate batches.
+
+Submitting allocation changes.
+
+Handling validation errors (return structured JSON including field-level errors and global messages).
+
+12. Deliverables
+
+Updated backend routes / handlers for:
+
+Opening/loading batches for an item in the drawer.
+
+Validating and saving allocations.
+
+Updated frontend (HTML/JS/template) for:
+
+Rendering the sorted candidate batch list.
+
+Enforcing FEFO/FIFO rules with same-priority groups.
+
+Client-side validations and user-friendly error messages.
+
+Ensure:
+
+No changes to database schema.
+
+Existing core entities and relationships are reused.
+
+The main Request Packaging screen continues to function, now with the updated drawer behavior.
+
+Please scan the existing codebase to find the current implementation of the “Select batches” drawer and refactor it to comply with all the above rules, keeping the overall architecture and schema intact.
