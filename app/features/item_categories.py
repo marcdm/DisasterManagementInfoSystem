@@ -41,30 +41,38 @@ MAX_COMMENTS_LENGTH = 300
 def validate_category_data(form_data, is_update=False, category_id=None):
     """
     Validate item category data against all business rules.
-    Returns (is_valid, errors_dict)
+    Returns (is_valid, errors_dict, normalized_data_dict)
+    
+    The normalized_data dict contains cleaned/normalized values that should be used
+    for persistence (e.g., category_code converted to UPPERCASE).
     """
     errors = {}
     
-    # Get form data
-    category_code = form_data.get('category_code', '').strip()
+    # Get form data and normalize
+    category_code = form_data.get('category_code', '').strip().upper()
     category_desc = form_data.get('category_desc', '').strip()
     comments_text = form_data.get('comments_text', '').strip() if form_data.get('comments_text') else None
     status_code = form_data.get('status_code', '').strip()
+    
+    # Build normalized data dictionary
+    normalized_data = {
+        'category_code': category_code,
+        'category_desc': category_desc,
+        'comments_text': comments_text,
+        'status_code': status_code
+    }
     
     # Category Code validation
     if not category_code:
         errors['category_code'] = 'Category code is required'
     else:
-        # Validate length
+        # Validate length (after uppercase conversion)
         if len(category_code) > MAX_CATEGORY_CODE_LENGTH:
             errors['category_code'] = f'Category code must not exceed {MAX_CATEGORY_CODE_LENGTH} characters'
         
-        # Convert to uppercase for validation
-        category_code_upper = category_code.upper()
-        
-        # Check uniqueness (case-insensitive)
+        # Check uniqueness (category_code is already uppercase)
         query = ItemCategory.query.filter(
-            db.func.upper(ItemCategory.category_code) == category_code_upper
+            db.func.upper(ItemCategory.category_code) == category_code
         )
         if is_update and category_id:
             query = query.filter(ItemCategory.category_id != category_id)
@@ -87,7 +95,7 @@ def validate_category_data(form_data, is_update=False, category_id=None):
     elif status_code not in STATUS_CODES:
         errors['status_code'] = f'Status code must be one of: {", ".join(STATUS_CODES)}'
     
-    return len(errors) == 0, errors
+    return len(errors) == 0, errors, normalized_data
 
 @item_categories_bp.route('/')
 @login_required
@@ -147,27 +155,30 @@ def create_category():
     Create a new item category.
     """
     if request.method == 'POST':
-        # Validate form data
-        is_valid, errors = validate_category_data(request.form)
+        # Validate form data and get normalized values
+        is_valid, errors, normalized_data = validate_category_data(request.form)
+        
+        # Convert None to empty string for template display compatibility
+        display_data = {k: (v if v is not None else '') for k, v in normalized_data.items()}
         
         if not is_valid:
             # Flash each error
             for field, error in errors.items():
                 flash(error, 'danger')
-            # Re-render form with errors
+            # Re-render form with errors using normalized data
             return render_template('item_categories/create.html', 
-                                 form_data=request.form,
+                                 form_data=display_data,
                                  errors=errors)
         
         try:
-            # Create new category
+            # Create new category using normalized data
             category = ItemCategory()
             
-            # Set form data (convert category_code to UPPERCASE)
-            category.category_code = request.form.get('category_code').strip().upper()
-            category.category_desc = request.form.get('category_desc').strip()
-            category.comments_text = request.form.get('comments_text').strip() if request.form.get('comments_text') else None
-            category.status_code = request.form.get('status_code')
+            # Set normalized form data (category_code is already UPPERCASE from validator)
+            category.category_code = normalized_data['category_code']
+            category.category_desc = normalized_data['category_desc']
+            category.comments_text = normalized_data['comments_text']
+            category.status_code = normalized_data['status_code']
             
             # Add audit fields
             add_audit_fields(category, current_user, is_new=True)
@@ -183,13 +194,13 @@ def create_category():
             db.session.rollback()
             flash('Failed to create category. A category with this code may already exist.', 'danger')
             return render_template('item_categories/create.html', 
-                                 form_data=request.form,
+                                 form_data=display_data,
                                  errors={})
         except Exception as e:
             db.session.rollback()
             flash(f'An unexpected error occurred: {str(e)}', 'danger')
             return render_template('item_categories/create.html', 
-                                 form_data=request.form,
+                                 form_data=display_data,
                                  errors={})
     
     # GET request - show empty form
@@ -231,25 +242,28 @@ def edit_category(category_id):
             flash('This category has been modified by another user. Please reload and try again.', 'warning')
             return redirect(url_for('item_categories.edit_category', category_id=category_id))
         
-        # Validate form data
-        is_valid, errors = validate_category_data(request.form, is_update=True, category_id=category_id)
+        # Validate form data and get normalized values
+        is_valid, errors, normalized_data = validate_category_data(request.form, is_update=True, category_id=category_id)
+        
+        # Convert None to empty string for template display compatibility
+        display_data = {k: (v if v is not None else '') for k, v in normalized_data.items()}
         
         if not is_valid:
             # Flash each error
             for field, error in errors.items():
                 flash(error, 'danger')
-            # Re-render form with errors
+            # Re-render form with errors using normalized data
             return render_template('item_categories/edit.html', 
                                  category=category,
-                                 form_data=request.form,
+                                 form_data=display_data,
                                  errors=errors)
         
         try:
-            # Update category fields (convert category_code to UPPERCASE)
-            category.category_code = request.form.get('category_code').strip().upper()
-            category.category_desc = request.form.get('category_desc').strip()
-            category.comments_text = request.form.get('comments_text').strip() if request.form.get('comments_text') else None
-            category.status_code = request.form.get('status_code')
+            # Update category fields using normalized data (category_code is already UPPERCASE from validator)
+            category.category_code = normalized_data['category_code']
+            category.category_desc = normalized_data['category_desc']
+            category.comments_text = normalized_data['comments_text']
+            category.status_code = normalized_data['status_code']
             
             # Update audit fields
             add_audit_fields(category, current_user, is_new=False)
@@ -269,14 +283,14 @@ def edit_category(category_id):
             flash('Failed to update category. A category with this code may already exist.', 'danger')
             return render_template('item_categories/edit.html', 
                                  category=category,
-                                 form_data=request.form,
+                                 form_data=display_data,
                                  errors={})
         except Exception as e:
             db.session.rollback()
             flash(f'An unexpected error occurred: {str(e)}', 'danger')
             return render_template('item_categories/edit.html', 
                                  category=category,
-                                 form_data=request.form,
+                                 form_data=display_data,
                                  errors={})
     
     # GET request - show form with current data
