@@ -5,6 +5,7 @@ from datetime import datetime, date
 from app.db import db
 from app.db.models import (DBIntake, DBIntakeItem, ReliefPkg, Inventory, Item, 
                           Warehouse, UnitOfMeasure, ReliefPkgItem)
+from app.services.batch_creation_service import BatchCreationService
 
 bp = Blueprint('intake', __name__, url_prefix='/intake')
 
@@ -157,6 +158,22 @@ def create_intake():
                     item_inventory.defective_qty += defective
                     item_inventory.expired_qty += expired
                     item_inventory.receive_qty += total_qty
+                    
+                    item = Item.query.get(item_id)
+                    if item and item.is_batched_flag:
+                        batch = BatchCreationService.create_batch_for_intake(
+                            inventory_id=item_inventory.inventory_id,
+                            item_id=item_id,
+                            usable_qty=usable,
+                            defective_qty=defective,
+                            expired_qty=expired,
+                            batch_date=intake_date,
+                            expiry_date=None,
+                            uom_code=pkg_item.uom_code,
+                            user_name=current_user.user_name
+                        )
+                        if batch:
+                            db.session.add(batch)
             
             if first_inventory_id is None:
                 flash('No valid items were processed', 'danger')
