@@ -418,7 +418,11 @@ class ItemBatch(db.Model):
     update_dtime = db.Column(db.DateTime, nullable=False)
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
     
-    inventory = db.relationship('Inventory', backref='batches')
+    # Relationship to Inventory with composite foreign key
+    inventory = db.relationship('Inventory', 
+        foreign_keys=[inventory_id, item_id],
+        primaryjoin='and_(ItemBatch.inventory_id==Inventory.inventory_id, ItemBatch.item_id==Inventory.item_id)',
+        backref='batches')
     item = db.relationship('Item', backref='batches')
     uom = db.relationship('UnitOfMeasure', backref='batches')
     
