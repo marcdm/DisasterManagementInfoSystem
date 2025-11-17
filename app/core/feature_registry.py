@@ -258,13 +258,13 @@ class FeatureRegistry:
             'navigation_group': 'master_data',
             'priority': 3
         },
-        'item_catalog': {
+        'item_management': {
             'name': 'Manage Items',
             'description': 'Manage relief item catalog',
-            'roles': ['SYSTEM_ADMINISTRATOR', 'LOGISTICS_MANAGER'],
+            'roles': ['CUSTODIAN'],  # Restricted to CUSTODIAN only - master data table
             'route': 'items.list_items',
             'url': '/items',
-            'icon': 'bi-tag',
+            'icon': 'bi-box-seam',
             'category': 'master_data',
             'navigation_group': 'master_data',
             'priority': 3

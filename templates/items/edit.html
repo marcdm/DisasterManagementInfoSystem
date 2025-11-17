@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
 {% endblock %}
 
-{% block title %}Create Item{% endblock %}
+{% block title %}Edit Item - {{ item.item_name }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -12,12 +12,12 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div class="page-header mb-0">
             <div class="page-title">
-                <i class="bi bi-box-seam page-title-icon"></i>
-                <h1 class="page-title-text">Create New Item</h1>
+                <i class="bi bi-pencil page-title-icon"></i>
+                <h1 class="page-title-text">Edit Item: {{ item.item_name }}</h1>
             </div>
         </div>
-        <a href="{{ url_for('items.list_items') }}" class="btn-relief-secondary">
-            <i class="bi bi-arrow-left"></i> Back to List
+        <a href="{{ url_for('items.view_item', item_id=item.item_id) }}" class="btn-relief-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Details
         </a>
     </div>
 
@@ -26,7 +26,10 @@
         <div class="col-lg-10 col-xl-8">
             <div class="card">
                 <div class="card-body p-4">
-                    <form method="POST" action="{{ url_for('items.create_item') }}" novalidate>
+                    <form method="POST" action="{{ url_for('items.edit_item', item_id=item.item_id) }}" novalidate>
+                        <!-- Hidden field for optimistic locking -->
+                        <input type="hidden" name="version_nbr" value="{{ item.version_nbr }}">
+                        
                         <!-- Identification Section -->
                         <div class="mb-4">
                             <h5 class="border-bottom pb-2 mb-3">
@@ -42,6 +45,7 @@
                                            id="item_code" 
                                            name="item_code" 
                                            maxlength="16" 
+                                           value="{{ item.item_code }}"
                                            required
                                            style="text-transform: uppercase;">
                                     <small class="form-text text-muted">Max 16 characters, auto-converted to uppercase</small>
@@ -55,6 +59,7 @@
                                            id="sku_code" 
                                            name="sku_code" 
                                            maxlength="30" 
+                                           value="{{ item.sku_code }}"
                                            required
                                            style="text-transform: uppercase;">
                                     <small class="form-text text-muted">Max 30 characters</small>
@@ -64,8 +69,8 @@
                                         Status <span class="text-danger">*</span>
                                     </label>
                                     <select class="form-select" id="status_code" name="status_code" required>
-                                        <option value="A" selected>Active</option>
-                                        <option value="I">Inactive</option>
+                                        <option value="A" {% if item.status_code == 'A' %}selected{% endif %}>Active</option>
+                                        <option value="I" {% if item.status_code == 'I' %}selected{% endif %}>Inactive</option>
                                     </select>
                                 </div>
                             </div>
@@ -86,6 +91,7 @@
                                            id="item_name" 
                                            name="item_name" 
                                            maxlength="60" 
+                                           value="{{ item.item_name }}"
                                            required
                                            style="text-transform: uppercase;">
                                     <small class="form-text text-muted">Max 60 characters, auto-converted to uppercase</small>
@@ -98,7 +104,7 @@
                                               id="item_desc" 
                                               name="item_desc" 
                                               rows="3" 
-                                              required></textarea>
+                                              required>{{ item.item_desc }}</textarea>
                                     <small class="form-text text-muted">Case-insensitive, used for searching</small>
                                 </div>
                                 <div class="col-md-6">
@@ -108,7 +114,7 @@
                                     <select class="form-select" id="category_id" name="category_id" required>
                                         <option value="">-- Select Category --</option>
                                         {% for category in categories %}
-                                        <option value="{{ category.category_id }}">
+                                        <option value="{{ category.category_id }}" {% if item.category_id == category.category_id %}selected{% endif %}>
                                             {{ category.category_code }} - {{ category.category_desc }}
                                         </option>
                                         {% endfor %}
@@ -121,7 +127,7 @@
                                     <select class="form-select" id="default_uom_code" name="default_uom_code" required>
                                         <option value="">-- Select UOM --</option>
                                         {% for uom in uoms %}
-                                        <option value="{{ uom.uom_code }}">
+                                        <option value="{{ uom.uom_code }}" {% if item.default_uom_code == uom.uom_code %}selected{% endif %}>
                                             {{ uom.uom_code }} - {{ uom.uom_desc }}
                                         </option>
                                         {% endfor %}
@@ -145,7 +151,8 @@
                                            id="reorder_qty" 
                                            name="reorder_qty" 
                                            step="0.01" 
-                                           min="0.01" 
+                                           min="0.01"
+                                           value="{{ item.reorder_qty }}"
                                            required>
                                     <small class="form-text text-muted">Must be greater than zero</small>
                                 </div>
@@ -154,9 +161,9 @@
                                         Issuance Order <span class="text-danger">*</span>
                                     </label>
                                     <select class="form-select" id="issuance_order" name="issuance_order" required>
-                                        <option value="FIFO" selected>FIFO (First In, First Out)</option>
-                                        <option value="FEFO">FEFO (First Expired, First Out)</option>
-                                        <option value="LIFO">LIFO (Last In, First Out)</option>
+                                        <option value="FIFO" {% if item.issuance_order == 'FIFO' %}selected{% endif %}>FIFO (First In, First Out)</option>
+                                        <option value="FEFO" {% if item.issuance_order == 'FEFO' %}selected{% endif %}>FEFO (First Expired, First Out)</option>
+                                        <option value="LIFO" {% if item.issuance_order == 'LIFO' %}selected{% endif %}>LIFO (Last In, First Out)</option>
                                     </select>
                                 </div>
                             </div>
@@ -166,8 +173,8 @@
                                         <input class="form-check-input" 
                                                type="checkbox" 
                                                id="is_batched_flag" 
-                                               name="is_batched_flag" 
-                                               checked>
+                                               name="is_batched_flag"
+                                               {% if item.is_batched_flag %}checked{% endif %}>
                                         <label class="form-check-label" for="is_batched_flag">
                                             <strong>Is Batched</strong>
                                             <br><small class="text-muted">Requires batch number for all movements</small>
@@ -179,7 +186,8 @@
                                         <input class="form-check-input" 
                                                type="checkbox" 
                                                id="can_expire_flag" 
-                                               name="can_expire_flag">
+                                               name="can_expire_flag"
+                                               {% if item.can_expire_flag %}checked{% endif %}>
                                         <label class="form-check-label" for="can_expire_flag">
                                             <strong>Can Expire</strong>
                                             <br><small class="text-muted">Requires expiry date tracking</small>
@@ -191,7 +199,8 @@
                                         <input class="form-check-input" 
                                                type="checkbox" 
                                                id="units_size_vary_flag" 
-                                               name="units_size_vary_flag">
+                                               name="units_size_vary_flag"
+                                               {% if item.units_size_vary_flag %}checked{% endif %}>
                                         <label class="form-check-label" for="units_size_vary_flag">
                                             <strong>Variable Size</strong>
                                             <br><small class="text-muted">Units have varying sizes</small>
@@ -214,7 +223,7 @@
                                     <textarea class="form-control" 
                                               id="usage_desc" 
                                               name="usage_desc" 
-                                              rows="3"></textarea>
+                                              rows="3">{{ item.usage_desc or '' }}</textarea>
                                     <small class="form-text text-muted">How this item is typically used</small>
                                 </div>
                                 <div class="col-md-6">
@@ -224,7 +233,7 @@
                                     <textarea class="form-control" 
                                               id="storage_desc" 
                                               name="storage_desc" 
-                                              rows="3"></textarea>
+                                              rows="3">{{ item.storage_desc or '' }}</textarea>
                                     <small class="form-text text-muted">Storage requirements (temperature, stacking, etc.)</small>
                                 </div>
                             </div>
@@ -239,17 +248,17 @@
                                       id="comments_text" 
                                       name="comments_text" 
                                       rows="3" 
-                                      maxlength="300"></textarea>
+                                      maxlength="300">{{ item.comments_text or '' }}</textarea>
                             <small class="form-text text-muted">Max 300 characters</small>
                         </div>
 
                         <!-- Form Actions -->
                         <div class="d-flex gap-2 justify-content-end border-top pt-3">
-                            <a href="{{ url_for('items.list_items') }}" class="btn-relief-secondary">
+                            <a href="{{ url_for('items.view_item', item_id=item.item_id) }}" class="btn-relief-secondary">
                                 <i class="bi bi-x-circle"></i> Cancel
                             </a>
                             <button type="submit" class="btn-relief-primary">
-                                <i class="bi bi-check-circle"></i> Create Item
+                                <i class="bi bi-check-circle"></i> Save Changes
                             </button>
                         </div>
                     </form>
