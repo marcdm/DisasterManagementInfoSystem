@@ -704,14 +704,9 @@
 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
-                    <button type="submit" 
-                            name="action"
-                            value="cancel"
+                    <button type="button" 
                             class="btn btn-secondary btn-sm" 
-                            formaction="{{ url_for('packaging.cancel_preparation', reliefrqst_id=relief_request.reliefrqst_id) }}" 
-                            formmethod="post"
-                            formnovalidate
-                            onclick="return confirm('Cancel package preparation? All unsaved changes and reservations will be released.')">
+                            onclick="cancelPackagePreparation()">
                         <i class="bi bi-x-circle"></i>
                         Cancel
                     </button>
@@ -750,6 +745,18 @@
 
 <!-- JavaScript for Modern Packaging UI -->
 <script>
+// Cancel package preparation
+function cancelPackagePreparation() {
+    if (confirm('Cancel package preparation? All unsaved changes and reservations will be released.')) {
+        // Create a form and submit it to the cancel endpoint
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("packaging.cancel_preparation", reliefrqst_id=relief_request.reliefrqst_id) }}';
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Load inventory levels for all items
     loadAllInventory();
@@ -771,7 +778,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Form validation on submit
     document.getElementById('packagingForm').addEventListener('submit', function(e) {
-        const action = e.submitter.value;
+        // Skip validation for cancel button
+        const submitter = e.submitter;
+        if (!submitter) return; // Browser compatibility
+        
+        const action = submitter.value || submitter.getAttribute('value');
+        
+        // Only validate for submit actions, not cancel or save_draft
         if (action === 'submit_for_approval' || action === 'send_for_dispatch') {
             if (!validateAllAllocations()) {
                 e.preventDefault();
