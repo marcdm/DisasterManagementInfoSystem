@@ -11,7 +11,7 @@ from sqlalchemy.orm import joinedload
 
 from app.db import db
 from app.db.models import (
-    ReliefRqst, ReliefRqstItem, Item, Warehouse, Inventory,
+    ReliefRqst, ReliefRqstItem, Item, Warehouse, Inventory, ItemBatch,
     User, Notification, ReliefRequestFulfillmentLock,
     ReliefPkg, ReliefPkgItem, ReliefRqstItemStatus
 )

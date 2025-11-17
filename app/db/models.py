@@ -377,6 +377,63 @@ class Inventory(db.Model):
     warehouse = db.relationship('Warehouse', backref='inventories')
     item = db.relationship('Item', backref='inventories')
     uom = db.relationship('UnitOfMeasure', backref='inventories')
+    
+    __mapper_args__ = {
+        'version_id_col': version_nbr
+    }
+
+class ItemBatch(db.Model):
+    """Item Batch - Tracks batches of items in inventory for FEFO/FIFO allocation
+    
+    Supports batch-level inventory management with expiry tracking and
+    allocation rules based on item configuration (is_batched_flag, can_expire_flag, issuance_order).
+    """
+    __tablename__ = 'itembatch'
+    __table_args__ = {'extend_existing': True}
+    
+    batch_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    inventory_id = db.Column(db.Integer, db.ForeignKey('inventory.inventory_id'), nullable=False)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.item_id'), nullable=False)
+    batch_no = db.Column(db.String(20), nullable=False)
+    batch_date = db.Column(db.Date, nullable=False)
+    expiry_date = db.Column(db.Date)
+    usable_qty = db.Column(db.Numeric(15, 4), nullable=False, default=0)
+    reserved_qty = db.Column(db.Numeric(15, 4), nullable=False, default=0)
+    defective_qty = db.Column(db.Numeric(15, 4), nullable=False, default=0)
+    expired_qty = db.Column(db.Numeric(15, 4), nullable=False, default=0)
+    uom_code = db.Column(db.String(25), db.ForeignKey('unitofmeasure.uom_code'), nullable=False)
+    size_spec = db.Column(db.String(30))
+    avg_unit_value = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    last_verified_by = db.Column(db.String(20))
+    last_verified_date = db.Column(db.Date)
+    status_code = db.Column(db.CHAR(1), nullable=False, default='A')
+    comments_text = db.Column(db.Text)
+    create_by_id = db.Column(db.String(20), nullable=False)
+    create_dtime = db.Column(db.DateTime, nullable=False)
+    update_by_id = db.Column(db.String(20), nullable=False)
+    update_dtime = db.Column(db.DateTime, nullable=False)
+    version_nbr = db.Column(db.Integer, nullable=False, default=1)
+    
+    inventory = db.relationship('Inventory', backref='batches')
+    item = db.relationship('Item', backref='batches')
+    uom = db.relationship('UnitOfMeasure', backref='batches')
+    
+    __mapper_args__ = {
+        'version_id_col': version_nbr
+    }
+    
+    @property
+    def available_qty(self):
+        """Calculate available quantity for allocation (usable - reserved)"""
+        return self.usable_qty - self.reserved_qty
+    
+    @property
+    def is_expired(self):
+        """Check if batch is expired"""
+        if not self.expiry_date:
+            return False
+        from datetime import date
+        return self.expiry_date < date.today()
 
 class Donor(db.Model):
     """Donor"""
@@ -527,18 +584,20 @@ class ReliefPkg(db.Model):
     to_inventory = db.relationship('Inventory', backref='relief_packages')
 
 class ReliefPkgItem(db.Model):
-    """Relief Package Item"""
+    """Relief Package Item - Supports both warehouse and batch-level allocation"""
     __tablename__ = 'reliefpkg_item'
     __table_args__ = (
         db.ForeignKeyConstraint(
             ['fr_inventory_id', 'item_id'],
             ['inventory.inventory_id', 'inventory.item_id']
         ),
+        {'extend_existing': True}
     )
     
     reliefpkg_id = db.Column(db.Integer, db.ForeignKey('reliefpkg.reliefpkg_id'), primary_key=True)
     fr_inventory_id = db.Column(db.Integer, db.ForeignKey('inventory.inventory_id'), primary_key=True)
     item_id = db.Column(db.Integer, db.ForeignKey('item.item_id'), primary_key=True)
+    batch_id = db.Column(db.Integer, db.ForeignKey('itembatch.batch_id'))
     item_qty = db.Column(db.Numeric(12, 2), nullable=False)
     uom_code = db.Column(db.String(25), db.ForeignKey('unitofmeasure.uom_code'), nullable=False)
     reason_text = db.Column(db.String(255))
@@ -551,6 +610,7 @@ class ReliefPkgItem(db.Model):
     package = db.relationship('ReliefPkg', backref='items')
     item = db.relationship('Item', backref='package_items')
     from_inventory = db.relationship('Inventory', foreign_keys=[fr_inventory_id, item_id])
+    batch = db.relationship('ItemBatch', backref='package_items')
 
 class DBIntake(db.Model):
     """Distribution/Donation Intake (AIDMGMT workflow step 3)"""
