@@ -802,35 +802,36 @@ def get_inventory(item_id, warehouse_id):
 @login_required
 def get_item_batches(item_id):
     """
-    API endpoint to get available batches for an item grouped by warehouse.
-    Returns batches sorted by FEFO/FIFO rules based on item configuration.
+    API endpoint to get available batches for an item.
+    Returns limited batch list (minimum needed to fulfill) with priority groups.
+    Supports new drawer workflow requirements.
     """
     try:
-        warehouse_id = request.args.get('warehouse_id', type=int)
+        # Get query parameters
+        remaining_qty = request.args.get('remaining_qty', type=float)
+        required_uom = request.args.get('required_uom', type=str)
         
         # Get item to check if it's batched
         item = Item.query.get(item_id)
         if not item:
             return jsonify({'error': 'Item not found'}), 404
         
-        # Get batches grouped by warehouse
-        if warehouse_id:
-            batches = BatchAllocationService.get_available_batches(item_id, warehouse_id)
-            batches = BatchAllocationService.sort_batches_by_allocation_rule(batches, item)
+        # Use new method to get limited batches if remaining_qty provided
+        if remaining_qty is not None and remaining_qty > 0:
+            limited_batches, total_available, shortfall = BatchAllocationService.get_limited_batches_for_drawer(
+                item_id,
+                Decimal(str(remaining_qty)),
+                required_uom
+            )
             
-            warehouse_batches = {
-                warehouse_id: batches
-            }
-        else:
-            warehouse_batches = BatchAllocationService.get_batches_by_warehouse(item_id)
-        
-        # Format response
-        result = {}
-        for wh_id, batch_list in warehouse_batches.items():
-            result[wh_id] = []
-            for batch in batch_list:
+            # Assign priority groups
+            batch_groups = BatchAllocationService.assign_priority_groups(limited_batches, item)
+            
+            # Format batches with priority groups
+            result = []
+            for batch, priority_group in batch_groups:
                 available_qty = batch.usable_qty - batch.reserved_qty
-                result[wh_id].append({
+                result.append({
                     'batch_id': batch.batch_id,
                     'batch_no': batch.batch_no,
                     'batch_date': batch.batch_date.isoformat() if batch.batch_date else None,
@@ -846,17 +847,57 @@ def get_item_batches(item_id):
                     'uom_code': batch.uom_code,
                     'size_spec': batch.size_spec,
                     'is_expired': batch.is_expired,
-                    'status_code': batch.status_code
+                    'status_code': batch.status_code,
+                    'priority_group': priority_group
                 })
-        
-        return jsonify({
-            'item_id': item_id,
-            'item_name': item.item_name,
-            'is_batched': item.is_batched_flag,
-            'can_expire': item.can_expire_flag,
-            'issuance_order': item.issuance_order,
-            'batches': result
-        })
+            
+            return jsonify({
+                'item_id': item_id,
+                'item_name': item.item_name,
+                'is_batched': item.is_batched_flag,
+                'can_expire': item.can_expire_flag,
+                'issuance_order': item.issuance_order,
+                'batches': result,
+                'total_available': float(total_available),
+                'shortfall': float(shortfall),
+                'can_fulfill': shortfall == 0
+            })
+        else:
+            # Legacy mode: return all batches grouped by warehouse (for backward compatibility)
+            warehouse_batches = BatchAllocationService.get_batches_by_warehouse(item_id)
+            
+            result = {}
+            for wh_id, batch_list in warehouse_batches.items():
+                result[wh_id] = []
+                for batch in batch_list:
+                    available_qty = batch.usable_qty - batch.reserved_qty
+                    result[wh_id].append({
+                        'batch_id': batch.batch_id,
+                        'batch_no': batch.batch_no,
+                        'batch_date': batch.batch_date.isoformat() if batch.batch_date else None,
+                        'expiry_date': batch.expiry_date.isoformat() if batch.expiry_date else None,
+                        'warehouse_id': batch.inventory.inventory_id,
+                        'warehouse_name': batch.inventory.warehouse.warehouse_name,
+                        'inventory_id': batch.inventory_id,
+                        'usable_qty': float(batch.usable_qty),
+                        'reserved_qty': float(batch.reserved_qty),
+                        'available_qty': float(available_qty),
+                        'defective_qty': float(batch.defective_qty),
+                        'expired_qty': float(batch.expired_qty),
+                        'uom_code': batch.uom_code,
+                        'size_spec': batch.size_spec,
+                        'is_expired': batch.is_expired,
+                        'status_code': batch.status_code
+                    })
+            
+            return jsonify({
+                'item_id': item_id,
+                'item_name': item.item_name,
+                'is_batched': item.is_batched_flag,
+                'can_expire': item.can_expire_flag,
+                'issuance_order': item.issuance_order,
+                'batches': result
+            })
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500

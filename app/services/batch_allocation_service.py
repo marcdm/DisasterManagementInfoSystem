@@ -18,13 +18,14 @@ class BatchAllocationService:
     """Service for managing batch-level allocations with FEFO/FIFO rules"""
     
     @staticmethod
-    def get_available_batches(item_id: int, warehouse_id: int = None) -> List[ItemBatch]:
+    def get_available_batches(item_id: int, warehouse_id: int = None, required_uom: str = None) -> List[ItemBatch]:
         """
-        Get available batches for an item, optionally filtered by warehouse.
+        Get available batches for an item, optionally filtered by warehouse and UOM.
         
         Args:
             item_id: Item to get batches for
             warehouse_id: Optional warehouse filter
+            required_uom: Optional UOM filter (matches request UOM)
             
         Returns:
             List of ItemBatch objects with available quantity > 0
@@ -42,19 +43,23 @@ class BatchAllocationService:
         if warehouse_id:
             query = query.filter(Inventory.inventory_id == warehouse_id)
         
+        if required_uom:
+            query = query.filter(ItemBatch.uom_code == required_uom)
+        
         return query.all()
     
     @staticmethod
     def sort_batches_by_allocation_rule(batches: List[ItemBatch], item: Item) -> List[ItemBatch]:
         """
         Sort batches according to FEFO/FIFO rules based on item configuration.
+        Includes deterministic tie-breaker on usable_qty DESC.
         
         Args:
             batches: List of batches to sort
             item: Item object with issuance_order and can_expire_flag
             
         Returns:
-            Sorted list of batches
+            Sorted list of batches with priority group assignments
         """
         today = date.today()
         
@@ -62,25 +67,41 @@ class BatchAllocationService:
         if item.can_expire_flag:
             active_batches = [
                 b for b in batches 
-                if not b.expiry_date or b.expiry_date >= today
+                if b.expiry_date and b.expiry_date >= today
             ]
         else:
             active_batches = batches
         
-        # Sort based on issuance order
+        # Sort based on issuance order with tie-breakers
         if item.issuance_order == 'FEFO' and item.can_expire_flag:
-            # First Expired First Out - sort by earliest expiry date
-            # Batches without expiry dates go last
+            # First Expired First Out - sort by earliest expiry date, then batch date, then qty DESC
             return sorted(
                 active_batches,
-                key=lambda b: (b.expiry_date is None, b.expiry_date if b.expiry_date else date.max, b.batch_date)
+                key=lambda b: (
+                    b.expiry_date is None, 
+                    b.expiry_date if b.expiry_date else date.max, 
+                    b.batch_date if b.batch_date else date.max,
+                    -(b.usable_qty - b.reserved_qty)  # Negative for DESC
+                )
             )
         elif item.issuance_order == 'LIFO':
-            # Last In First Out - sort by latest batch date
-            return sorted(active_batches, key=lambda b: b.batch_date, reverse=True)
+            # Last In First Out - sort by latest batch date, then qty DESC
+            return sorted(
+                active_batches, 
+                key=lambda b: (
+                    -(b.batch_date.toordinal() if b.batch_date else 0),
+                    -(b.usable_qty - b.reserved_qty)
+                )
+            )
         else:  # FIFO (default)
-            # First In First Out - sort by earliest batch date
-            return sorted(active_batches, key=lambda b: b.batch_date)
+            # First In First Out - sort by earliest batch date, then qty DESC
+            return sorted(
+                active_batches, 
+                key=lambda b: (
+                    b.batch_date if b.batch_date else date.min,
+                    -(b.usable_qty - b.reserved_qty)
+                )
+            )
     
     @staticmethod
     def auto_allocate_batches(
@@ -260,3 +281,86 @@ class BatchAllocationService:
             warehouse_batches[wh_id].append(batch)
         
         return warehouse_batches
+    
+    @staticmethod
+    def get_limited_batches_for_drawer(
+        item_id: int,
+        remaining_qty: Decimal,
+        required_uom: str = None
+    ) -> Tuple[List[ItemBatch], Decimal, Decimal]:
+        """
+        Get the minimum prefix of batches needed to fulfill remaining quantity.
+        Only returns enough batches to satisfy the request (or all if insufficient).
+        
+        Args:
+            item_id: Item ID
+            remaining_qty: Remaining quantity to fulfill
+            required_uom: Required unit of measure
+            
+        Returns:
+            Tuple of:
+                - List of batches (limited to minimum needed)
+                - Total available from these batches
+                - Shortfall (0 if can fulfill, positive if not)
+        """
+        # Get item and all available batches
+        item = Item.query.get(item_id)
+        if not item:
+            return [], Decimal('0'), remaining_qty
+        
+        batches = BatchAllocationService.get_available_batches(item_id, required_uom=required_uom)
+        sorted_batches = BatchAllocationService.sort_batches_by_allocation_rule(batches, item)
+        
+        # Calculate minimum prefix needed
+        cumulative_available = Decimal('0')
+        limited_batches = []
+        
+        for batch in sorted_batches:
+            available_qty = batch.usable_qty - batch.reserved_qty
+            limited_batches.append(batch)
+            cumulative_available += available_qty
+            
+            # Stop once we have enough to fulfill the request
+            if cumulative_available >= remaining_qty:
+                break
+        
+        # Calculate shortfall
+        shortfall = max(Decimal('0'), remaining_qty - cumulative_available)
+        
+        return limited_batches, cumulative_available, shortfall
+    
+    @staticmethod
+    def assign_priority_groups(batches: List[ItemBatch], item: Item) -> List[Tuple[ItemBatch, int]]:
+        """
+        Assign priority group IDs to batches based on FEFO/FIFO rules.
+        Batches in the same priority group have the same expiry_date and batch_date.
+        
+        Args:
+            batches: Sorted list of batches
+            item: Item with issuance order configuration
+            
+        Returns:
+            List of (batch, priority_group_id) tuples
+        """
+        if not batches:
+            return []
+        
+        batch_groups = []
+        current_group_id = 0
+        prev_key = None
+        
+        for batch in batches:
+            # Define priority key based on issuance order
+            if item.issuance_order == 'FEFO' and item.can_expire_flag:
+                current_key = (batch.expiry_date, batch.batch_date)
+            else:  # FIFO or LIFO
+                current_key = (batch.batch_date,)
+            
+            # Increment group ID if key changed
+            if prev_key is not None and current_key != prev_key:
+                current_group_id += 1
+            
+            batch_groups.append((batch, current_group_id))
+            prev_key = current_key
+        
+        return batch_groups
