@@ -94,13 +94,13 @@ def create_intake():
                         return redirect(url_for('intake.create_intake'))
                     
                     item_inventory = Inventory.query.filter_by(
-                        warehouse_id=warehouse_id,
+                        inventory_id=warehouse_id,
                         item_id=item_id
                     ).first()
                     
                     if not item_inventory:
                         item_inventory = Inventory(
-                            warehouse_id=warehouse_id,
+                            inventory_id=warehouse_id,
                             item_id=item_id,
                             usable_qty=0,
                             defective_qty=0,

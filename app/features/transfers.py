@@ -34,7 +34,7 @@ def create():
             return redirect(url_for('transfers.create'))
         
         from_inventory = Inventory.query.filter_by(
-            warehouse_id=from_warehouse_id, 
+            inventory_id=from_warehouse_id, 
             item_id=item_id
         ).first()
         
@@ -43,13 +43,13 @@ def create():
             return redirect(url_for('transfers.create'))
         
         to_inventory = Inventory.query.filter_by(
-            warehouse_id=to_warehouse_id, 
+            inventory_id=to_warehouse_id, 
             item_id=item_id
         ).first()
         
         if not to_inventory:
             to_inventory = Inventory(
-                warehouse_id=to_warehouse_id,
+                inventory_id=to_warehouse_id,
                 item_id=item_id,
                 uom_code=from_inventory.uom_code,
                 usable_qty=0,

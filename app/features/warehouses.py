@@ -399,7 +399,7 @@ def delete_warehouse(warehouse_id):
     # Check for FK references
     # Check inventory table
     from app.db.models import Inventory
-    if Inventory.query.filter_by(warehouse_id=warehouse_id).first():
+    if Inventory.query.filter_by(inventory_id=warehouse_id).first():
         flash('This warehouse cannot be deleted because it is referenced in inventory records.', 'danger')
         return redirect(url_for('warehouses.view_warehouse', warehouse_id=warehouse_id))
     

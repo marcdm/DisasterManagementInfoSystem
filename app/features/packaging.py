@@ -815,7 +815,7 @@ def get_item_batches(item_id):
                     'batch_no': batch.batch_no,
                     'batch_date': batch.batch_date.isoformat() if batch.batch_date else None,
                     'expiry_date': batch.expiry_date.isoformat() if batch.expiry_date else None,
-                    'warehouse_id': batch.inventory.warehouse_id,
+                    'warehouse_id': batch.inventory.inventory_id,
                     'warehouse_name': batch.inventory.warehouse.warehouse_name,
                     'inventory_id': batch.inventory_id,
                     'usable_qty': float(batch.usable_qty),
