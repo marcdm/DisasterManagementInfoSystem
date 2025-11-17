@@ -125,6 +125,11 @@ const BatchAllocation = (function() {
             if (currentItemData.requiredUom) {
                 params.append('required_uom', currentItemData.requiredUom);
             }
+            // Include allocated batch IDs so they're always shown for editing
+            const allocatedBatchIds = Object.keys(currentAllocations);
+            if (allocatedBatchIds.length > 0) {
+                params.append('allocated_batch_ids', allocatedBatchIds.join(','));
+            }
             
             const url = `/packaging/api/item/${itemId}/batches?${params.toString()}`;
             console.log('Fetching batches from:', url);

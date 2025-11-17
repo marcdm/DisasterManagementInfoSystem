@@ -294,21 +294,23 @@ class BatchAllocationService:
     def get_limited_batches_for_drawer(
         item_id: int,
         remaining_qty: Decimal,
-        required_uom: str = None
+        required_uom: str = None,
+        allocated_batch_ids: List[int] = None
     ) -> Tuple[List[ItemBatch], Decimal, Decimal]:
         """
         Get batches for the drawer display.
-        Shows ALL available batches sorted by FEFO/FIFO order.
-        This allows users to see and edit all their previous selections.
+        Shows ONE batch per warehouse (top FEFO/FIFO), minimum needed to fulfill.
+        Always includes previously allocated batches for editing.
         
         Args:
             item_id: Item ID
             remaining_qty: Remaining quantity to fulfill
             required_uom: Required unit of measure
+            allocated_batch_ids: List of batch IDs that are already allocated (for editing)
             
         Returns:
             Tuple of:
-                - List of all available batches (sorted by FEFO/FIFO)
+                - List of limited batches (one per warehouse, minimum needed + allocated)
                 - Total available from these batches
                 - Shortfall (0 if can fulfill, positive if not)
         """
@@ -320,16 +322,51 @@ class BatchAllocationService:
         batches = BatchAllocationService.get_available_batches(item_id, required_uom=required_uom)
         sorted_batches = BatchAllocationService.sort_batches_by_allocation_rule(batches, item)
         
-        # Calculate total available from all batches
-        cumulative_available = Decimal('0')
+        allocated_batch_ids = allocated_batch_ids or []
+        
+        # Group by warehouse, keeping only the first (top priority) batch per warehouse
+        seen_warehouses = set()
+        warehouse_top_batches = []
+        allocated_batches = []
+        
         for batch in sorted_batches:
+            warehouse_id = batch.inventory.inventory_id
+            
+            # Always include if this batch is already allocated
+            if batch.batch_id in allocated_batch_ids:
+                allocated_batches.append(batch)
+                seen_warehouses.add(warehouse_id)
+                continue
+            
+            # Add first batch per warehouse
+            if warehouse_id not in seen_warehouses:
+                warehouse_top_batches.append(batch)
+                seen_warehouses.add(warehouse_id)
+        
+        # Accumulate warehouses until we can fulfill the request
+        cumulative_available = Decimal('0')
+        limited_batches = []
+        
+        # First, add all allocated batches (must show for editing)
+        for batch in allocated_batches:
+            limited_batches.append(batch)
             available_qty = batch.usable_qty - batch.reserved_qty
             cumulative_available += available_qty
+        
+        # Then add top batches from warehouses until fulfilled
+        for batch in warehouse_top_batches:
+            available_qty = batch.usable_qty - batch.reserved_qty
+            limited_batches.append(batch)
+            cumulative_available += available_qty
+            
+            # Stop once we have enough to fulfill the request
+            if cumulative_available >= remaining_qty:
+                break
         
         # Calculate shortfall
         shortfall = max(Decimal('0'), remaining_qty - cumulative_available)
         
-        return sorted_batches, cumulative_available, shortfall
+        return limited_batches, cumulative_available, shortfall
     
     @staticmethod
     def assign_priority_groups(batches: List[ItemBatch], item: Item) -> List[Tuple[ItemBatch, int]]:

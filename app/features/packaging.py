@@ -811,6 +811,15 @@ def get_item_batches(item_id):
         # Get query parameters
         remaining_qty = request.args.get('remaining_qty', type=float)
         required_uom = request.args.get('required_uom', type=str)
+        allocated_batch_ids_str = request.args.get('allocated_batch_ids', type=str)
+        
+        # Parse allocated batch IDs from comma-separated string
+        allocated_batch_ids = []
+        if allocated_batch_ids_str:
+            try:
+                allocated_batch_ids = [int(bid) for bid in allocated_batch_ids_str.split(',') if bid.strip()]
+            except ValueError:
+                pass  # Ignore invalid batch IDs
         
         # Get item to check if it's batched
         item = Item.query.get(item_id)
@@ -823,7 +832,8 @@ def get_item_batches(item_id):
             limited_batches, total_available, shortfall = BatchAllocationService.get_limited_batches_for_drawer(
                 item_id,
                 Decimal(str(remaining_qty)),
-                required_uom
+                required_uom,
+                allocated_batch_ids
             )
             
             # Assign priority groups
