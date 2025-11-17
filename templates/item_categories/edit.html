@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block extra_styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css?v=1763346750') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
 {% endblock %}
 
 {% block title %}Edit Item Category{% endblock %}
@@ -40,7 +40,7 @@
                     <div class="col-md-6">
                         <label for="category_code" class="form-label">Category Code *</label>
                         <input type="text" 
-                               class="form-control field-sm" 
+                               class="form-control" 
                                id="category_code" 
                                name="category_code" 
                                maxlength="30"
@@ -56,7 +56,7 @@
                     <div class="col-md-6">
                         <label for="category_desc" class="form-label">Description *</label>
                         <input type="text" 
-                               class="form-control field-md" 
+                               class="form-control" 
                                id="category_desc" 
                                name="category_desc" 
                                maxlength="60"
@@ -74,7 +74,7 @@
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <label for="status_code" class="form-label">Status *</label>
-                        <select class="form-select field-xs" id="status_code" name="status_code" required>
+                        <select class="form-select" id="status_code" name="status_code" required>
                             <option value="">Select status...</option>
                             <option value="A" {% if (form_data and form_data.get('status_code') == 'A') or (not form_data and category.status_code == 'A') %}selected{% endif %}>Active</option>
                             <option value="I" {% if (form_data and form_data.get('status_code') == 'I') or (not form_data and category.status_code == 'I') %}selected{% endif %}>Inactive</option>

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block extra_styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css?v=1763346750') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
 {% endblock %}
 
 {% block extra_scripts %}
@@ -43,7 +43,7 @@
                     <div class="col-md-6">
                         <label for="warehouse_name" class="form-label">Warehouse Name *</label>
                         <input type="text" 
-                               class="form-control field-lg" 
+                               class="form-control" 
                                id="warehouse_name" 
                                name="warehouse_name" 
                                value="{{ warehouse.warehouse_name }}"
@@ -55,7 +55,7 @@
                     </div>
                     <div class="col-md-6">
                         <label for="warehouse_type" class="form-label">Warehouse Type *</label>
-                        <select class="form-select field-md" id="warehouse_type" name="warehouse_type" required>
+                        <select class="form-select" id="warehouse_type" name="warehouse_type" required>
                             {% for type in warehouse_types %}
                             <option value="{{ type }}" {% if warehouse.warehouse_type == type %}selected{% endif %}>{{ type }}</option>
                             {% endfor %}
@@ -73,7 +73,7 @@
                     <div class="col-md-12 mb-3">
                         <label for="address1_text" class="form-label">Address Line 1 *</label>
                         <input type="text" 
-                               class="form-control field-xl" 
+                               class="form-control" 
                                id="address1_text" 
                                name="address1_text" 
                                maxlength="255" 
@@ -86,7 +86,7 @@
                     <div class="col-md-12 mb-3">
                         <label for="address2_text" class="form-label">Address Line 2</label>
                         <input type="text" 
-                               class="form-control field-xl" 
+                               class="form-control" 
                                id="address2_text" 
                                name="address2_text" 
                                maxlength="255"
@@ -100,7 +100,7 @@
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <label for="parish_code" class="form-label">Parish *</label>
-                        <select class="form-select field-md" id="parish_code" name="parish_code" required>
+                        <select class="form-select" id="parish_code" name="parish_code" required>
                             {% for parish in parishes %}
                             <option value="{{ parish.parish_code }}" {% if warehouse.parish_code == parish.parish_code %}selected{% endif %}>
                                 {{ parish.parish_name }}
@@ -113,7 +113,7 @@
                     </div>
                     <div class="col-md-6">
                         <label for="custodian_id" class="form-label">Custodian *</label>
-                        <select class="form-select field-lg" id="custodian_id" name="custodian_id" required>
+                        <select class="form-select" id="custodian_id" name="custodian_id" required>
                             {% for custodian in custodians %}
                             <option value="{{ custodian.custodian_id }}" {% if warehouse.custodian_id == custodian.custodian_id %}selected{% endif %}>
                                 {{ custodian.custodian_name }}
@@ -133,7 +133,7 @@
                     <div class="col-md-6">
                         <label for="contact_name" class="form-label">Contact Name *</label>
                         <input type="text" 
-                               class="form-control field-md" 
+                               class="form-control" 
                                id="contact_name" 
                                name="contact_name" 
                                maxlength="50"
@@ -147,7 +147,7 @@
                     <div class="col-md-6">
                         <label for="phone_no" class="form-label">Phone Number *</label>
                         <input type="tel" 
-                               class="form-control phone-mask field-phone" 
+                               class="form-control phone-mask" 
                                id="phone_no" 
                                name="phone_no" 
                                value="{{ warehouse.phone_no }}"
@@ -163,7 +163,7 @@
                     <div class="col-md-6">
                         <label for="email_text" class="form-label">Email</label>
                         <input type="email" 
-                               class="form-control field-email" 
+                               class="form-control" 
                                id="email_text" 
                                name="email_text" 
                                maxlength="100"
@@ -180,7 +180,7 @@
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <label for="status_code" class="form-label">Status *</label>
-                        <select class="form-select field-xs" id="status_code" name="status_code" required onchange="toggleReasonField()">
+                        <select class="form-select" id="status_code" name="status_code" required onchange="toggleReasonField()">
                             <option value="A" {% if warehouse.status_code == 'A' %}selected{% endif %}>Active</option>
                             <option value="I" {% if warehouse.status_code == 'I' %}selected{% endif %}>Inactive</option>
                         </select>
@@ -191,7 +191,7 @@
                     <div class="col-md-6" id="reason_container" style="display: {% if warehouse.status_code == 'I' %}block{% else %}none{% endif %};">
                         <label for="reason_desc" class="form-label">Reason for Inactivation *</label>
                         <input type="text" 
-                               class="form-control field-xl" 
+                               class="form-control" 
                                id="reason_desc" 
                                name="reason_desc" 
                                maxlength="255"
