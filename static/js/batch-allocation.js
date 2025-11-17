@@ -68,13 +68,15 @@ const BatchAllocation = (function() {
      * @param {number} itemId - Item ID
      * @param {string} itemName - Item name
      * @param {number} requestedQty - Requested quantity
+     * @param {string} requiredUom - Required UOM (optional)
      */
-    function openDrawer(itemId, itemName, requestedQty) {
+    function openDrawer(itemId, itemName, requestedQty, requiredUom) {
         currentItemId = itemId;
         currentItemData = {
             itemId: itemId,
             itemName: itemName,
-            requestedQty: requestedQty
+            requestedQty: requestedQty,
+            requiredUom: requiredUom || null
         };
         
         // Update header
@@ -116,7 +118,22 @@ const BatchAllocation = (function() {
         showLoading();
         
         try {
-            const response = await fetch(`/packaging/api/item/${itemId}/batches`);
+            // Load existing allocations to calculate remaining qty
+            loadExistingAllocations();
+            const alreadyAllocated = getTotalAllocated();
+            const remainingQty = currentItemData.requestedQty - alreadyAllocated;
+            
+            // Build API URL with query parameters
+            const params = new URLSearchParams();
+            if (remainingQty > 0) {
+                params.append('remaining_qty', remainingQty);
+            }
+            if (currentItemData.requiredUom) {
+                params.append('required_uom', currentItemData.requiredUom);
+            }
+            
+            const url = `/packaging/api/item/${itemId}/batches?${params.toString()}`;
+            const response = await fetch(url);
             const data = await response.json();
             
             if (!response.ok) {
@@ -127,24 +144,26 @@ const BatchAllocation = (function() {
             currentItemData.issuanceOrder = data.issuance_order || 'FIFO';
             currentItemData.canExpire = data.can_expire;
             currentItemData.isBatched = data.is_batched;
+            currentItemData.totalAvailable = data.total_available || 0;
+            currentItemData.shortfall = data.shortfall || 0;
+            currentItemData.canFulfill = data.can_fulfill || false;
             
             // Update issuance order display
             elements.issuanceOrder.textContent = data.issuance_order || 'FIFO';
             elements.autoAllocateRule.textContent = data.issuance_order || 'FIFO';
             
-            // Flatten batches from all warehouses
+            // Store batches (now a flat array with priority_group)
             currentBatches = {};
-            const allBatches = [];
+            const allBatches = Array.isArray(data.batches) ? data.batches : [];
             
-            for (const [warehouseId, batches] of Object.entries(data.batches)) {
-                batches.forEach(batch => {
-                    currentBatches[batch.batch_id] = batch;
-                    allBatches.push(batch);
-                });
+            allBatches.forEach(batch => {
+                currentBatches[batch.batch_id] = batch;
+            });
+            
+            // Show shortfall warning if needed
+            if (currentItemData.shortfall > 0) {
+                showShortfallWarning(currentItemData.totalAvailable, currentItemData.shortfall);
             }
-            
-            // Load existing allocations from form
-            loadExistingAllocations();
             
             // Render batches
             renderBatches(allBatches);
@@ -182,6 +201,43 @@ const BatchAllocation = (function() {
     }
     
     /**
+     * Show shortfall warning when batches cannot fully fulfill request
+     * @param {number} totalAvailable - Total available across all batches
+     * @param {number} shortfall - Amount that cannot be fulfilled
+     */
+    function showShortfallWarning(totalAvailable, shortfall) {
+        const container = document.getElementById('batchListContainer');
+        
+        // Remove any existing warning
+        const existingWarning = container.querySelector('.batch-shortfall-warning');
+        if (existingWarning) {
+            existingWarning.remove();
+        }
+        
+        // Create new warning
+        const warning = document.createElement('div');
+        warning.className = 'batch-shortfall-warning';
+        warning.style.cssText = 'background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;';
+        warning.innerHTML = `
+            <div style="display: flex; align-items: start; gap: 12px;">
+                <i class="bi bi-exclamation-triangle-fill" style="color: #ff9800; font-size: 20px;"></i>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; color: #856404; margin-bottom: 4px;">Insufficient Stock</div>
+                    <div style="color: #856404; font-size: 14px;">
+                        Maximum available: <strong>${formatNumber(totalAvailable)}</strong> | 
+                        Shortfall: <strong>${formatNumber(shortfall)}</strong>
+                    </div>
+                    <div style="color: #856404; font-size: 13px; margin-top: 4px;">
+                        Partial fulfillment allowed. The request cannot be fully satisfied with current stock.
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.insertBefore(warning, container.firstChild);
+    }
+    
+    /**
      * Render the batch list
      * @param {Array} batches - Array of batch objects
      */
@@ -210,8 +266,9 @@ const BatchAllocation = (function() {
         const template = elements.batchItemTemplate.content.cloneNode(true);
         const container = template.querySelector('.batch-item');
         
-        // Set batch ID
+        // Set batch ID and priority group
         container.dataset.batchId = batch.batch_id;
+        container.dataset.priorityGroup = batch.priority_group !== undefined ? batch.priority_group : -1;
         
         // Populate batch details
         container.querySelector('.batch-number').textContent = batch.batch_no;
@@ -254,11 +311,11 @@ const BatchAllocation = (function() {
             input.disabled = true;
         }
         
-        // Input change event
+        // Input change event with pick order validation
         input.addEventListener('input', () => {
             const qty = parseFloat(input.value) || 0;
             
-            // Validate
+            // Validate quantity limits
             if (qty > batch.available_qty) {
                 input.value = batch.available_qty;
             }
@@ -277,6 +334,7 @@ const BatchAllocation = (function() {
             }
             
             updateTotals();
+            validatePickOrder();
         });
         
         // "Use Max" button
@@ -352,9 +410,102 @@ const BatchAllocation = (function() {
     }
     
     /**
+     * Validate pick order - ensure batches are picked in priority group order
+     * @returns {Object} Validation result {isValid: boolean, error: string}
+     */
+    function validatePickOrder() {
+        const batchElements = elements.batchList.querySelectorAll('.batch-item');
+        if (batchElements.length === 0) {
+            return {isValid: true, error: ''};
+        }
+        
+        // Group batches by priority
+        const priorityGroups = {};
+        batchElements.forEach(el => {
+            const batchId = parseInt(el.dataset.batchId);
+            const priorityGroup = parseInt(el.dataset.priorityGroup);
+            const batch = currentBatches[batchId];
+            
+            if (!batch) return;
+            
+            if (!priorityGroups[priorityGroup]) {
+                priorityGroups[priorityGroup] = [];
+            }
+            
+            priorityGroups[priorityGroup].push({
+                batchId: batchId,
+                priorityGroup: priorityGroup,
+                availableQty: batch.available_qty,
+                allocatedQty: currentAllocations[batchId] || 0,
+                batchNo: batch.batch_no
+            });
+        });
+        
+        // Check each priority group in order
+        const sortedGroupIds = Object.keys(priorityGroups).map(Number).sort((a, b) => a - b);
+        
+        for (let i = 0; i < sortedGroupIds.length; i++) {
+            const groupId = sortedGroupIds[i];
+            const group = priorityGroups[groupId];
+            
+            // Check if any later group has allocations
+            const laterGroups = sortedGroupIds.slice(i + 1);
+            const hasLaterAllocations = laterGroups.some(laterGroupId => {
+                return priorityGroups[laterGroupId].some(b => b.allocatedQty > 0);
+            });
+            
+            if (hasLaterAllocations) {
+                // Check if current group is fully allocated
+                const groupTotalAvailable = group.reduce((sum, b) => sum + b.availableQty, 0);
+                const groupTotalAllocated = group.reduce((sum, b) => sum + b.allocatedQty, 0);
+                
+                if (groupTotalAllocated < groupTotalAvailable) {
+                    // Clear error styling from all batches
+                    batchElements.forEach(el => el.classList.remove('pick-order-error'));
+                    
+                    // Highlight problematic batches
+                    laterGroups.forEach(laterGroupId => {
+                        priorityGroups[laterGroupId].forEach(b => {
+                            if (b.allocatedQty > 0) {
+                                const el = elements.batchList.querySelector(`[data-batch-id="${b.batchId}"]`);
+                                if (el) el.classList.add('pick-order-error');
+                            }
+                        });
+                    });
+                    
+                    const remaining = groupTotalAvailable - groupTotalAllocated;
+                    return {
+                        isValid: false,
+                        error: `Pick order violation: ${formatNumber(remaining)} units still available in higher-priority batches. You must allocate from earlier batches before picking from later ones.`
+                    };
+                }
+            }
+        }
+        
+        // Clear any error styling
+        batchElements.forEach(el => el.classList.remove('pick-order-error'));
+        return {isValid: true, error: ''};
+    }
+    
+    /**
      * Apply allocations to the main form
      */
     function applyAllocations() {
+        // Validate pick order before applying
+        const validation = validatePickOrder();
+        if (!validation.isValid) {
+            alert(`Cannot apply allocations:\n\n${validation.error}`);
+            return;
+        }
+        
+        // Validate total allocated doesn't exceed requested
+        const totalAllocated = getTotalAllocated();
+        const remaining = currentItemData.requestedQty - totalAllocated;
+        if (totalAllocated > currentItemData.requestedQty) {
+            alert(`Total allocated (${formatNumber(totalAllocated)}) exceeds requested quantity (${formatNumber(currentItemData.requestedQty)})`);
+            return;
+        }
+        
         // Remove existing allocation inputs for this item
         const existingInputs = document.querySelectorAll(`input[name^="batch_allocation_${currentItemId}_"]`);
         existingInputs.forEach(input => input.remove());

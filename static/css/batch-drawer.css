@@ -219,6 +219,22 @@
     opacity: 0.6;
 }
 
+.batch-item.pick-order-error {
+    border-color: var(--color-warning, #f59e0b);
+    background: rgba(245, 158, 11, 0.08);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+    animation: pick-order-pulse 2s ease-in-out infinite;
+}
+
+@keyframes pick-order-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.4);
+    }
+}
+
 .batch-item-header {
     display: flex;
     justify-content: space-between;
