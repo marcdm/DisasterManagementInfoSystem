@@ -190,32 +190,18 @@
         }
         
         .sidebar-section-header {
-            padding: 14px 20px;
-            font-size: 0.75rem;
-            font-weight: 800;
-            color: white;
-            background: linear-gradient(135deg, var(--goj-green) 0%, #007d42 100%);
+            padding: 20px 20px 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #999;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 1px;
             white-space: nowrap;
-            margin: 10px 0 0 0;
-            border-radius: 0;
-            box-shadow: 0 2px 4px rgba(0, 150, 57, 0.1);
-            position: relative;
+            margin-top: 10px;
         }
         
         .sidebar-section-header:first-child {
             margin-top: 0;
-        }
-        
-        .sidebar-section-header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 20px;
-            right: 20px;
-            height: 1px;
-            background: rgba(255, 255, 255, 0.2);
         }
         
         .sidebar.collapsed .sidebar-section-header {
@@ -226,15 +212,12 @@
         .sidebar-nav-item {
             display: flex;
             align-items: center;
-            padding: 13px 20px;
-            color: #2c3e50;
+            padding: 12px 20px;
+            color: #5a5a5a;
             text-decoration: none;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s;
             position: relative;
             font-size: 0.9rem;
-            font-weight: 500;
-            background-color: white;
-            border-left: 3px solid transparent;
         }
         
         .sidebar-nav-item i {
@@ -242,8 +225,7 @@
             width: 24px;
             margin-right: 14px;
             text-align: center;
-            color: #5a6c7d;
-            transition: all 0.25s ease;
+            color: #5a5a5a;
         }
         
         .sidebar-nav-item span {
@@ -260,34 +242,27 @@
         }
         
         .sidebar-nav-item:hover {
-            background: linear-gradient(to right, rgba(0, 150, 57, 0.08) 0%, rgba(0, 150, 57, 0.04) 100%);
+            background-color: #f0f0f0;
             color: var(--goj-green);
-            border-left-color: var(--goj-green);
-            transform: translateX(2px);
         }
         
         .sidebar-nav-item:hover i {
             color: var(--goj-green);
-            transform: scale(1.1);
         }
         
         .sidebar-nav-item.active {
-            background: linear-gradient(to right, rgba(0, 150, 57, 0.12) 0%, rgba(0, 150, 57, 0.06) 100%);
+            background-color: var(--goj-light-green);
             color: var(--goj-green);
-            font-weight: 600;
-            border-left-color: var(--goj-green);
-            box-shadow: inset 3px 0 0 var(--goj-green);
+            font-weight: 500;
         }
         
         .sidebar-nav-item.active i {
             color: var(--goj-green);
-            font-weight: 700;
         }
         
         .sidebar.collapsed .sidebar-nav-item.active {
             border-left: none;
             border-right: 4px solid var(--goj-green);
-            box-shadow: inset -3px 0 0 var(--goj-green);
         }
         
         .nav-section-header {
