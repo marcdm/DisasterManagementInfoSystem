@@ -11,17 +11,54 @@ BEGIN;
 -- STEP 1: ADD MISSING COLUMNS
 -- ============================================================================
 
--- Add item_code column (required, unique, uppercase)
+-- Add item_code column (nullable initially - you must populate it before making NOT NULL)
 ALTER TABLE item 
 ADD COLUMN item_code varchar(16);
 
--- Populate item_code with a unique value based on item_id (temporary)
--- You may need to update this with actual business logic
-UPDATE item 
-SET item_code = 'ITEM-' || LPAD(item_id::text, 10, '0')
-WHERE item_code IS NULL;
+-- NOTE: You MUST populate item_code with your business values before proceeding
+-- The migration will STOP here with an error if item_code is not populated
+-- Example population (customize based on your business logic):
+--   UPDATE item SET item_code = <your_value>;
 
--- Make item_code NOT NULL after populating
+-- Verify all item_code values are populated
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM item WHERE item_code IS NULL) THEN
+        RAISE EXCEPTION 'Migration halted: item_code column has NULL values. Please populate all item_code values with unique uppercase codes (max 16 chars) before proceeding. Example: UPDATE item SET item_code = YOUR_BUSINESS_LOGIC;';
+    END IF;
+END $$;
+
+-- Verify all item_code values are unique
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT item_code 
+        FROM item 
+        WHERE item_code IS NOT NULL
+        GROUP BY item_code 
+        HAVING COUNT(*) > 1
+    ) THEN
+        RAISE EXCEPTION 'Migration halted: Duplicate item_code values found. Each item_code must be unique.';
+    END IF;
+END $$;
+
+-- Verify all item_code values are uppercase
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM item WHERE item_code IS NOT NULL AND item_code != UPPER(item_code)) THEN
+        RAISE EXCEPTION 'Migration halted: Some item_code values are not uppercase. All item_code values must be UPPERCASE.';
+    END IF;
+END $$;
+
+-- Verify item_code length constraint
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM item WHERE LENGTH(item_code) > 16) THEN
+        RAISE EXCEPTION 'Migration halted: Some item_code values exceed 16 characters.';
+    END IF;
+END $$;
+
+-- Make item_code NOT NULL after validation
 ALTER TABLE item 
 ALTER COLUMN item_code SET NOT NULL;
 

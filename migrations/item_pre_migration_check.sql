@@ -65,28 +65,47 @@ FROM item
 GROUP BY status_code
 ORDER BY status_code;
 
--- Check 7: Preview proposed item_code values (auto-generated)
+-- Check 7: Current item data that needs item_code values
 SELECT 
     item_id,
     item_name,
     sku_code,
-    'ITEM-' || LPAD(item_id::text, 10, '0') as proposed_item_code
+    category_id
 FROM item
 ORDER BY item_id
 LIMIT 10;
 
 -- ============================================================================
--- IMPORTANT NOTES FOR ITEM_CODE POPULATION
+-- CRITICAL: ITEM_CODE POPULATION REQUIRED
 -- ============================================================================
--- The migration script will auto-generate item_code as 'ITEM-0000000001', etc.
--- 
--- If you want to use custom item codes instead, run this BEFORE the migration:
--- 
--- UPDATE item SET item_code = '<your_business_logic>' WHERE condition;
--- 
--- Example: Use SKU code as item code if they're the same:
--- UPDATE item SET item_code = sku_code;
--- 
--- Or use a combination:
--- UPDATE item SET item_code = 'ITM-' || sku_code;
+-- You MUST populate the item_code column with your business values BEFORE running
+-- the migration. The migration will fail if item_code values are not provided.
+--
+-- Requirements:
+-- - Max length: 16 characters
+-- - Must be UPPERCASE
+-- - Must be UNIQUE across all items
+-- - Cannot be NULL
+--
+-- Example population strategies:
+--
+-- 1. Use existing SKU code (if it meets requirements):
+--    UPDATE item SET item_code = sku_code;
+--
+-- 2. Create codes from item name abbreviation + ID:
+--    UPDATE item SET item_code = UPPER(SUBSTRING(item_name, 1, 8) || '-' || item_id);
+--
+-- 3. Custom business logic (e.g., category prefix + sequence):
+--    UPDATE item SET item_code = 'CAT' || category_id || '-' || LPAD(item_id::text, 6, '0');
+--
+-- 4. Manual entry for each item (for smaller datasets):
+--    UPDATE item SET item_code = 'BLANKET-001' WHERE item_id = 1;
+--    UPDATE item SET item_code = 'WATER-500ML' WHERE item_id = 2;
+--
+-- After populating, verify with:
+--    SELECT COUNT(*), COUNT(DISTINCT item_code) FROM item;
+--    -- Both counts should match (all unique)
+--
+--    SELECT item_code, COUNT(*) FROM item GROUP BY item_code HAVING COUNT(*) > 1;
+--    -- Should return no rows (no duplicates)
 -- ============================================================================

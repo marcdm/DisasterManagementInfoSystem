@@ -57,22 +57,61 @@ WHERE item_name IN (
 );
 ```
 
-### Step 2: (Optional) Customize Item Codes
+### Step 2: **REQUIRED** - Populate Item Codes
 
-The migration will auto-generate `item_code` values as `ITEM-0000000001`, etc.
+**This step is MANDATORY.** The migration will fail if you skip this.
 
-If you want custom item codes, run SQL to populate them **before** the migration:
+You must populate the `item_code` column with your business values before running the migration.
+
+**Requirements:**
+- Max length: 16 characters
+- Must be UPPERCASE
+- Must be UNIQUE across all items
+- Cannot be NULL
+
+**Example population strategies:**
 
 ```sql
--- Example: Use SKU code as item code
+-- Option 1: Use existing SKU code (if it meets requirements)
 UPDATE item SET item_code = sku_code;
 
--- Example: Add prefix to SKU
-UPDATE item SET item_code = 'ITM-' || sku_code;
-
--- Example: Custom business logic
+-- Option 2: Create codes from item name abbreviation + ID
 UPDATE item 
-SET item_code = UPPER(SUBSTRING(item_name, 1, 3) || '-' || LPAD(item_id::text, 5, '0'));
+SET item_code = UPPER(SUBSTRING(item_name, 1, 8) || '-' || item_id);
+
+-- Option 3: Custom business logic (category prefix + sequence)
+UPDATE item 
+SET item_code = 'CAT' || category_id || '-' || LPAD(item_id::text, 6, '0');
+
+-- Option 4: Manual entry for each item (for smaller datasets)
+UPDATE item SET item_code = 'BLANKET-001' WHERE item_id = 1;
+UPDATE item SET item_code = 'WATER-500ML' WHERE item_id = 2;
+UPDATE item SET item_code = 'MRE-ADULT' WHERE item_id = 3;
+-- ... etc
+```
+
+**Verify your item codes:**
+
+```sql
+-- Check all are populated
+SELECT COUNT(*) as total, COUNT(item_code) as populated 
+FROM item;
+
+-- Check uniqueness (should return no rows)
+SELECT item_code, COUNT(*) 
+FROM item 
+GROUP BY item_code 
+HAVING COUNT(*) > 1;
+
+-- Check uppercase (should return no rows)
+SELECT item_code 
+FROM item 
+WHERE item_code != UPPER(item_code);
+
+-- Check length (should return no rows)
+SELECT item_code, LENGTH(item_code) 
+FROM item 
+WHERE LENGTH(item_code) > 16;
 ```
 
 ### Step 3: Backup Your Database
