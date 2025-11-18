@@ -32,7 +32,7 @@
     align-items: flex-start;
     gap: 0.75rem;
     position: relative;
-    padding-bottom: 1.5rem;
+    padding-bottom: 2rem;
 }
 
 .workflow-step:last-child {
@@ -43,9 +43,9 @@
 .workflow-step:not(:last-child)::after {
     content: '';
     position: absolute;
-    left: 19px;
-    top: 38px;
-    bottom: 0;
+    left: 18px;
+    top: 44px;
+    bottom: 0.5rem;
     width: 2px;
     background: #28a745;
 }
