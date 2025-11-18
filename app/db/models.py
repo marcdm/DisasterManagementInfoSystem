@@ -789,27 +789,46 @@ class DistributionPackageItem(db.Model):
     item = db.relationship('Item', backref='distribution_package_items')
 
 class Transfer(db.Model):
-    """Transfer between warehouses"""
+    """Transfer between warehouses
+    
+    Tracks inventory transfers between warehouses with batch-level detail.
+    Foreign keys reference warehouse directly (fr_inventory_id and to_inventory_id
+    are conceptually inventory IDs but reference warehouse.warehouse_id).
+    
+    Status Codes:
+        D = Draft (transfer being prepared)
+        C = Completed (transfer executed)
+        V = Verified (transfer verified at destination)
+        P = Processed (transfer intake completed)
+    """
     __tablename__ = 'transfer'
     
     transfer_id = db.Column(db.Integer, primary_key=True)
-    fr_inventory_id = db.Column(db.Integer, db.ForeignKey('inventory.inventory_id'), nullable=False)
-    to_inventory_id = db.Column(db.Integer, db.ForeignKey('inventory.inventory_id'), nullable=False)
-    transfer_date = db.Column(db.Date, nullable=False)
-    event_id = db.Column(db.Integer, db.ForeignKey('event.event_id'))
+    fr_inventory_id = db.Column(db.Integer, db.ForeignKey('warehouse.warehouse_id'), nullable=False)
+    to_inventory_id = db.Column(db.Integer, db.ForeignKey('warehouse.warehouse_id'), nullable=False)
+    eligible_event_id = db.Column(db.Integer, db.ForeignKey('event.event_id'))
+    transfer_date = db.Column(db.Date, nullable=False, server_default=db.text('CURRENT_DATE'))
     reason_text = db.Column(db.String(255))
     status_code = db.Column(db.CHAR(1), nullable=False)
     create_by_id = db.Column(db.String(20), nullable=False)
     create_dtime = db.Column(db.DateTime, nullable=False)
     update_by_id = db.Column(db.String(20), nullable=False)
-    update_dtime = db.Column(db.DateTime, nullable=False)
+    update_dtime = db.Column(db.DateTime)
     verify_by_id = db.Column(db.String(20), nullable=False)
-    verify_dtime = db.Column(db.DateTime, nullable=False)
+    verify_dtime = db.Column(db.DateTime)
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
     
-    from_inventory = db.relationship('Inventory', foreign_keys=[fr_inventory_id])
-    to_inventory = db.relationship('Inventory', foreign_keys=[to_inventory_id])
-    event = db.relationship('Event', backref='transfers')
+    __table_args__ = (
+        db.CheckConstraint("transfer_date <= CURRENT_DATE", name='c_transfer_1'),
+        db.CheckConstraint("status_code IN ('D', 'C', 'V', 'P')", name='c_transfer_2'),
+        db.Index('dk_transfer_1', 'transfer_date'),
+        db.Index('dk_transfer_2', 'fr_inventory_id'),
+        db.Index('dk_transfer_3', 'to_inventory_id'),
+    )
+    
+    from_warehouse = db.relationship('Warehouse', foreign_keys=[fr_inventory_id], backref='transfers_sent')
+    to_warehouse = db.relationship('Warehouse', foreign_keys=[to_inventory_id], backref='transfers_received')
+    event = db.relationship('Event', foreign_keys=[eligible_event_id], backref='transfers')
 
 class TransferItem(db.Model):
     """Transfer Item - Batch-level transfer tracking between warehouses

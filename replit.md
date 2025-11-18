@@ -1,7 +1,7 @@
 # DRIMS - Disaster Relief Inventory Management System
 
 ## Overview
-DRIMS (Disaster Relief Inventory Management System) is a web-based platform for the Government of Jamaica's ODPEM, designed to manage the full lifecycle of disaster relief supplies. It ensures compliance with government processes using the `aidmgmt-3.sql` schema. The system streamlines inventory tracking, donation management, relief request processing, and distribution across multiple warehouses, supporting disaster event coordination and supply allocation. It includes robust user administration with RBAC, comprehensive management of donors, agencies, and custodians, inventory transfers, location tracking, analytics, reporting, and strong security features. The project aims to provide a modern, efficient, and user-friendly system for disaster preparedness and response.
+DRIMS (Disaster Relief Inventory Management System) is a web-based platform for the Government of Jamaica's ODPEM, designed to manage the full lifecycle of disaster relief supplies. It aims to streamline inventory tracking, donation management, relief request processing, and distribution across multiple warehouses, ensuring compliance with government processes. The system supports disaster event coordination, supply allocation, user administration with RBAC, and comprehensive management of various entities, inventory transfers, location tracking, analytics, and reporting. The project's ambition is to provide a modern, efficient, and user-friendly system for disaster preparedness and response, ensuring robust security features.
 
 ## User Preferences
 - **Communication style**: Simple, everyday language.
@@ -27,56 +27,56 @@ DRIMS (Disaster Relief Inventory Management System) is a web-based platform for 
 - **Templates**: Jinja2 templates (`templates/`) enforce Government of Jamaica (GOJ) branding.
 
 ### UI/UX Design
-All pages maintain a modern, consistent UI with a comprehensive design system:
-- **Modern Design System** (`modern-ui.css`): Foundation with 50+ CSS custom properties for colors, spacing, typography, shadows, border radius values, and z-index scale. Includes a complete component library with metric cards, filter tabs, modern tables, buttons, status badges, alerts, forms, empty states, loading spinners, login page components, and standardized checkboxes (20px × 20px with proper spacing).
-- **Consistent Styling**: Modern UI standard with summary metric cards, filter tabs, modern tables (`modern-table`), standardized action buttons (`btn-modern`, `btn-primary`, `btn-outline`), color-coded status badges, code/SKU pills (`code-pill`), standardized checkboxes with 0.75rem spacing from labels, and clean page layouts.
-- **Shared Components**: Reusable Jinja2 macros for status badges, summary cards, and a unified workflow progress sidebar (`_workflow_progress.html`). All components use design tokens for maintainability.
-- **Styling**: Uses `modern-ui.css` (foundation), `relief-requests-ui.css`, `notifications-ui.css`, `user-management-ui.css`, and `workflow-sidebar.css` for feature-specific enhancements.
+All pages maintain a modern, consistent UI with a comprehensive design system including:
+- **Modern Design System**: Foundation with 50+ CSS custom properties, a complete component library (metric cards, filter tabs, modern tables, buttons, status badges, alerts, forms, empty states, loading spinners), and standardized checkboxes.
+- **Consistent Styling**: Modern UI standard with summary metric cards, filter tabs, modern tables, standardized action buttons, color-coded status badges, and clean page layouts.
+- **Shared Components**: Reusable Jinja2 macros for status badges, summary cards, and a unified workflow progress sidebar.
 - **Responsiveness**: Fixed header, collapsible sidebar, dynamic content margins, responsive grid layouts with Bootstrap 5.3.3.
-- **Branding**: GOJ branding with primary green (#009639) and gold accent (#FDB913), official Jamaica Coat of Arms and ODPEM logos, consistent across all pages.
+- **Branding**: GOJ branding with primary green (#009639) and gold accent (#FDB913), official Jamaica Coat of Arms and ODPEM logos.
 - **Accessibility**: WCAG 2.1 AA compliance with focus-visible states, proper color contrast, ARIA labels, semantic HTML, and screen reader support.
 - **Workflows**: Standardized 5-step workflow patterns for Agency Relief Requests and Eligibility Approval.
-- **Dashboard System**: 6 role-specific dashboards with consistent modern UI, filter tabs, summary cards, and optimized queries. System Administration dashboard features modern tables with status badges, enhanced quick links with modern buttons, and improved recent users display with avatars.
-- **Management Modules**: Comprehensive modules for Event Management, Warehouse Management, User Management, Notification Management, Item Management, Item Category Management, Custodian Management, Unit of Measure Management, and Inventory, all featuring modern UI, CRUD operations, validation, and optimistic locking. All Create forms follow a consistent structure with sectioned layouts, icon headers, proper spacing, and standardized action buttons.
+- **Dashboards**: 6 role-specific dashboards with consistent modern UI, filter tabs, and summary cards.
+- **Management Modules**: Comprehensive modules for Event, Warehouse, User, Notification, Item, Item Category, Custodian, Unit of Measure, and Inventory management, all featuring modern UI, CRUD operations, validation, and optimistic locking.
 
 ### Database Architecture
 - **Schema**: Based on the authoritative ODPEM `aidmgmt-3.sql` schema (40 tables).
 - **Key Design Decisions**:
     - **Data Consistency**: All `varchar` fields in uppercase.
-    - **Auditability**: Standard `create_by_id`, `create_dtime`, `version_nbr` on all ODPEM tables. Audit fields now use `user.user_name` (varchar(20)) for consistent tracking.
+    - **Auditability**: Standard `create_by_id`, `create_dtime`, `version_nbr` on all ODPEM tables.
     - **Precision**: `DECIMAL(15,4)` for quantity fields.
     - **Status Management**: Integer/character codes for entity statuses, with lookup tables.
     - **Optimistic Locking**: Implemented across all 40 tables using SQLAlchemy's `version_id_col`.
-    - **User Management**: Enhanced `public.user` table with `user_name` field, MFA, lockout, password management, agency linkage, and `citext` for case-insensitive email.
-    - **New Workflows**: `agency_account_request` and `agency_account_request_audit` tables for account creation workflows.
-    - **Phone Number Format**: System-wide standardization to `+1 (XXX) XXX-XXXX` format with centralized validation (`app/core/phone_utils.py`) and auto-formatting masked input (`static/js/phone-mask.js`).
-    - **Donation Table**: Tracks donations from donors with status workflow (E=Entered, V=Verified, P=Processed). Includes references to donor, event, and custodian. Check constraints enforce valid received_date (<=CURRENT_DATE) and status_code (E/V/P). Full optimistic locking via version_nbr.
-    - **Warehouse Types**: Simplified to two types only: `MAIN-HUB` (central/main warehouses) and `SUB-HUB` (sub-warehouses, agency warehouses). Database check constraint enforces these values only.
-    - **Item Category Schema**: Updated `itemcatg` table to use `category_id` (integer identity) as primary key instead of `category_code`. The `category_code` remains as a unique business key with uppercase check constraint. Includes `status_code` ('A'/'I') and full optimistic locking support.
-    - **Custodian Table**: Migrated to DRIMS naming standards with constraints: `pk_custodian` (primary key), `uk_custodian_1` (unique custodian_name), `c_custodian_1` (uppercase custodian_name check), `c_custodian_3` (uppercase contact_name check), `fk_custodian_parish` (foreign key to parish). Identity column for `custodian_id`, timestamp(0) precision for audit fields.
-    - **Item Table Schema**: Migrated to target specifications with proper constraints and column ordering. Primary key renamed to `pk_item`, unique constraints `uk_item_1` (item_code), `uk_item_2` (item_name), `uk_item_3` (sku_code). Added 5 new columns: `item_code` (position 2, varchar(30) unique), `units_size_vary_flag`, `is_batched_flag`, `can_expire_flag`, `issuance_order` (FIFO/LIFO/FEFO). Removed obsolete columns: `category_code`, `expiration_apply_flag`. All varchar fields enforce uppercase. Full optimistic locking support via `version_nbr`.
-    - **Batch Tracking System**: New `itembatch` table supports batch-level inventory management with FEFO/FIFO allocation rules. Features include: batch number tracking (uppercase), batch/expiry dates, batch-level quantities (usable/reserved/defective/expired using DECIMAL(15,4)), UOM tracking, size specifications, avg_unit_value, verification tracking, status codes (A/U), and full optimistic locking. Indexes support FEFO (expiry_date) and FIFO (batch_date) queries. The `reliefpkg_item` table now includes REQUIRED `batch_id` as part of composite primary key (reliefpkg_id, fr_inventory_id, item_id, batch_id) to enforce mandatory batch-level allocation tracking. SQLAlchemy relationships use explicit `primaryjoin` conditions to handle composite foreign keys.
-    - **Inventory Table Schema**: Migrated to target specifications with composite primary key (inventory_id, item_id) where inventory_id IS the warehouse_id. No separate warehouse_id column - inventory_id references warehouse(warehouse_id) for alignment. `inventory_id` is integer NOT NULL (not auto-generated) and must be manually set to match warehouse_id when creating records. Includes reorder_qty column, named constraints (c_inventory_1 through c_inventory_7), conditional unique index uk_inventory_1 on (item_id, inventory_id) WHERE usable_qty > 0, and duplicate index dk_inventory_1 on item_id for join optimization. Single-column foreign keys to inventory_id reference warehouse(warehouse_id) since inventory_id is not unique (composite PK model). All code updated to use `inventory.inventory_id` instead of removed `inventory.warehouse_id` field.
-    - **Event Table Schema**: Uses `GENERATED BY DEFAULT AS IDENTITY` for event_id primary key. Supports 10 event types: STORM, HURRICANE, TORNADO, FLOOD, TSUNAMI, FIRE, EARTHQUAKE, WAR, EPIDEMIC, ADHOC. Includes check constraints for event_type (c_event_1), start_date <= CURRENT_DATE (c_event_2), status_code in ('A','C') (c_event_3), and complex constraints for closed_date/reason_desc logic (c_event_4a, c_event_4b). Status codes: A=Active, C=Closed. Closed events must have both closed_date and reason_desc populated. Full optimistic locking support via version_nbr. Referenced by 6 foreign keys: agency.ineligible_event_id, distribution_package.event_id, donation.event_id, transaction.event_id, transfer.event_id, and reliefrqst.eligible_event_id.
+    - **User Management**: Enhanced `public.user` table with `user_name`, MFA, lockout, password management, agency linkage, and `citext` for case-insensitive email.
+    - **New Workflows**: `agency_account_request` and `agency_account_request_audit` tables for account creation.
+    - **Phone Number Format**: System-wide standardization to `+1 (XXX) XXX-XXXX`.
+    - **Donation Table**: Tracks donations with status workflow (Entered, Verified, Processed).
+    - **Warehouse Types**: Simplified to two types: `MAIN-HUB` and `SUB-HUB`.
+    - **Item Category Schema**: `itemcatg` uses `category_id` (integer identity) as primary key.
+    - **Custodian Table**: Migrated to DRIMS naming standards.
+    - **Item Table Schema**: Includes `item_code`, `units_size_vary_flag`, `is_batched_flag`, `can_expire_flag`, `issuance_order` (FIFO/LIFO/FEFO).
+    - **Batch Tracking System**: New `itembatch` table supports batch-level inventory management with FEFO/FIFO allocation rules. The `reliefpkg_item` table now includes `batch_id` as part of its composite primary key for mandatory batch-level allocation tracking.
+    - **Inventory Table Schema**: Composite primary key (inventory_id, item_id) where inventory_id is the warehouse_id.
+    - **Event Table Schema**: Uses `GENERATED BY DEFAULT AS IDENTITY` for `event_id`. Supports 10 event types.
+    - **Transfer Table**: Tracks inventory transfers between warehouses with status workflow (Draft, Completed, Verified, Processed).
 
 ### Data Flow Patterns
-- **AIDMGMT Relief Workflow**: End-to-end process from request creation (agencies) to eligibility review (ODPEM directors), package preparation (logistics), and distribution.
-- **Dashboards**: Role-based dashboard routing with 6 specialized views (Logistics, Agency, Director, Admin, Inventory, General). Main dashboard (`/`) automatically routes users based on primary role.
-- **Inventory Management**: Two-tier tracking system: warehouse-level stock in `inventory` table (usable/reserved/defective/expired quantities) and batch-level tracking in `itembatch` table for items with `is_batched_flag=TRUE`. Batch allocation supports FEFO (First Expired First Out) for expirable items and FIFO (First In First Out) for non-expirable items based on `item.issuance_order` configuration.
-- **Eligibility Approval Workflow**: Role-based access control (RBAC) and service layer for eligibility decisions.
-- **Package Fulfillment Workflow**: Unified `packaging` blueprint with routes for pending fulfillment and package preparation. Includes features like summary metric cards, multi-warehouse allocation, dynamic item status validation, and a 4-step workflow sidebar.
-- **Services**: `ItemStatusService` for status validation, `InventoryReservationService` for transaction-safe inventory reservation, and `BatchAllocationService` for automatic FEFO/FIFO batch allocation with configurable issuance order rules.
+- **AIDMGMT Relief Workflow**: End-to-end process from request creation to distribution.
+- **Dashboards**: Role-based dashboard routing with 6 specialized views.
+- **Inventory Management**: Two-tier tracking system: warehouse-level stock and batch-level tracking with FEFO/FIFO allocation.
+- **Eligibility Approval Workflow**: Role-based access control and service layer for eligibility decisions.
+- **Package Fulfillment Workflow**: Unified `packaging` blueprint with routes for pending fulfillment and package preparation.
+- **Services**: `ItemStatusService`, `InventoryReservationService`, and `BatchAllocationService`.
 
 ### Role-Based Access Control (RBAC)
-- **Feature Registry**: Centralized feature-to-role mapping in `app/core/feature_registry.py` with 26 features mapped to 10 verified database role codes.
-- **Dynamic Navigation System**: Role-based dynamic navigation (`templates/components/_dynamic_navigation.html`) adapts to user permissions.
-- **Security Decorators**: Backend route protection decorators (`app/core/decorators.py`) for single, any, or all feature access control.
+- **Feature Registry**: Centralized feature-to-role mapping in `app/core/feature_registry.py` (26 features to 10 database roles).
+- **Dynamic Navigation System**: Role-based dynamic navigation (`templates/components/_dynamic_navigation.html`).
+- **Security Decorators**: Backend route protection decorators (`app/core/decorators.py`).
 - **Smart Routing**: Automatic dashboard routing based on user's primary role.
-- **Role Priority**: SYSTEM_ADMINISTRATOR > ODPEM_DG/DDG/DIR_PEOD > CUSTODIAN > LOGISTICS_MANAGER > LOGISTICS_OFFICER > INVENTORY_CLERK > AGENCY_DISTRIBUTOR/SHELTER.
+- **Role Priority**: Defined hierarchy from SYSTEM_ADMINISTRATOR to AGENCY_DISTRIBUTOR/SHELTER.
 - **Verified Database Roles**: SYSTEM_ADMINISTRATOR, LOGISTICS_MANAGER, LOGISTICS_OFFICER, ODPEM_DG, ODPEM_DDG, ODPEM_DIR_PEOD, INVENTORY_CLERK, AGENCY_DISTRIBUTOR, AGENCY_SHELTER, AUDITOR, CUSTODIAN.
-- **Master Data RBAC Restrictions**: Event, Warehouse, Item, ItemCategory, UnitOfMeasure, and Custodian table CRUD operations restricted to CUSTODIAN role only. Master data tables follow consistent naming standards for constraints (pk_, uk_, c_, fk_ prefixes).
-- **Item Management Module**: Full CRUD operations for relief items (`app/features/items.py`) restricted to CUSTODIAN role. Features include search/filter by category, batch tracking, expiration tracking, status tabs (Active/Inactive/Batched/Expirable), summary metrics, validation helpers for item_code/item_name/sku_code/reorder_qty/issuance_order/comments, uniqueness checks, optimistic locking, stock/transaction checks before inactivation, and modern UI templates (list, create, view, edit) following established design patterns.
-- **Automatic Batch Creation**: Batches are automatically created during inventory intake processes (relief package intake in `app/features/intake_aidmgmt.py`) for items with `is_batched_flag=TRUE`. The `BatchCreationService` (`app/services/batch_creation_service.py`) generates unique batch numbers (format: ITEM-WH-YYYYMMDD-SEQ), creates batch records with quantities and dates, and supports update-or-create operations for preserving batch identity across warehouses. No manual batch management UI - batches are system-managed for data integrity and traceability.
+- **Master Data RBAC Restrictions**: CRUD operations for Event, Warehouse, Item, ItemCategory, UnitOfMeasure, and Custodian restricted to CUSTODIAN role.
+- **Item Management Module**: Full CRUD for relief items restricted to CUSTODIAN role.
+- **Automatic Batch Creation**: Batches are automatically created during inventory intake processes for items with `is_batched_flag=TRUE` via `BatchCreationService`.
 
 ## External Dependencies
 
@@ -97,4 +97,3 @@ All pages maintain a modern, consistent UI with a comprehensive design system:
 ### Frontend CDN Resources
 - Bootstrap 5.3.3 CSS/JS
 - Bootstrap Icons 1.11.3
-```
