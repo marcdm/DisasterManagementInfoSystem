@@ -332,6 +332,45 @@ def _process_intake_submission(donation, warehouse):
             'comments_text': item_comments.upper() if item_comments else None
         })
     
+    # Check for duplicate batch numbers within this submission (only for batched items)
+    seen_batches = set()
+    for intake_item in intake_items:
+        # Skip auto-generated NOBATCH placeholders (for non-batched items)
+        if intake_item['batch_no'].startswith('NOBATCH-'):
+            continue
+            
+        batch_key = (intake_item['item_id'], intake_item['batch_no'])
+        if batch_key in seen_batches:
+            errors.append(
+                f'{intake_item["item"].item_name}: Duplicate batch number "{intake_item["batch_no"]}" in this submission. '
+                f'Each item can only have one batch per intake.'
+            )
+        seen_batches.add(batch_key)
+    
+    # Check if batch numbers already exist in database for batched items only
+    # Filter out auto-generated NOBATCH placeholders to avoid false duplicates
+    batched_items = [item for item in intake_items if not item['batch_no'].startswith('NOBATCH-')]
+    
+    if batched_items:
+        from sqlalchemy import tuple_
+        batch_pairs = [(item['item_id'], item['batch_no']) for item in batched_items]
+        
+        existing_batches = ItemBatch.query.filter(
+            tuple_(ItemBatch.item_id, ItemBatch.batch_no).in_(batch_pairs)
+        ).all()
+        
+        # Map existing batches to item names for user-friendly error messages
+        if existing_batches:
+            # Create lookup of item_id to item_name from batched_items
+            item_name_map = {item['item_id']: item['item'].item_name for item in batched_items}
+            
+            for existing_batch in existing_batches:
+                item_name = item_name_map.get(existing_batch.item_id, f'Item ID {existing_batch.item_id}')
+                errors.append(
+                    f'{item_name}: This batch number "{existing_batch.batch_no}" already exists for this item. '
+                    f'Please enter a unique batch number.'
+                )
+    
     # Validate total quantities match donation quantities (from database, not form)
     # Fetch authoritative donation quantities from database to prevent bypass
     db_donation_items = {di.item_id: di.item_qty for di in donation_items}
