@@ -49,7 +49,7 @@ CREATE TABLE dnintake_item
         CONSTRAINT c_dnintake_item_4 CHECK (expired_qty >= 0.00),
 
     status_code CHAR(1) NOT NULL
-        -- P=Pending verification, V=Verified
+        -- P=Processed, V=Verified
         CONSTRAINT c_dnintake_item_5 CHECK (status_code IN ('P','V')),
     comments_text VARCHAR(255),
 
@@ -89,4 +89,4 @@ COMMIT;
 -- 1. Key fixes: quantity precision changed to DECIMAL(12,2), avg_unit_value must be > 0.00
 -- 2. Fixed constraint c_dnintake_item_4 to check expired_qty instead of defective_qty
 -- 3. Added missing expiry_date constraint (c_dnintake_item_1c)
--- 4. Status codes: P=Pending verification, V=Verified
+-- 4. Status codes: P=Processed, V=Verified

@@ -66,7 +66,7 @@ PRIMARY KEY (donation_id, inventory_id, item_id, batch_no)
 3. **pk_dnintake_item**: Unique index on primary key (auto-created)
 
 ### Status Codes
-- **P** = Pending verification (initial intake entry)
+- **P** = Processed (intake processed/completed)
 - **V** = Verified (intake verified by custodian)
 
 ## Technical Details
@@ -142,7 +142,7 @@ class DonationIntakeItem(db.Model):
     """Donation Intake Item - Batch-level intake tracking for donations
     
     Status Codes:
-        P = Pending verification
+        P = Processed
         V = Verified
     """
     __tablename__ = 'dnintake_item'

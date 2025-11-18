@@ -976,7 +976,7 @@ class DonationIntakeItem(db.Model):
     create it with batch_id and zero quantities, then update with intake amounts.
     
     Status Codes:
-        P = Pending verification
+        P = Processed
         V = Verified
     """
     __tablename__ = 'dnintake_item'
