@@ -650,16 +650,33 @@
                                 {% endif %}
                             </td>
                             <td>
+                                {% set has_allocations = existing_batch_allocations and item.item_id in existing_batch_allocations %}
+                                {% set batch_count = existing_batch_allocations[item.item_id]|length if has_allocations else 0 %}
+                                
                                 <button 
                                     type="button" 
-                                    class="btn btn-outline select-batches-btn"
+                                    class="btn {% if has_allocations %}btn-success{% else %}btn-outline-secondary{% endif %} select-batches-btn"
                                     onclick="openBatchDrawer({{ item.item_id }}, '{{ item.item.item_desc if item.item else 'Unknown Item' }}', {{ item.request_qty }})"
                                     data-item-id="{{ item.item_id }}">
-                                    <i class="bi bi-clipboard-check"></i>
-                                    Select Batches
+                                    <i class="bi bi-{% if has_allocations %}eye{% else %}clipboard-check{% endif %}"></i>
+                                    {% if has_allocations %}
+                                        View/Edit Batches
+                                        <span class="badge bg-light text-success ms-1">{{ batch_count }}</span>
+                                    {% else %}
+                                        Select Batches
+                                    {% endif %}
                                 </button>
+                                
+                                {# Show summary of allocated batches below button #}
+                                {% if has_allocations %}
+                                    <div class="text-muted" style="font-size: 0.75rem; margin-top: 0.25rem;">
+                                        {% set warehouse_ids = existing_batch_allocations[item.item_id]|map(attribute='warehouse_id')|unique|list %}
+                                        {{ warehouse_ids|length }} warehouse{{ 's' if warehouse_ids|length > 1 else '' }}
+                                    </div>
+                                {% endif %}
+                                
                                 {# Hidden inputs for batch allocations - pre-populated from LO's prepared package #}
-                                {% if existing_batch_allocations and item.item_id in existing_batch_allocations %}
+                                {% if has_allocations %}
                                     {% for batch_alloc in existing_batch_allocations[item.item_id] %}
                                         <input type="hidden" 
                                                name="batch_allocation_{{ item.item_id }}_{{ batch_alloc.batch_id }}" 
