@@ -500,3 +500,99 @@ def delete_donation_item(donation_id, item_id):
         db.session.rollback()
         flash(f'Cannot delete item: {str(e)}', 'danger')
         return redirect(url_for('donations.view_donation', donation_id=donation_id))
+
+
+@donations_bp.route('/<int:donation_id>/verify', methods=['POST'])
+@login_required
+@feature_required('donation_management')
+def verify_donation(donation_id):
+    """
+    Verify entire donation (header + all items) as a single atomic transaction.
+    Uses isolated transaction to ensure complete atomicity.
+    """
+    version_nbr_from_form = int(request.form.get('version_nbr', 0))
+    item_versions_from_form = {}
+    
+    for key in request.form.keys():
+        if key.startswith('item_version_'):
+            item_id = int(key.replace('item_version_', ''))
+            item_versions_from_form[item_id] = int(request.form.get(key))
+    
+    success_message = None
+    error_message = None
+    
+    try:
+        donation = Donation.query.filter_by(donation_id=donation_id).with_for_update().first()
+        
+        if not donation:
+            error_message = f'Donation #{donation_id} not found'
+            db.session.rollback()
+            flash(error_message, 'danger')
+            return redirect(url_for('donations.list_donations'))
+        
+        if version_nbr_from_form != donation.version_nbr:
+            error_message = 'This donation has been modified by another user. Please reload and try again.'
+            db.session.rollback()
+            flash(error_message, 'danger')
+            return redirect(url_for('donations.view_donation', donation_id=donation_id))
+        
+        if donation.status_code == 'V':
+            error_message = 'This donation is already verified'
+            db.session.rollback()
+            flash(error_message, 'info')
+            return redirect(url_for('donations.view_donation', donation_id=donation_id))
+        
+        if donation.status_code == 'P':
+            error_message = 'Cannot verify a processed donation'
+            db.session.rollback()
+            flash(error_message, 'warning')
+            return redirect(url_for('donations.view_donation', donation_id=donation_id))
+        
+        donation_items = DonationItem.query.filter_by(donation_id=donation_id).with_for_update().all()
+        
+        if not donation_items:
+            error_message = 'Cannot verify donation with no items. Add items first.'
+            db.session.rollback()
+            flash(error_message, 'warning')
+            return redirect(url_for('donations.view_donation', donation_id=donation_id))
+        
+        for item in donation_items:
+            if item.item_id in item_versions_from_form:
+                if item.version_nbr != item_versions_from_form[item.item_id]:
+                    error_message = f'Item {item.item.item_name} has been modified. Please reload and try again.'
+                    db.session.rollback()
+                    flash(error_message, 'danger')
+                    return redirect(url_for('donations.view_donation', donation_id=donation_id))
+        
+        items_verified = 0
+        
+        donation.status_code = 'V'
+        add_audit_fields(donation, current_user, is_new=False)
+        add_verify_fields(donation, current_user)
+        
+        for donation_item in donation_items:
+            if donation_item.status_code != 'V':
+                donation_item.status_code = 'V'
+                add_audit_fields(donation_item, current_user, is_new=False)
+                add_verify_fields(donation_item, current_user)
+                items_verified += 1
+        
+        db.session.flush()
+        db.session.commit()
+        
+        success_message = f'Donation #{donation_id} and {items_verified} item(s) verified successfully'
+        flash(success_message, 'success')
+        return redirect(url_for('donations.view_donation', donation_id=donation_id))
+        
+    except StaleDataError:
+        db.session.rollback()
+        flash('This donation has been modified by another user. Please reload and try again.', 'danger')
+        return redirect(url_for('donations.view_donation', donation_id=donation_id))
+    except IntegrityError as e:
+        db.session.rollback()
+        flash(f'Database constraint violation: {str(e)}', 'danger')
+        return redirect(url_for('donations.view_donation', donation_id=donation_id))
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Unexpected error during verification: {str(e)}', 'danger')
+        return redirect(url_for('donations.view_donation', donation_id=donation_id))
