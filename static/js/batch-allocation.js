@@ -547,16 +547,17 @@ const BatchAllocation = (function() {
                 let newStatus = autoStatus;
                 
                 // Auto-status logic based on allocation
+                // Status codes: R=Requested, P=Partly Filled, F=Filled, D=Denied, U=Unavailable, W=Withdrawn, L=Limit Allowed
                 if (totalAllocated === 0) {
-                    // No allocation - set to default auto status (usually 'A' = Approved)
-                    newStatus = autoStatus;
-                    console.log(`  → No allocation, using auto status: ${newStatus}`);
+                    // No allocation - set to 'R' (Requested) if allowed, else use auto status
+                    newStatus = allowedArray.includes('R') ? 'R' : autoStatus;
+                    console.log(`  → No allocation, using status: ${newStatus}`);
                 } else if (totalAllocated >= requestedQty) {
-                    // Fully allocated - set to 'A' (Approved) if allowed
-                    newStatus = allowedArray.includes('A') ? 'A' : autoStatus;
+                    // Fully allocated - set to 'F' (Filled) if allowed
+                    newStatus = allowedArray.includes('F') ? 'F' : autoStatus;
                     console.log(`  → Fully allocated, new status: ${newStatus}`);
                 } else {
-                    // Partially allocated - set to 'P' (Partially Approved) if allowed
+                    // Partially allocated - set to 'P' (Partly Filled) if allowed
                     newStatus = allowedArray.includes('P') ? 'P' : autoStatus;
                     console.log(`  → Partially allocated (${totalAllocated}/${requestedQty}), new status: ${newStatus}`);
                 }
