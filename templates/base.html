@@ -865,6 +865,9 @@
                             </a>
                         </div>`;
                         notificationList.innerHTML = listHtml;
+                        
+                        // Add click handlers to notification links to mark as read
+                        attachNotificationClickHandlers();
                     } else {
                         clearAllBtn.style.display = 'none';
                         notificationList.innerHTML = `
@@ -881,6 +884,83 @@
                     clearAllBtn.style.display = 'none';
                     notificationList.innerHTML = '<div class="notification-bell-empty text-danger"><i class="bi bi-exclamation-circle"></i><p>Failed to load notifications</p></div>';
                 });
+        }
+        
+        function attachNotificationClickHandlers() {
+            // Use event delegation from the notification list container (stable element)
+            const notificationList = document.getElementById('notificationList');
+            if (!notificationList) return;
+            
+            // Remove any existing delegated listeners to avoid duplicates
+            const oldListener = notificationList._notificationClickHandler;
+            if (oldListener) {
+                notificationList.removeEventListener('click', oldListener);
+            }
+            
+            // Create new delegated click handler
+            const clickHandler = function(event) {
+                // Check if clicked element is a notification link or inside one
+                const link = event.target.closest('.notification-bell-link');
+                if (!link) return;
+                
+                event.preventDefault(); // Prevent immediate navigation
+                
+                const notificationItem = link.closest('.notification-bell-item');
+                const notificationId = notificationItem.dataset.notificationId;
+                const targetUrl = link.getAttribute('href');
+                
+                // Only mark as read if it's currently unread
+                if (notificationItem.classList.contains('unread')) {
+                    // Optimistically update UI immediately
+                    notificationItem.classList.remove('unread');
+                    const newBadge = notificationItem.querySelector('.badge-new-bell');
+                    if (newBadge) {
+                        newBadge.remove();
+                    }
+                    
+                    // Optimistically update badge count
+                    const badge = document.getElementById('notificationCount');
+                    if (badge && badge.textContent) {
+                        const currentCount = parseInt(badge.textContent);
+                        const newCount = Math.max(0, currentCount - 1);
+                        if (newCount > 0) {
+                            badge.textContent = newCount;
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                    
+                    // Mark notification as read via API
+                    fetch(`/notifications/api/mark-read/${notificationId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            console.error('Failed to mark notification as read:', data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error marking notification as read:', error);
+                    })
+                    .finally(() => {
+                        // Navigate to the target URL
+                        window.location.href = targetUrl;
+                    });
+                } else {
+                    // Already read, just navigate
+                    window.location.href = targetUrl;
+                }
+            };
+            
+            // Attach the delegated listener
+            notificationList.addEventListener('click', clickHandler);
+            
+            // Store reference for cleanup on next render
+            notificationList._notificationClickHandler = clickHandler;
         }
         
         function confirmClearAllNotifications() {
