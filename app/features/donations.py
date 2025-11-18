@@ -159,7 +159,7 @@ def create_donation():
                 events = Event.query.filter_by(status_code='A').order_by(Event.event_name).all()
                 custodians = Custodian.query.order_by(Custodian.custodian_name).all()
                 items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
-                uoms = UnitOfMeasure.query.filter_by(status_code='A').order_by(UnitOfMeasure.uom_name).all()
+                uoms = UnitOfMeasure.query.filter_by(status_code='A').order_by(UnitOfMeasure.uom_desc).all()
                 adhoc_event = _get_adhoc_event()
                 return render_template('donations/create.html', 
                                      donors=donors, 
@@ -189,10 +189,11 @@ def create_donation():
                 donation_item = DonationItem()
                 donation_item.donation_id = donation.donation_id
                 donation_item.item_id = item_info['item_id']
-                donation_item.quantity = item_info['quantity']
-                donation_item.uom_id = item_info['uom_id']
+                donation_item.item_qty = item_info['quantity']
+                donation_item.uom_code = item_info['uom_id']
+                donation_item.location_name = 'DONATION RECEIVED'
                 donation_item.status_code = item_info['status_code']
-                donation_item.item_comments = item_info['item_comments'].upper() if item_info['item_comments'] else None
+                donation_item.comments_text = item_info['item_comments'].upper() if item_info['item_comments'] else None
                 
                 add_audit_fields(donation_item, current_user, is_new=True)
                 
@@ -210,7 +211,7 @@ def create_donation():
             events = Event.query.filter_by(status_code='A').order_by(Event.event_name).all()
             custodians = Custodian.query.order_by(Custodian.custodian_name).all()
             items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
-            uoms = UnitOfMeasure.query.filter_by(status_code='A').order_by(UnitOfMeasure.uom_name).all()
+            uoms = UnitOfMeasure.query.filter_by(status_code='A').order_by(UnitOfMeasure.uom_desc).all()
             adhoc_event = _get_adhoc_event()
             return render_template('donations/create.html', 
                                  donors=donors, 
@@ -228,7 +229,7 @@ def create_donation():
             events = Event.query.filter_by(status_code='A').order_by(Event.event_name).all()
             custodians = Custodian.query.order_by(Custodian.custodian_name).all()
             items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
-            uoms = UnitOfMeasure.query.filter_by(status_code='A').order_by(UnitOfMeasure.uom_name).all()
+            uoms = UnitOfMeasure.query.filter_by(status_code='A').order_by(UnitOfMeasure.uom_desc).all()
             adhoc_event = _get_adhoc_event()
             return render_template('donations/create.html', 
                                  donors=donors, 
@@ -246,7 +247,7 @@ def create_donation():
             events = Event.query.filter_by(status_code='A').order_by(Event.event_name).all()
             custodians = Custodian.query.order_by(Custodian.custodian_name).all()
             items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
-            uoms = UnitOfMeasure.query.filter_by(status_code='A').order_by(UnitOfMeasure.uom_name).all()
+            uoms = UnitOfMeasure.query.filter_by(status_code='A').order_by(UnitOfMeasure.uom_desc).all()
             adhoc_event = _get_adhoc_event()
             return render_template('donations/create.html', 
                                  donors=donors, 
@@ -262,7 +263,7 @@ def create_donation():
     events = Event.query.filter_by(status_code='A').order_by(Event.event_name).all()
     custodians = Custodian.query.order_by(Custodian.custodian_name).all()
     items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
-    uoms = UnitOfMeasure.query.filter_by(status_code='A').order_by(UnitOfMeasure.uom_name).all()
+    uoms = UnitOfMeasure.query.filter_by(status_code='A').order_by(UnitOfMeasure.uom_desc).all()
     adhoc_event = _get_adhoc_event()
     
     if not donors:

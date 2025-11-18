@@ -205,7 +205,7 @@ function addItemRow() {
                     <label class="form-label">UOM <span class="text-danger">*</span></label>
                     <select class="form-select" name="uom_id_${itemCounter}" required>
                         <option value="">-- Select UOM --</option>
-                        ${uoms.map(uom => `<option value="${uom.uom_id}">${uom.uom_name}</option>`).join('')}
+                        ${uoms.map(uom => `<option value="${uom.uom_code}">${uom.uom_desc}</option>`).join('')}
                     </select>
                 </div>
                 <div class="col-md-6">
