@@ -48,7 +48,7 @@
     <form method="POST" action="{{ url_for('donation_intake.intake_form', donation_id=donation.donation_id, inventory_id=warehouse.warehouse_id) }}" id="intakeForm">
         <div class="row">
             <!-- Main Form Section -->
-            <div class="col-lg-8">
+            <div class="col-lg-9">
                 <!-- Intake Header Card -->
                 <div class="card mb-3">
                     <div class="card-header bg-light">
@@ -59,7 +59,7 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label for="intake_date" class="form-label fw-bold required-field">Intake Date</label>
                                 <input type="date" 
                                        class="form-control" 
@@ -70,7 +70,7 @@
                                        required>
                                 <div class="form-text">Cannot be in the future</div>
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-8 mb-3">
                                 <label for="comments_text" class="form-label fw-bold">Comments</label>
                                 <input type="text" 
                                        class="form-control" 
@@ -100,14 +100,14 @@
                             <table class="table table-hover mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th style="width: 25%">Item</th>
-                                        <th style="width: 10%">Donated Qty</th>
-                                        <th style="width: 10%">Batch No</th>
-                                        <th style="width: 10%">Batch Date</th>
-                                        <th style="width: 10%">Expiry Date</th>
+                                        <th style="width: 20%">Item</th>
+                                        <th style="width: 8%">Donated Qty</th>
+                                        <th style="width: 12%">Batch No</th>
+                                        <th style="width: 11%">Batch Date</th>
+                                        <th style="width: 11%">Expiry Date</th>
                                         <th style="width: 8%">UOM</th>
-                                        <th style="width: 8%">Unit Value</th>
-                                        <th style="width: 6%">Usable</th>
+                                        <th style="width: 10%">Unit Value</th>
+                                        <th style="width: 8%">Usable</th>
                                         <th style="width: 6%">Defective</th>
                                         <th style="width: 6%">Expired</th>
                                     </tr>
@@ -136,7 +136,7 @@
                                         </td>
                                         <td>
                                             <input type="text" 
-                                                   class="form-control form-control-sm" 
+                                                   class="form-control" 
                                                    name="batch_no_{{ di.item_id }}" 
                                                    placeholder="{% if di.item.is_batched_flag %}Required{% else %}Optional{% endif %}"
                                                    {% if di.item.is_batched_flag %}required{% endif %}
@@ -144,20 +144,20 @@
                                         </td>
                                         <td>
                                             <input type="date" 
-                                                   class="form-control form-control-sm" 
+                                                   class="form-control" 
                                                    name="batch_date_{{ di.item_id }}" 
                                                    max="{{ today }}"
                                                    required>
                                         </td>
                                         <td>
                                             <input type="date" 
-                                                   class="form-control form-control-sm" 
+                                                   class="form-control" 
                                                    name="expiry_date_{{ di.item_id }}" 
                                                    min="{{ today }}"
                                                    {% if di.item.can_expire_flag %}required{% endif %}>
                                         </td>
                                         <td>
-                                            <select class="form-select form-select-sm" 
+                                            <select class="form-select" 
                                                     name="uom_code_{{ di.item_id }}" 
                                                     required>
                                                 <option value="">--</option>
@@ -170,7 +170,7 @@
                                         </td>
                                         <td>
                                             <input type="number" 
-                                                   class="form-control form-control-sm" 
+                                                   class="form-control" 
                                                    name="avg_unit_value_{{ di.item_id }}" 
                                                    step="0.01" 
                                                    min="0.01"
@@ -179,7 +179,7 @@
                                         </td>
                                         <td>
                                             <input type="number" 
-                                                   class="form-control form-control-sm" 
+                                                   class="form-control" 
                                                    name="usable_qty_{{ di.item_id }}" 
                                                    step="0.0001" 
                                                    min="0"
@@ -191,7 +191,7 @@
                                         </td>
                                         <td>
                                             <input type="number" 
-                                                   class="form-control form-control-sm" 
+                                                   class="form-control" 
                                                    name="defective_qty_{{ di.item_id }}" 
                                                    step="0.0001" 
                                                    min="0"
@@ -201,7 +201,7 @@
                                         </td>
                                         <td>
                                             <input type="number" 
-                                                   class="form-control form-control-sm" 
+                                                   class="form-control" 
                                                    name="expired_qty_{{ di.item_id }}" 
                                                    step="0.0001" 
                                                    min="0"
@@ -235,7 +235,7 @@
             </div>
 
             <!-- Sidebar Info -->
-            <div class="col-lg-4">
+            <div class="col-lg-3">
                 <!-- Donation Info Card -->
                 <div class="card mb-3">
                     <div class="card-header bg-light">
