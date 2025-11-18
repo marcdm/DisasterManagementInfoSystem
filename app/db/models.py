@@ -546,11 +546,29 @@ class Donation(db.Model):
     custodian = db.relationship('Custodian', backref='donations')
 
 class ReliefRqstStatus(db.Model):
-    """Relief Request Status Lookup Table"""
+    """Relief Request Status Lookup Table
+    
+    Status Codes:
+        0 = DRAFT (creation workflow)
+        1 = AWAITING APPROVAL (creation workflow)
+        2 = CANCELLED (creation workflow)
+        3 = SUBMITTED (creation workflow)
+        4 = DENIED (action workflow, requires reason)
+        5 = PART FILLED (action workflow)
+        6 = CLOSED (action workflow, requires reason)
+        7 = FILLED (action workflow)
+        8 = INELIGIBLE (action workflow, requires reason)
+        9 = PROCESSED (processed workflow)
+    
+    Views:
+        v_status4reliefrqst_create: Statuses 0,1,2,3 (creation)
+        v_status4reliefrqst_action: Statuses 4,5,6,7,8 (action)
+        v_status4reliefrqst_processed: Status 9 (processed)
+    """
     __tablename__ = 'reliefrqst_status'
     
     status_code = db.Column(db.SmallInteger, primary_key=True)
-    status_desc = db.Column(db.String(20), nullable=False)
+    status_desc = db.Column(db.String(30), nullable=False)
     reason_rqrd_flag = db.Column(db.Boolean, nullable=False, default=False)
     is_active_flag = db.Column(db.Boolean, nullable=False, default=True)
 
