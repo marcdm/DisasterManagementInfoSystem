@@ -36,7 +36,8 @@ All pages maintain a modern, consistent UI with a comprehensive design system in
 - **Accessibility**: WCAG 2.1 AA compliance with focus-visible states, proper color contrast, ARIA labels, semantic HTML, and screen reader support.
 - **Workflows**: Standardized 5-step workflow patterns for Agency Relief Requests and Eligibility Approval.
 - **Dashboards**: 6 role-specific dashboards with consistent modern UI, filter tabs, and summary cards.
-- **Management Modules**: Comprehensive modules for Event, Warehouse, User, Notification, Item, Item Category, Custodian, Unit of Measure, and Inventory management, all featuring modern UI, CRUD operations, validation, and optimistic locking.
+- **Management Modules**: Comprehensive modules for Event, Warehouse, User, Notification, Item, Item Category, Custodian, Unit of Measure, Inventory, and Donation management, all featuring modern UI, CRUD operations, validation, and optimistic locking.
+- **Donation Processing**: Complete donation workflow including header and item management, status tracking (Entered, Verified, Processed), verification audit trails, modern UI with summary cards and filter tabs, restricted to LOGISTICS_MANAGER and LOGISTICS_OFFICER roles.
 
 ### Database Architecture
 - **Schema**: Based on the authoritative ODPEM `aidmgmt-3.sql` schema (40 tables).
@@ -71,9 +72,10 @@ All pages maintain a modern, consistent UI with a comprehensive design system in
 - **Eligibility Approval Workflow**: Role-based access control and service layer for eligibility decisions.
 - **Package Fulfillment Workflow**: Unified `packaging` blueprint with routes for pending fulfillment and package preparation.
 - **Services**: `ItemStatusService`, `InventoryReservationService`, and `BatchAllocationService`.
+- **Donation Processing Workflow**: Complete CRUD operations for donation headers and items with status transitions, verification tracking, and inventory integration.
 
 ### Role-Based Access Control (RBAC)
-- **Feature Registry**: Centralized feature-to-role mapping in `app/core/feature_registry.py` (26 features to 10 database roles).
+- **Feature Registry**: Centralized feature-to-role mapping in `app/core/feature_registry.py` (27 features to 10 database roles).
 - **Dynamic Navigation System**: Role-based dynamic navigation (`templates/components/_dynamic_navigation.html`).
 - **Security Decorators**: Backend route protection decorators (`app/core/decorators.py`).
 - **Smart Routing**: Automatic dashboard routing based on user's primary role.
