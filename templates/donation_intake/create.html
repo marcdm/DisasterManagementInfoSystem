@@ -52,7 +52,7 @@
                                         data-donor="{{ donation.donor.donor_name }}"
                                         data-desc="{{ donation.donation_desc }}"
                                         data-date="{{ donation.received_date|format_date }}"
-                                        data-items="{{ donation.items|length }}">
+                                        data-items='{% for item in donation.items %}{{ item.item.item_name }}: {{ item.item_qty }} {{ item.uom_code }}{% if not loop.last %}|{% endif %}{% endfor %}'>
                                     #{{ donation.donation_id }} - {{ donation.donation_desc|truncate(60) }} ({{ donation.donor.donor_name }})
                                 </option>
                                 {% endfor %}
@@ -80,7 +80,8 @@
                                     </div>
                                     <div class="row mt-2">
                                         <div class="col-12">
-                                            <strong>Items:</strong> <span id="detail-items"></span>
+                                            <strong>Items:</strong>
+                                            <ul id="detail-items" class="mb-0 mt-1"></ul>
                                         </div>
                                     </div>
                                 </div>
@@ -157,7 +158,21 @@ function showDonationDetails() {
         document.getElementById('detail-donor').textContent = option.dataset.donor;
         document.getElementById('detail-desc').textContent = option.dataset.desc;
         document.getElementById('detail-date').textContent = option.dataset.date;
-        document.getElementById('detail-items').textContent = option.dataset.items + ' items';
+        
+        // Parse and display items with quantities
+        const itemsData = option.dataset.items;
+        const itemsList = document.getElementById('detail-items');
+        itemsList.innerHTML = '';
+        
+        if (itemsData) {
+            const items = itemsData.split('|');
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                itemsList.appendChild(li);
+            });
+        }
+        
         document.getElementById('donation-details').style.display = 'block';
     } else {
         document.getElementById('donation-details').style.display = 'none';
