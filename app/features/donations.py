@@ -80,7 +80,10 @@ def list_donations():
 @login_required
 @feature_required('donation_management')
 def create_donation():
-    """Create new donation header"""
+    """
+    Create new donation with header and items in a single atomic transaction.
+    If any validation or save error occurs, rollback entire transaction.
+    """
     if request.method == 'POST':
         try:
             donor_id = request.form.get('donor_id')
@@ -108,17 +111,58 @@ def create_donation():
                 if received_date > date.today():
                     errors.append('Received date cannot be in the future')
             
+            item_data = []
+            for key in request.form.keys():
+                if key.startswith('item_id_'):
+                    item_num = key.split('_')[-1]
+                    item_id = request.form.get(f'item_id_{item_num}')
+                    quantity_str = request.form.get(f'quantity_{item_num}')
+                    uom_id = request.form.get(f'uom_id_{item_num}')
+                    status_code = request.form.get(f'status_code_{item_num}')
+                    item_comments = request.form.get(f'item_comments_{item_num}', '').strip()
+                    
+                    if item_id:
+                        if not quantity_str:
+                            errors.append(f'Quantity is required for item #{item_num}')
+                        else:
+                            try:
+                                quantity = Decimal(quantity_str)
+                                if quantity <= 0:
+                                    errors.append(f'Quantity must be greater than 0 for item #{item_num}')
+                            except:
+                                errors.append(f'Invalid quantity for item #{item_num}')
+                        
+                        if not uom_id:
+                            errors.append(f'UOM is required for item #{item_num}')
+                        if not status_code:
+                            errors.append(f'Status is required for item #{item_num}')
+                        
+                        item_data.append({
+                            'item_id': int(item_id),
+                            'quantity': Decimal(quantity_str) if quantity_str else None,
+                            'uom_id': int(uom_id) if uom_id else None,
+                            'status_code': status_code,
+                            'item_comments': item_comments
+                        })
+            
+            if not item_data:
+                errors.append('At least one donation item is required')
+            
             if errors:
                 for error in errors:
                     flash(error, 'danger')
                 donors = Donor.query.order_by(Donor.donor_name).all()
                 events = Event.query.filter_by(status_code='A').order_by(Event.event_name).all()
                 custodians = Custodian.query.order_by(Custodian.custodian_name).all()
+                items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
+                uoms = UnitOfMeasure.query.filter_by(status_code='A').order_by(UnitOfMeasure.uom_name).all()
                 adhoc_event = _get_adhoc_event()
                 return render_template('donations/create.html', 
                                      donors=donors, 
                                      events=events,
                                      custodians=custodians,
+                                     items=items,
+                                     uoms=uoms,
                                      adhoc_event=adhoc_event,
                                      today=date.today().isoformat(),
                                      form_data=request.form)
@@ -135,19 +179,86 @@ def create_donation():
             add_audit_fields(donation, current_user, is_new=True)
             
             db.session.add(donation)
+            db.session.flush()
+            
+            for item_info in item_data:
+                donation_item = DonationItem()
+                donation_item.donation_id = donation.donation_id
+                donation_item.item_id = item_info['item_id']
+                donation_item.quantity = item_info['quantity']
+                donation_item.uom_id = item_info['uom_id']
+                donation_item.status_code = item_info['status_code']
+                donation_item.item_comments = item_info['item_comments'].upper() if item_info['item_comments'] else None
+                
+                add_audit_fields(donation_item, current_user, is_new=True)
+                
+                db.session.add(donation_item)
+            
             db.session.commit()
             
-            flash(f'Donation #{donation.donation_id} created successfully. Now add donation items.', 'success')
+            flash(f'Donation #{donation.donation_id} created successfully with {len(item_data)} item(s).', 'success')
             return redirect(url_for('donations.view_donation', donation_id=donation.donation_id))
             
+        except ValueError as e:
+            db.session.rollback()
+            flash(f'Validation error: {str(e)}', 'danger')
+            donors = Donor.query.order_by(Donor.donor_name).all()
+            events = Event.query.filter_by(status_code='A').order_by(Event.event_name).all()
+            custodians = Custodian.query.order_by(Custodian.custodian_name).all()
+            items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
+            uoms = UnitOfMeasure.query.filter_by(status_code='A').order_by(UnitOfMeasure.uom_name).all()
+            adhoc_event = _get_adhoc_event()
+            return render_template('donations/create.html', 
+                                 donors=donors, 
+                                 events=events,
+                                 custodians=custodians,
+                                 items=items,
+                                 uoms=uoms,
+                                 adhoc_event=adhoc_event,
+                                 today=date.today().isoformat(),
+                                 form_data=request.form)
         except IntegrityError as e:
             db.session.rollback()
             flash(f'Database error: {str(e)}', 'danger')
-            return redirect(url_for('donations.create_donation'))
+            donors = Donor.query.order_by(Donor.donor_name).all()
+            events = Event.query.filter_by(status_code='A').order_by(Event.event_name).all()
+            custodians = Custodian.query.order_by(Custodian.custodian_name).all()
+            items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
+            uoms = UnitOfMeasure.query.filter_by(status_code='A').order_by(UnitOfMeasure.uom_name).all()
+            adhoc_event = _get_adhoc_event()
+            return render_template('donations/create.html', 
+                                 donors=donors, 
+                                 events=events,
+                                 custodians=custodians,
+                                 items=items,
+                                 uoms=uoms,
+                                 adhoc_event=adhoc_event,
+                                 today=date.today().isoformat(),
+                                 form_data=request.form)
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Unexpected error: {str(e)}', 'danger')
+            donors = Donor.query.order_by(Donor.donor_name).all()
+            events = Event.query.filter_by(status_code='A').order_by(Event.event_name).all()
+            custodians = Custodian.query.order_by(Custodian.custodian_name).all()
+            items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
+            uoms = UnitOfMeasure.query.filter_by(status_code='A').order_by(UnitOfMeasure.uom_name).all()
+            adhoc_event = _get_adhoc_event()
+            return render_template('donations/create.html', 
+                                 donors=donors, 
+                                 events=events,
+                                 custodians=custodians,
+                                 items=items,
+                                 uoms=uoms,
+                                 adhoc_event=adhoc_event,
+                                 today=date.today().isoformat(),
+                                 form_data=request.form)
     
     donors = Donor.query.order_by(Donor.donor_name).all()
     events = Event.query.filter_by(status_code='A').order_by(Event.event_name).all()
     custodians = Custodian.query.order_by(Custodian.custodian_name).all()
+    items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
+    uoms = UnitOfMeasure.query.filter_by(status_code='A').order_by(UnitOfMeasure.uom_name).all()
     adhoc_event = _get_adhoc_event()
     
     if not donors:
@@ -158,10 +269,20 @@ def create_donation():
         flash('No custodians available. Please create a custodian first.', 'warning')
         return redirect(url_for('donations.list_donations'))
     
+    if not items:
+        flash('No items available. Please create items first.', 'warning')
+        return redirect(url_for('donations.list_donations'))
+    
+    if not uoms:
+        flash('No units of measure available. Please create UOMs first.', 'warning')
+        return redirect(url_for('donations.list_donations'))
+    
     return render_template('donations/create.html', 
                          donors=donors, 
                          events=events,
                          custodians=custodians,
+                         items=items,
+                         uoms=uoms,
                          adhoc_event=adhoc_event,
                          today=date.today().isoformat())
 

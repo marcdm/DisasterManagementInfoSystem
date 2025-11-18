@@ -131,12 +131,30 @@
                             </div>
                         </div>
 
+                        <!-- Donation Items Section -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="border-bottom pb-2 mb-0 flex-grow-1">
+                                    <i class="bi bi-box-seam"></i> Donation Items <span class="text-danger">*</span>
+                                </h5>
+                                <button type="button" class="btn btn-sm btn-success ms-3" id="addItemBtn">
+                                    <i class="bi bi-plus-circle"></i> Add Item
+                                </button>
+                            </div>
+                            <div id="itemsContainer">
+                                <!-- Item rows will be added here dynamically -->
+                            </div>
+                            <div id="noItemsMessage" class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> Click "Add Item" to add donation items. At least one item is required.
+                            </div>
+                        </div>
+
                         <!-- Form Actions -->
                         <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
                             <a href="{{ url_for('donations.list_donations') }}" class="btn-relief-secondary">
                                 <i class="bi bi-x-circle"></i> Cancel
                             </a>
-                            <button type="submit" class="btn-relief-primary">
+                            <button type="submit" class="btn-relief-primary" id="submitBtn">
                                 <i class="bi bi-check-circle"></i> Accept Donation
                             </button>
                         </div>
@@ -146,4 +164,115 @@
         </div>
     </div>
 </div>
+
+<script>
+let itemCounter = 0;
+const items = {{ items | tojson | safe }};
+const uoms = {{ uoms | tojson | safe }};
+
+function addItemRow() {
+    const container = document.getElementById('itemsContainer');
+    const noItemsMsg = document.getElementById('noItemsMessage');
+    
+    itemCounter++;
+    const rowId = `item-row-${itemCounter}`;
+    
+    const itemRow = document.createElement('div');
+    itemRow.className = 'card mb-3';
+    itemRow.id = rowId;
+    itemRow.innerHTML = `
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <h6 class="mb-0">Item #${itemCounter}</h6>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeItemRow('${rowId}')">
+                    <i class="bi bi-trash"></i> Remove
+                </button>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Item <span class="text-danger">*</span></label>
+                    <select class="form-select" name="item_id_${itemCounter}" required>
+                        <option value="">-- Select Item --</option>
+                        ${items.map(item => `<option value="${item.item_id}">${item.item_name}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Quantity <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" name="quantity_${itemCounter}" 
+                           step="0.0001" min="0.0001" required placeholder="0.00">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">UOM <span class="text-danger">*</span></label>
+                    <select class="form-select" name="uom_id_${itemCounter}" required>
+                        <option value="">-- Select UOM --</option>
+                        ${uoms.map(uom => `<option value="${uom.uom_id}">${uom.uom_name}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Item Status <span class="text-danger">*</span></label>
+                    <select class="form-select" name="status_code_${itemCounter}" required>
+                        <option value="">-- Select Status --</option>
+                        <option value="P">Processed</option>
+                        <option value="V">Verified</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Item Comments</label>
+                    <input type="text" class="form-control" name="item_comments_${itemCounter}" 
+                           placeholder="Optional comments" style="text-transform: uppercase;">
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(itemRow);
+    
+    if (noItemsMsg) {
+        noItemsMsg.style.display = 'none';
+    }
+    
+    updateItemNumbers();
+}
+
+function removeItemRow(rowId) {
+    const row = document.getElementById(rowId);
+    if (row) {
+        row.remove();
+        updateItemNumbers();
+        
+        const container = document.getElementById('itemsContainer');
+        const noItemsMsg = document.getElementById('noItemsMessage');
+        
+        if (container.children.length === 0 && noItemsMsg) {
+            noItemsMsg.style.display = 'block';
+        }
+    }
+}
+
+function updateItemNumbers() {
+    const container = document.getElementById('itemsContainer');
+    const items = container.children;
+    
+    Array.from(items).forEach((item, index) => {
+        const header = item.querySelector('h6');
+        if (header) {
+            header.textContent = `Item #${index + 1}`;
+        }
+    });
+}
+
+document.getElementById('addItemBtn').addEventListener('click', addItemRow);
+
+document.querySelector('form').addEventListener('submit', function(e) {
+    const container = document.getElementById('itemsContainer');
+    
+    if (container.children.length === 0) {
+        e.preventDefault();
+        alert('Please add at least one donation item before submitting.');
+        return false;
+    }
+});
+
+addItemRow();
+</script>
 {% endblock %}
