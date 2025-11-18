@@ -890,17 +890,26 @@ def _submit_for_approval(relief_request):
         if not was_already_pending:
             try:
                 from app.services.notification_service import NotificationService
+                import logging
+                logger = logging.getLogger(__name__)
+                
                 lm_users = NotificationService.get_active_users_by_role_codes(['LOGISTICS_MANAGER'])
-                preparer_name = f"{current_user.first_name} {current_user.last_name}" if current_user.first_name else current_user.email.split('@')[0]
-                NotificationService.create_package_ready_for_approval_notification(
-                    relief_pkg=relief_pkg,
-                    recipient_users=lm_users,
-                    preparer_name=preparer_name
-                )
+                logger.info(f'Found {len(lm_users)} Logistics Manager(s) to notify for relief request #{relief_request.reliefrqst_id}')
+                
+                if lm_users:
+                    preparer_name = f"{current_user.first_name} {current_user.last_name}" if current_user.first_name else current_user.email.split('@')[0]
+                    notifications = NotificationService.create_package_ready_for_approval_notification(
+                        relief_pkg=relief_pkg,
+                        recipient_users=lm_users,
+                        preparer_name=preparer_name
+                    )
+                    logger.info(f'Created {len(notifications)} notification(s) for LM approval of relief request #{relief_request.reliefrqst_id}')
+                else:
+                    logger.warning(f'No Logistics Managers found to notify for relief request #{relief_request.reliefrqst_id}')
             except Exception as e:
                 import logging
                 logger = logging.getLogger(__name__)
-                logger.warning(f'Failed to send LM approval notification: {str(e)}')
+                logger.error(f'Failed to send LM approval notification: {str(e)}', exc_info=True)
         
         db.session.commit()
         
