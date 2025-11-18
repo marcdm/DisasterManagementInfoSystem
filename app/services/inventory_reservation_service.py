@@ -96,7 +96,33 @@ def reserve_inventory(reliefrqst_id: int, new_allocations: List[Dict], old_alloc
                 ).with_for_update().first()
                 
                 if not inventory:
-                    return False, f'No active inventory found for item {item_id} at warehouse {inventory_id}'
+                    # If we're trying to INCREASE reservations (new allocation), this is an error
+                    if difference > 0:
+                        return False, f'No active inventory found for item {item_id} at warehouse {inventory_id}'
+                    
+                    # If we're trying to DECREASE reservations (releasing old allocation),
+                    # check for inactive inventory and clean it up
+                    else:
+                        # Query for inactive inventory to clean up stale reservations
+                        inactive_inventory = Inventory.query.filter_by(
+                            item_id=item_id,
+                            inventory_id=inventory_id
+                        ).with_for_update().first()
+                        
+                        if inactive_inventory and inactive_inventory.status_code != 'A':
+                            # Found inactive inventory with stale reservation - clean it up
+                            from flask import current_app
+                            current_app.logger.warning(
+                                f'Releasing reservation from inactive inventory: '
+                                f'item_id={item_id}, warehouse_id={inventory_id}, '
+                                f'status={inactive_inventory.status_code}, '
+                                f'releasing {abs(difference)} units'
+                            )
+                            # Reset reserved_qty to prevent data integrity issues
+                            new_reserved = inactive_inventory.reserved_qty + difference
+                            inactive_inventory.reserved_qty = max(Decimal('0'), new_reserved)
+                        # If no inventory record exists at all, skip silently
+                        continue
                 
                 # Calculate new reserved quantity
                 new_reserved = inventory.reserved_qty + difference
