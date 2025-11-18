@@ -507,6 +507,8 @@ const BatchAllocation = (function() {
      */
     function updateMainPageDisplay() {
         const totalAllocated = getTotalAllocated();
+        const requestedQty = currentItemData.requestedQty;
+        const remaining = Math.max(0, requestedQty - totalAllocated);
         
         // Update allocated quantity display in main form (if element exists)
         const allocatedDisplay = document.getElementById(`allocated_${currentItemId}`);
@@ -514,18 +516,94 @@ const BatchAllocation = (function() {
             allocatedDisplay.textContent = formatNumber(totalAllocated);
         }
         
+        // Update Allocated column (approve.html uses total_${itemId})
+        const totalDisplay = document.getElementById(`total_${currentItemId}`);
+        if (totalDisplay) {
+            totalDisplay.textContent = formatNumber(totalAllocated);
+        }
+        
+        // Update Remaining column
+        const remainingDisplay = document.getElementById(`remaining_${currentItemId}`);
+        if (remainingDisplay) {
+            remainingDisplay.textContent = formatNumber(remaining);
+        }
+        
+        // Update Status dropdown based on allocation logic
+        const statusDropdown = document.getElementById(`status_${currentItemId}`);
+        if (statusDropdown) {
+            const autoStatus = statusDropdown.getAttribute('data-auto-status');
+            const allowedCodes = statusDropdown.getAttribute('data-allowed-codes');
+            
+            if (autoStatus && allowedCodes) {
+                const allowedArray = allowedCodes.split(',');
+                let newStatus = autoStatus;
+                
+                // Auto-status logic based on allocation
+                if (totalAllocated === 0) {
+                    // No allocation - set to default auto status (usually 'A' = Approved)
+                    newStatus = autoStatus;
+                } else if (totalAllocated >= requestedQty) {
+                    // Fully allocated - set to 'A' (Approved) if allowed
+                    newStatus = allowedArray.includes('A') ? 'A' : autoStatus;
+                } else {
+                    // Partially allocated - set to 'P' (Partially Approved) if allowed
+                    newStatus = allowedArray.includes('P') ? 'P' : autoStatus;
+                }
+                
+                // Only update if the new status is in the allowed codes
+                if (allowedArray.includes(newStatus) && statusDropdown.value !== newStatus) {
+                    statusDropdown.value = newStatus;
+                    // Trigger change event to update any dependent UI
+                    statusDropdown.dispatchEvent(new Event('change'));
+                }
+            }
+        }
+        
         // Update "Select Batches" button to show allocation count
-        const selectBtn = document.querySelector(`[data-item-id="${currentItemId}"] .select-batches-btn`);
+        const selectBtn = document.querySelector(`.select-batches-btn[data-item-id="${currentItemId}"]`);
         if (selectBtn) {
-            const batchCount = Object.keys(currentAllocations).length;
+            const batchCount = Object.keys(currentAllocations).filter(key => currentAllocations[key] > 0).length;
+            
             if (batchCount > 0) {
-                selectBtn.innerHTML = `<i class="bi bi-box-seam"></i> ${batchCount} Batch${batchCount > 1 ? 'es' : ''} Selected`;
+                // Count unique warehouses from allocations
+                const warehouseIds = new Set();
+                for (const batchId of Object.keys(currentAllocations)) {
+                    if (currentAllocations[batchId] > 0) {
+                        const batch = currentBatches[batchId];
+                        if (batch && batch.warehouseId) {
+                            warehouseIds.add(batch.warehouseId);
+                        }
+                    }
+                }
+                const warehouseCount = warehouseIds.size;
+                
+                selectBtn.innerHTML = `<i class="bi bi-eye"></i> View/Edit Batches <span class="badge bg-light text-success ms-1">${batchCount}</span>`;
                 selectBtn.classList.add('btn-success');
-                selectBtn.classList.remove('btn-outline');
+                selectBtn.classList.remove('btn-outline-secondary');
+                
+                // Update warehouse summary text (if it exists)
+                const summaryDiv = selectBtn.parentElement.querySelector('.text-muted');
+                if (summaryDiv) {
+                    summaryDiv.textContent = `${warehouseCount} warehouse${warehouseCount > 1 ? 's' : ''}`;
+                } else {
+                    // Create summary div if it doesn't exist
+                    const newSummary = document.createElement('div');
+                    newSummary.className = 'text-muted';
+                    newSummary.style.fontSize = '0.75rem';
+                    newSummary.style.marginTop = '0.25rem';
+                    newSummary.textContent = `${warehouseCount} warehouse${warehouseCount > 1 ? 's' : ''}`;
+                    selectBtn.parentElement.appendChild(newSummary);
+                }
             } else {
-                selectBtn.innerHTML = '<i class="bi bi-box-seam"></i> Select Batches';
+                selectBtn.innerHTML = '<i class="bi bi-clipboard-check"></i> Select Batches';
                 selectBtn.classList.remove('btn-success');
-                selectBtn.classList.add('btn-outline');
+                selectBtn.classList.add('btn-outline-secondary');
+                
+                // Remove warehouse summary if it exists
+                const summaryDiv = selectBtn.parentElement.querySelector('.text-muted');
+                if (summaryDiv) {
+                    summaryDiv.remove();
+                }
             }
         }
     }
