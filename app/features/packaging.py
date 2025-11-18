@@ -230,6 +230,7 @@ def pending_fulfillment():
         joinedload(ReliefRqst.eligible_event),
         joinedload(ReliefRqst.status),
         joinedload(ReliefRqst.items),
+        joinedload(ReliefRqst.packages),  # Load packages to check for pending approval
         joinedload(ReliefRqst.fulfillment_lock).joinedload(ReliefRequestFulfillmentLock.fulfiller)
     ).filter(
         ReliefRqst.status_code.in_([rr_service.STATUS_SUBMITTED, rr_service.STATUS_PART_FILLED])
@@ -237,8 +238,18 @@ def pending_fulfillment():
     
     all_requests = base_query.all()
     
+    # Helper function to check if request has package pending LM approval
+    def has_pending_approval(req):
+        """Check if request has a package submitted for LM approval"""
+        return any(pkg.status_code == rr_service.PKG_STATUS_PENDING and pkg.dispatch_dtime is None 
+                   for pkg in req.packages)
+    
     if filter_type == 'awaiting':
-        filtered_requests = [r for r in all_requests if r.status_code == rr_service.STATUS_SUBMITTED and not r.fulfillment_lock]
+        # Exclude requests that have packages pending LM approval
+        filtered_requests = [r for r in all_requests 
+                           if r.status_code == rr_service.STATUS_SUBMITTED 
+                           and not r.fulfillment_lock 
+                           and not has_pending_approval(r)]
     elif filter_type == 'in_progress':
         filtered_requests = [r for r in all_requests if r.fulfillment_lock]
     elif filter_type == 'ready':
@@ -247,15 +258,23 @@ def pending_fulfillment():
         filtered_requests = all_requests
     
     global_counts = {
-        'submitted': len([r for r in all_requests if r.status_code == rr_service.STATUS_SUBMITTED and not r.fulfillment_lock]),
+        'submitted': len([r for r in all_requests 
+                         if r.status_code == rr_service.STATUS_SUBMITTED 
+                         and not r.fulfillment_lock 
+                         and not has_pending_approval(r)]),
         'locked': len([r for r in all_requests if r.fulfillment_lock]),
         'part_filled': len([r for r in all_requests if r.status_code == rr_service.STATUS_PART_FILLED])
     }
     
     filtered_counts = {
-        'submitted': len([r for r in filtered_requests if r.status_code == rr_service.STATUS_SUBMITTED and not r.fulfillment_lock]),
+        'submitted': len([r for r in filtered_requests 
+                         if r.status_code == rr_service.STATUS_SUBMITTED 
+                         and not r.fulfillment_lock 
+                         and not has_pending_approval(r)]),
         'locked': len([r for r in filtered_requests if r.fulfillment_lock]),
-        'part_filled': len([r for r in filtered_requests if r.status_code == rr_service.STATUS_PART_FILLED and not r.fulfillment_lock])
+        'part_filled': len([r for r in filtered_requests 
+                           if r.status_code == rr_service.STATUS_PART_FILLED 
+                           and not r.fulfillment_lock])
     }
     
     return render_template('packaging/pending_fulfillment.html',
