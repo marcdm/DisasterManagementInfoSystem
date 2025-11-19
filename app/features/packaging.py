@@ -1311,6 +1311,12 @@ def get_item_batches(item_id):
                 allocated_batch_ids
             )
             
+            # Debug logging
+            print(f"DEBUG get_item_batches: item_id={item_id}, remaining_qty={remaining_qty}")
+            print(f"DEBUG get_item_batches: allocated_batch_ids={allocated_batch_ids}")
+            print(f"DEBUG get_item_batches: limited_batches count={len(limited_batches)}")
+            print(f"DEBUG get_item_batches: total_available={total_available}, shortfall={shortfall}")
+            
             # Assign priority groups
             batch_groups = BatchAllocationService.assign_priority_groups(limited_batches, item)
             
@@ -1318,7 +1324,7 @@ def get_item_batches(item_id):
             result = []
             for batch, priority_group in batch_groups:
                 available_qty = batch.usable_qty - batch.reserved_qty
-                result.append({
+                batch_info = {
                     'batch_id': batch.batch_id,
                     'batch_no': batch.batch_no,
                     'batch_date': batch.batch_date.isoformat() if batch.batch_date else None,
@@ -1336,7 +1342,9 @@ def get_item_batches(item_id):
                     'is_expired': batch.is_expired,
                     'status_code': batch.status_code,
                     'priority_group': priority_group
-                })
+                }
+                result.append(batch_info)
+                print(f"DEBUG batch: {batch.batch_id} ({batch.batch_no}) - warehouse_id={batch_info['warehouse_id']}, warehouse_name={batch_info['warehouse_name']}, available={available_qty}")
             
             return jsonify({
                 'item_id': item_id,
