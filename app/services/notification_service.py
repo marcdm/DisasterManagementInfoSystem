@@ -313,7 +313,7 @@ class NotificationService:
         for user in recipient_users:
             # Different deep-links for different user types based on role
             user_role_codes = [role.code for role in user.roles]
-            is_logistics_user = any(code in ['LO', 'LM'] for code in user_role_codes)
+            is_logistics_user = any(code in ['LOGISTICS_OFFICER', 'LOGISTICS_MANAGER'] for code in user_role_codes)
             
             if is_logistics_user:
                 # Logistics/warehouse users: Link to package details
