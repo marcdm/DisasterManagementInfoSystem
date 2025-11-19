@@ -467,6 +467,7 @@ def _process_intake_submission(donation, warehouse):
                 inventory = Inventory()
                 inventory.inventory_id = warehouse.warehouse_id
                 inventory.item_id = item_data['item_id']
+                inventory.uom_code = item_data['uom_code']
                 inventory.usable_qty = item_data['usable_qty']
                 inventory.defective_qty = item_data['defective_qty']
                 inventory.expired_qty = item_data['expired_qty']
