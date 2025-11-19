@@ -460,7 +460,7 @@ const BatchAllocation = (function() {
         
         // Populate batch details (warehouse name now in section header, not batch item)
         container.querySelector('.batch-number').textContent = batch.batch_no;
-        container.querySelector('.batch-batch-date').textContent = formatDate(batch.batch_date);
+        container.querySelector('.batch-batch-date').textContent = formatDate(batch.batch_date) || 'N/A';
         container.querySelector('.batch-expiry-date').textContent = formatDate(batch.expiry_date) || 'N/A';
         container.querySelector('.batch-available-qty').textContent = formatNumber(batch.available_qty);
         

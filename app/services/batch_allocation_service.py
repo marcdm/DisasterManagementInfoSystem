@@ -384,6 +384,10 @@ class BatchAllocationService:
                 all_batches.append(batch)
                 seen_batch_ids.add(batch.batch_id)
         
+        # Re-sort all_batches to ensure FEFO ordering within each warehouse
+        # This ensures batches are displayed in correct order in the drawer
+        all_batches = BatchAllocationService.sort_batches_by_allocation_rule(all_batches, item)
+        
         # Calculate total available and shortfall
         cumulative_available = Decimal('0')
         for batch in all_batches:
