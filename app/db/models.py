@@ -494,6 +494,13 @@ class BatchLocation(db.Model):
     batch = db.relationship('ItemBatch', foreign_keys=[batch_id], backref='locations')
     location = db.relationship('Location', backref='batch_locations')
 
+class Country(db.Model):
+    """Country Lookup Table"""
+    __tablename__ = 'country'
+    
+    country_id = db.Column(db.SmallInteger, primary_key=True)
+    country_name = db.Column(db.String(80), nullable=False)
+
 class Donor(db.Model):
     """Donor"""
     __tablename__ = 'donor'
@@ -512,6 +519,8 @@ class Donor(db.Model):
     update_by_id = db.Column(db.String(20), nullable=False)
     update_dtime = db.Column(db.DateTime, nullable=False)
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
+    
+    country = db.relationship('Country', backref='donors')
 
 class Donation(db.Model):
     """Donation
