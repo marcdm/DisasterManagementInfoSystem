@@ -360,10 +360,10 @@ def approve_package(reliefrqst_id):
 
 def _save_draft_approval(relief_request, relief_pkg):
     """
-    LM saves draft changes during approval workflow.
+    LM saves draft changes during approval workflow and releases lock.
     - Updates allocations with delta-based itembatch changes
     - Keeps package in Pending status
-    - Retains lock for continued editing
+    - Releases lock so other LM users can access the package
     - No notifications sent
     """
     try:
@@ -397,9 +397,13 @@ def _save_draft_approval(relief_request, relief_pkg):
         
         # Commit changes
         db.session.commit()
-        flash(f'Draft saved for relief request #{relief_request.reliefrqst_id}. Package remains pending approval.', 'success')
         
-        return redirect(url_for('packaging.approve_package', reliefrqst_id=relief_request.reliefrqst_id))
+        # Release lock so other users can access this package
+        lock_service.release_lock(relief_request.reliefrqst_id, current_user.user_id, force=False, release_reservations=False)
+        
+        flash(f'Draft saved for relief request #{relief_request.reliefrqst_id}. Lock released - other users can now access this package.', 'success')
+        
+        return redirect(url_for('packaging.pending_approval'))
         
     except ValueError as e:
         db.session.rollback()
@@ -962,11 +966,12 @@ def prepare_package(reliefrqst_id):
 
 def _save_draft(relief_request):
     """
-    Save packaging progress as draft (lock retained for continued editing).
+    Save packaging progress as draft and release lock.
     
     IMPORTANT: Uses atomic transaction to ensure allocations and reservations stay in sync.
     If inventory reservation fails, entire transaction rolls back to prevent phantom allocations.
-    Lock is retained so user can continue editing and retry.
+    Lock is retained on failure so user can continue editing and retry.
+    Lock is released on success so other LO/LM users can access the package.
     """
     try:
         # Process and validate allocations (creates ReliefPkgItem records in pending transaction)
@@ -996,9 +1001,13 @@ def _save_draft(relief_request):
         
         # Reservation succeeded - commit both allocations and reservations atomically
         db.session.commit()
-        flash(f'Draft saved for relief request #{relief_request.reliefrqst_id} with inventory reserved', 'success')
         
-        return redirect(url_for('packaging.prepare_package', reliefrqst_id=relief_request.reliefrqst_id))
+        # Release lock so other users can access this package
+        lock_service.release_lock(relief_request.reliefrqst_id, current_user.user_id, force=False, release_reservations=False)
+        
+        flash(f'Draft saved for relief request #{relief_request.reliefrqst_id} with inventory reserved. Lock released - other users can now access this package.', 'success')
+        
+        return redirect(url_for('packaging.pending_fulfillment'))
         
     except ValueError as e:
         db.session.rollback()
