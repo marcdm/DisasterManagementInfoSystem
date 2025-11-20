@@ -540,23 +540,6 @@
                 </div>
             </div>
 
-            <!-- Lock Info Banner -->
-            {% if is_locked_by_me %}
-            <div class="lock-info-banner">
-                <div class="lock-info-content">
-                    <i class="bi bi-lock-fill"></i>
-                    <div class="lock-info-text">
-                        <h6>You are currently editing this relief package</h6>
-                        <p>Editing session started 0 minutes ago. Your lock will automatically expire after 15 minutes of inactivity.</p>
-                    </div>
-                </div>
-                <button type="button" class="btn-release-lock" onclick="releaseLock()">
-                    <i class="bi bi-unlock"></i>
-                    Release Lock
-                </button>
-            </div>
-            {% endif %}
-
             <!-- Metric Cards -->
             <div class="metric-cards">
                 <div class="metric-card">
@@ -1153,14 +1136,8 @@ function validateAllAllocations() {
     return valid;
 }
 
-function releaseLock() {
-    if (confirm('Are you sure you want to release the lock? Any unsaved changes will be lost.')) {
-        window.location.href = '{{ url_for("packaging.pending_approval") }}';
-    }
-}
-
 function handleCancelPackage() {
-    if (confirm('Cancel package preparation?\n\nThis will:\n• Delete all draft allocations\n• Release all inventory reservations\n• Release the fulfillment lock\n\nThis action cannot be undone.')) {
+    if (confirm('Cancel package preparation?\n\nThis will:\n• Delete all draft allocations\n• Release all inventory reservations\n\nThis action cannot be undone.')) {
         // Create and submit a form to POST to the cancel route
         const form = document.createElement('form');
         form.method = 'POST';

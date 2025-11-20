@@ -144,38 +144,21 @@
                     {% endif %}
                 </td>
                 <td>
-                    {% if req.fulfillment_lock %}
-                    {{ status_badge('info', 'Being Prepared') }}
-                    <div class="table-sku">by {{ req.fulfillment_lock.fulfiller.first_name }} {{ req.fulfillment_lock.fulfiller.last_name }}</div>
-                    {% elif req.packages and req.packages|selectattr('status_code', 'equalto', 'P')|selectattr('dispatch_dtime', 'none')|list %}
+                    {% if req.packages and req.packages|selectattr('status_code', 'equalto', 'P')|selectattr('dispatch_dtime', 'none')|list %}
                     {{ status_badge('primary', 'Awaiting Approval') }}
                     {% elif req.status_code == STATUS_SUBMITTED %}
                     {{ status_badge('warning', 'Awaiting to be Filled') }}
                     {% elif req.status_code == STATUS_PART_FILLED %}
-                    {{ status_badge('success', 'Ready for Dispatch') }}
+                    {{ status_badge('info', 'Being Prepared') }}
                     {% endif %}
                 </td>
                 <td>
-                    {% if req.fulfillment_lock and req.fulfillment_lock.fulfiller_user_id == current_user.user_id %}
-                    <a href="{{ url_for('packaging.prepare_package', reliefrqst_id=req.reliefrqst_id) }}" 
-                       class="btn-relief-primary btn-sm"
-                       aria-label="Continue preparing RR-{{ '%06d'|format(req.reliefrqst_id) }}">
-                        <i class="bi bi-box-seam"></i>
-                        Continue
-                    </a>
-                    {% elif req.fulfillment_lock %}
-                    <button class="btn-relief-secondary btn-sm" disabled>
-                        <i class="bi bi-lock"></i>
-                        Locked
-                    </button>
-                    {% else %}
                     <a href="{{ url_for('packaging.prepare_package', reliefrqst_id=req.reliefrqst_id) }}" 
                        class="btn-relief-primary btn-sm"
                        aria-label="Prepare package for RR-{{ '%06d'|format(req.reliefrqst_id) }}">
                         <i class="bi bi-box-seam"></i>
                         Prepare
                     </a>
-                    {% endif %}
                 </td>
             </tr>
             {% endfor %}
