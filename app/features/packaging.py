@@ -13,7 +13,7 @@ import uuid
 from app.db import db
 from app.db.models import (
     ReliefRqst, ReliefRqstItem, Item, Warehouse, Inventory, ItemBatch,
-    User, Notification, ReliefRequestFulfillmentLock,
+    User, Notification,
     ReliefPkg, ReliefPkgItem, ReliefRqstItemStatus
 )
 from app.core.rbac import has_permission, permission_required
@@ -37,8 +37,9 @@ def pending_approval():
     Criteria for "Pending LM Approval":
     - Relief Request status = SUBMITTED or PART_FILLED (allows multi-batch fulfillment)
     - ReliefPkg exists with status_code='P' (Pending - submitted for approval)
-    - No active fulfillment lock (LO released lock after submission)
     - Not yet dispatched (dispatch_dtime is NULL)
+    
+    Concurrency control is handled via optimistic locking (version_nbr).
     """
     from app.core.rbac import is_logistics_manager
     if not is_logistics_manager():
@@ -53,8 +54,7 @@ def pending_approval():
         joinedload(ReliefRqst.eligible_event),
         joinedload(ReliefRqst.status),
         joinedload(ReliefRqst.items),
-        joinedload(ReliefRqst.packages),
-        joinedload(ReliefRqst.fulfillment_lock).joinedload(ReliefRequestFulfillmentLock.fulfiller)
+        joinedload(ReliefRqst.packages)
     ).filter(
         ReliefRqst.status_code.in_([rr_service.STATUS_SUBMITTED, rr_service.STATUS_PART_FILLED])
     ).order_by(ReliefRqst.create_dtime.desc()).all()
@@ -65,8 +65,8 @@ def pending_approval():
         # Check if there's a ReliefPkg for this request with status='P' (submitted for approval)
         relief_pkg = next((pkg for pkg in req.packages if pkg.status_code == rr_service.PKG_STATUS_PENDING), None)
         
-        if relief_pkg and not req.fulfillment_lock and relief_pkg.dispatch_dtime is None:
-            # Package exists, is pending approval, no active lock, and not yet dispatched
+        if relief_pkg and relief_pkg.dispatch_dtime is None:
+            # Package exists, is pending approval and not yet dispatched
             pending_requests.append(req)
     
     counts = {
