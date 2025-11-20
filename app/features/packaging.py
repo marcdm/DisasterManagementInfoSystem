@@ -1854,7 +1854,8 @@ def dispatch_received():
     base_query = db.session.query(ReliefPkg).options(
         joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.agency),
         joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.eligible_event),
-        joinedload(ReliefPkg.items).joinedload(ReliefPkgItem.warehouse)
+        joinedload(ReliefPkg.items).joinedload(ReliefPkgItem.item),
+        joinedload(ReliefPkg.items).joinedload(ReliefPkgItem.batch)
     ).join(ReliefRqst).filter(
         ReliefPkg.status_code == rr_service.PKG_STATUS_DISPATCHED,
         ReliefPkg.received_dtime != None  # Has been handed over
@@ -1923,8 +1924,7 @@ def dispatch_received_details(reliefpkg_id):
         joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.eligible_event),
         joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.items).joinedload(ReliefRqstItem.item),
         joinedload(ReliefPkg.items).joinedload(ReliefPkgItem.item),
-        joinedload(ReliefPkg.items).joinedload(ReliefPkgItem.batch),
-        joinedload(ReliefPkg.items).joinedload(ReliefPkgItem.warehouse)
+        joinedload(ReliefPkg.items).joinedload(ReliefPkgItem.batch)
     ).get_or_404(reliefpkg_id)
     
     # Verify package has been handed over
