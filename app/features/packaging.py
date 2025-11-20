@@ -724,8 +724,7 @@ def pending_fulfillment():
         joinedload(ReliefRqst.eligible_event),
         joinedload(ReliefRqst.status),
         joinedload(ReliefRqst.items),
-        joinedload(ReliefRqst.packages),  # Load packages to check for pending approval
-        joinedload(ReliefRqst.fulfillment_lock).joinedload(ReliefRequestFulfillmentLock.fulfiller)
+        joinedload(ReliefRqst.packages)  # Load packages to check for pending approval
     ).filter(
         ReliefRqst.status_code.in_([rr_service.STATUS_SUBMITTED, rr_service.STATUS_PART_FILLED])
     ).order_by(ReliefRqst.create_dtime.desc())
@@ -739,17 +738,15 @@ def pending_fulfillment():
                    for pkg in req.packages)
     
     if filter_type == 'awaiting':
-        # Show all SUBMITTED requests regardless of lock status
-        # (SUBMITTED requests should appear here even if being actively prepared)
+        # Show all SUBMITTED requests (not yet partially filled)
         filtered_requests = [r for r in all_requests 
                            if r.status_code == rr_service.STATUS_SUBMITTED 
                            and not has_pending_approval(r)]
     elif filter_type == 'in_progress':
-        # Being Prepared: Only show PART_FILLED requests with locks (active preparation)
-        # SUBMITTED requests should not appear here even if they have a lock
+        # Being Prepared: Show PART_FILLED requests (in active preparation)
         filtered_requests = [r for r in all_requests 
-                           if r.fulfillment_lock 
-                           and r.status_code == rr_service.STATUS_PART_FILLED]
+                           if r.status_code == rr_service.STATUS_PART_FILLED
+                           and not has_pending_approval(r)]
     elif filter_type == 'pending_approval':
         # Show only requests with packages awaiting LM approval
         filtered_requests = [r for r in all_requests if has_pending_approval(r)]
@@ -766,8 +763,8 @@ def pending_fulfillment():
                          if r.status_code == rr_service.STATUS_SUBMITTED 
                          and not has_pending_approval(r)]),
         'locked': len([r for r in all_requests 
-                      if r.fulfillment_lock 
-                      and r.status_code == rr_service.STATUS_PART_FILLED]),
+                      if r.status_code == rr_service.STATUS_PART_FILLED
+                      and not has_pending_approval(r)]),
         'pending_approval': len([r for r in all_requests if has_pending_approval(r)]),
         'approved': approved_packages_count
     }
@@ -777,8 +774,8 @@ def pending_fulfillment():
                          if r.status_code == rr_service.STATUS_SUBMITTED 
                          and not has_pending_approval(r)]),
         'locked': len([r for r in filtered_requests 
-                      if r.fulfillment_lock 
-                      and r.status_code == rr_service.STATUS_PART_FILLED]),
+                      if r.status_code == rr_service.STATUS_PART_FILLED
+                      and not has_pending_approval(r)]),
         'pending_approval': len([r for r in filtered_requests if has_pending_approval(r)])
     }
     
