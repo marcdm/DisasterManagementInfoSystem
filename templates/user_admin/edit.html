@@ -4,22 +4,101 @@
 {% block title %}Edit User - {{ user.full_name or user.email }}{% endblock %}
 
 {% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/modern-ui.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/user-management-ui.css') }}">
+<style>
+    /* Modern Card Styling */
+    .card {
+        border-radius: 0.5rem;
+        transition: all 0.2s ease-in-out;
+    }
+    
+    .card-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #f1f3f5;
+    }
+    
+    .card-title {
+        font-weight: 600;
+        color: #212529;
+        font-size: 1rem;
+    }
+    
+    /* Form Modern Styling */
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #009639;
+        box-shadow: 0 0 0 0.2rem rgba(0, 150, 57, 0.1);
+    }
+    
+    /* Button Consistency */
+    .btn {
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        transition: all 0.2s;
+    }
+    
+    .btn-success {
+        background-color: #009639;
+        border-color: #009639;
+    }
+    
+    .btn-success:hover {
+        background-color: #007a2e;
+        border-color: #007a2e;
+    }
+    
+    /* Page Header Modern Style */
+    .page-header {
+        margin-bottom: 0;
+    }
+    
+    .page-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .page-title-icon {
+        font-size: 1.75rem;
+        color: #009639;
+    }
+    
+    .page-title-text {
+        font-size: 1.875rem;
+        font-weight: 700;
+        color: #212529;
+        margin: 0;
+    }
+    
+    .page-subtitle {
+        font-size: 1rem;
+        color: #6c757d;
+        margin: 0;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="user-management-container">
+<div class="container-fluid py-4">
     <!-- Page Header -->
-    <div class="page-header-modern">
-        <div class="page-title-group">
-            <h1>
-                <i class="bi bi-pencil"></i>
-                Edit User
-            </h1>
-            <p class="subtitle">{{ user.email }}</p>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="page-header mb-0">
+            <div class="page-title">
+                <i class="bi bi-pencil-square page-title-icon"></i>
+                <h1 class="page-title-text">Edit User</h1>
+            </div>
+            <p class="page-subtitle">{{ user.email }}</p>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ url_for('user_admin.view', user_id=user.user_id) }}" class="btn-user-action">
+            <a href="{{ url_for('user_admin.view', user_id=user.user_id) }}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left"></i> Back to Profile
             </a>
         </div>
@@ -42,13 +121,14 @@
             <!-- Main Form Column -->
             <div class="col-lg-8">
                 <!-- Account Information -->
-                <div class="info-card">
-                    <div class="info-card-header">
-                        <h3 class="info-card-title">
-                            <i class="bi bi-person-badge"></i> Account Information
-                        </h3>
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-person-badge text-success"></i> Account Information
+                        </h6>
                         {{ status_badge('active' if user.is_active else ('locked' if user.is_locked else 'inactive')) }}
                     </div>
+                    <div class="card-body">
                     
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -155,16 +235,18 @@
                             </div>
                         </div>
                     </div>
+                    </div>
                 </div>
 
                 <!-- Password Reset -->
-                <div class="info-card">
-                    <div class="info-card-header">
-                        <h3 class="info-card-title">
-                            <i class="bi bi-key"></i> Password Management
-                        </h3>
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-key text-warning"></i> Password Management
+                        </h6>
                         <span class="badge bg-warning">Optional</span>
                     </div>
+                    <div class="card-body">
                     
                     <div class="alert alert-warning">
                         <i class="bi bi-exclamation-triangle"></i>
@@ -199,16 +281,18 @@
                             </div>
                         </div>
                     </div>
+                    </div>
                 </div>
 
                 <!-- Role Assignment -->
-                <div class="info-card">
-                    <div class="info-card-header">
-                        <h3 class="info-card-title">
-                            <i class="bi bi-shield-lock"></i> Role Assignment
-                        </h3>
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-shield-lock text-primary"></i> Role Assignment
+                        </h6>
                         <span class="badge bg-info" id="roleCount">{{ user_role_ids|length }} selected</span>
                     </div>
+                    <div class="card-body">
                     <p class="text-muted mb-3">
                         <i class="bi bi-info-circle"></i> Modify user permissions by selecting or deselecting roles
                     </p>
@@ -234,18 +318,20 @@
                         </div>
                         {% endfor %}
                     </div>
+                    </div>
                 </div>
 
                 <!-- Warehouse Access -->
-                <div class="info-card">
-                    <div class="info-card-header">
-                        <h3 class="info-card-title">
-                            <i class="bi bi-building-check"></i> Warehouse Access
-                        </h3>
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-building-check text-info"></i> Warehouse Access
+                        </h6>
                         <span class="badge bg-secondary" id="warehouseCount">
                             {% if user_warehouse_ids|length == 0 %}All warehouses{% else %}{{ user_warehouse_ids|length }} selected{% endif %}
                         </span>
                     </div>
+                    <div class="card-body">
                     <p class="text-muted mb-3">
                         <i class="bi bi-info-circle"></i> Leave empty to grant access to all warehouses
                     </p>
@@ -266,18 +352,20 @@
                         </div>
                         {% endfor %}
                     </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Sidebar -->
             <div class="col-lg-4">
                 <!-- Account Status -->
-                <div class="info-card sticky-top" style="top: 1rem;">
-                    <div class="info-card-header">
-                        <h3 class="info-card-title">
-                            <i class="bi bi-toggle-on"></i> Account Status
-                        </h3>
+                <div class="card shadow-sm border-0 mb-3 sticky-top" style="top: 1rem;">
+                    <div class="card-header bg-white border-0 pb-0">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-toggle-on text-success"></i> Account Status
+                        </h6>
                     </div>
+                    <div class="card-body">
                     
                     <div class="form-check form-switch mb-3">
                         <input type="checkbox" 
@@ -299,35 +387,39 @@
                         {% endif %}
                     </small>
 
-                    {% if user.is_locked %}
-                    <div class="alert alert-danger">
-                        <i class="bi bi-lock-fill"></i>
-                        <strong>Account Locked</strong>
-                        <p class="mb-0 small">This account is currently locked due to security policy</p>
+                        {% if user.is_locked %}
+                        <div class="alert alert-danger">
+                            <i class="bi bi-lock-fill"></i>
+                            <strong>Account Locked</strong>
+                            <p class="mb-0 small">This account is currently locked due to security policy</p>
+                        </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="info-card">
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn-user-action warning">
-                            <i class="bi bi-save"></i> Save Changes
-                        </button>
-                        <a href="{{ url_for('user_admin.view', user_id=user.user_id) }}" class="btn-user-action">
-                            <i class="bi bi-x-circle"></i> Cancel
-                        </a>
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle"></i> Save Changes
+                            </button>
+                            <a href="{{ url_for('user_admin.view', user_id=user.user_id) }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                        </div>
                     </div>
                 </div>
 
                 <!-- User Info -->
-                <div class="info-card">
-                    <div class="info-card-header">
-                        <h3 class="info-card-title">
-                            <i class="bi bi-info-circle"></i> Account Info
-                        </h3>
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-header bg-white border-0 pb-0">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-info-circle text-primary"></i> Account Info
+                        </h6>
                     </div>
-                    <div class="small text-muted">
+                    <div class="card-body">
+                        <div class="small text-muted">
                         <div class="mb-2">
                             <i class="bi bi-calendar-plus"></i>
                             <strong>Created:</strong><br>
@@ -338,8 +430,9 @@
                             <strong>Last Login:</strong><br>
                             {{ user.last_login_dtime.strftime('%Y-%m-%d %H:%M') if user.last_login_dtime else 'Never' }}
                         </div>
-                        <div>
-                            {{ mfa_status_badge(user.mfa_enabled, user.mfa_secret is not none) }}
+                            <div>
+                                {{ mfa_status_badge(user.mfa_enabled, user.mfa_secret is not none) }}
+                            </div>
                         </div>
                     </div>
                 </div>
