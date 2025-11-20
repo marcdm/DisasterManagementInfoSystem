@@ -225,17 +225,6 @@ class FeatureRegistry:
             'navigation_group': 'inventory',
             'priority': 12
         },
-        'inventory_transfers': {
-            'name': 'Transfer Inventory',
-            'description': 'Transfer items between warehouses',
-            'roles': ['LOGISTICS_OFFICER', 'LOGISTICS_MANAGER', 'INVENTORY_CLERK', 'SYSTEM_ADMINISTRATOR'],
-            'route': 'transfers.list_transfers',
-            'url': '/transfers',
-            'icon': 'bi-arrow-left-right',
-            'category': 'inventory',
-            'navigation_group': 'inventory',
-            'priority': 11
-        },
         
         # =================================================================
         # MASTER DATA MANAGEMENT
