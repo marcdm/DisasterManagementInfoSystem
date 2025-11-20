@@ -294,10 +294,13 @@ def _process_intake_submission(donation, warehouse):
                 errors.append(f'Quantities cannot be negative for {item.item_name}')
                 continue
             
-            total_qty = usable_qty + defective_qty + expired_qty
-            if total_qty == 0:
-                errors.append(f'{item.item_name}: At least one of Usable, Defective, or Expired quantity must be greater than zero')
+            # Reject if usable quantity is zero (entire donation is defective/expired)
+            if usable_qty == 0:
+                errors.append(f'{item.item_name}: Usable quantity cannot be zero. At least some portion of the donation must be usable.')
                 continue
+            
+            # Calculate total quantity for tracking
+            total_qty = usable_qty + defective_qty + expired_qty
             
         except:
             errors.append(f'Invalid quantities for {item.item_name}')

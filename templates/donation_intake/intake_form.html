@@ -390,7 +390,7 @@ input[type=number] {
                         <ul class="mb-0 small">
                             <li><strong>Usable Qty</strong>: Auto-calculated (read-only). Formula: Donated Qty - Defective - Expired</li>
                             <li><strong>Defective/Expired</strong>: Enter amounts as needed. Usable qty adjusts automatically in real-time (max 2 decimal places)</li>
-                            <li><strong>At Least One Quantity Required</strong>: At least one of Usable, Defective, or Expired quantity must be greater than zero</li>
+                            <li><strong>Usable Qty Cannot Be Zero</strong>: At least some portion of the donation must be usable. Cannot mark entire donation as defective/expired.</li>
                             <li><strong>Batch Number</strong>: Required for batched items</li>
                             <li><strong>Batch Date</strong>: Cannot be in the future</li>
                             <li><strong>Expiry Date</strong>: Required for perishable items, must be future date</li>
@@ -431,7 +431,7 @@ function autoAdjustUsableQty(itemId) {
     // Update the usable quantity field
     usableInput.value = calculatedUsable.toFixed(2);
     
-    // Validate quantities after adjustment
+    // Immediately validate quantities after adjustment (for real-time feedback)
     validateQuantities(itemId);
 }
 
@@ -509,16 +509,16 @@ function validateQuantities(itemId) {
     const total = usable + defective + expired;
     const diff = Math.abs(total - expected);
     
-    // Check if all quantities are zero
-    if (usable === 0 && defective === 0 && expired === 0) {
+    // Check if usable quantity is zero (entire donation is defective/expired)
+    if (usable === 0) {
         usableInput.classList.add('is-invalid');
         defectiveInput.classList.add('is-invalid');
         expiredInput.classList.add('is-invalid');
-        usableInput.dataset.zeroQtyError = 'true';
+        usableInput.dataset.zeroUsableError = 'true';
         
         // Show inline error message
         if (errorDiv && errorText) {
-            errorText.textContent = 'At least one of Usable, Defective, or Expired quantity must be greater than zero.';
+            errorText.textContent = 'Usable quantity cannot be zero. At least some portion of the donation must be usable.';
             errorDiv.style.display = 'block';
         }
     }
@@ -527,7 +527,7 @@ function validateQuantities(itemId) {
         usableInput.classList.add('is-invalid');
         defectiveInput.classList.add('is-invalid');
         expiredInput.classList.add('is-invalid');
-        delete usableInput.dataset.zeroQtyError;
+        delete usableInput.dataset.zeroUsableError;
         
         // Show inline error message for total mismatch
         if (errorDiv && errorText) {
@@ -538,7 +538,7 @@ function validateQuantities(itemId) {
         usableInput.classList.remove('is-invalid');
         defectiveInput.classList.remove('is-invalid');
         expiredInput.classList.remove('is-invalid');
-        delete usableInput.dataset.zeroQtyError;
+        delete usableInput.dataset.zeroUsableError;
         
         // Hide inline error message
         if (errorDiv && errorText) {
@@ -559,9 +559,9 @@ document.getElementById('intakeForm').addEventListener('submit', function(e) {
         const usableInput = document.querySelector(`input[name="usable_qty_${itemId}"]`);
         if (usableInput.classList.contains('is-invalid')) {
             hasError = true;
-            // Check if this is a zero-quantity error
-            if (usableInput.dataset.zeroQtyError === 'true') {
-                errorMessages.push('At least one of Usable, Defective, or Expired quantity must be greater than zero for all items.');
+            // Check if this is a zero usable quantity error
+            if (usableInput.dataset.zeroUsableError === 'true') {
+                errorMessages.push('Usable quantity cannot be zero. At least some portion of the donation must be usable.');
             } else {
                 errorMessages.push('Total quantities (Usable + Defective + Expired) must equal donated quantities for all items.');
             }
@@ -621,6 +621,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         flatpickr(input, options);
+    });
+    
+    // Validate all quantities on page load for immediate feedback
+    const itemIds = [...new Set([...document.querySelectorAll('[data-item-id]')].map(el => el.dataset.itemId))];
+    itemIds.forEach(itemId => {
+        validateQuantities(itemId);
     });
 });
 </script>
