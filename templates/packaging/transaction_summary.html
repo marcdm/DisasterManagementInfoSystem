@@ -256,10 +256,17 @@
         <i class="bi bi-printer"></i>
         Print Transaction Summary
     </button>
+    {% if has_role('LOGISTICS_MANAGER') %}
     <a href="{{ url_for('packaging.pending_approval') }}" class="btn-back">
         <i class="bi bi-arrow-left"></i>
         Back to Pending Approval
     </a>
+    {% else %}
+    <a href="{{ url_for('packaging.pending_fulfillment', filter='approved_for_dispatch') }}" class="btn-back">
+        <i class="bi bi-arrow-left"></i>
+        Back to Approved Packages
+    </a>
+    {% endif %}
 </div>
 
 <div class="print-container">
