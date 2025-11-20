@@ -431,25 +431,44 @@ def _process_intake_submission(donation, warehouse):
             
             db.session.add(intake_item)
             
-            # Create itembatch record
-            item_batch = ItemBatch()
-            item_batch.inventory_id = warehouse.warehouse_id
-            item_batch.item_id = item_data['item_id']
-            item_batch.batch_no = item_data['batch_no']
-            item_batch.batch_date = item_data['batch_date']
-            item_batch.expiry_date = item_data['expiry_date']
-            item_batch.uom_code = item_data['uom_code']
-            item_batch.avg_unit_value = item_data['avg_unit_value']
-            item_batch.usable_qty = item_data['usable_qty']
-            item_batch.defective_qty = item_data['defective_qty']
-            item_batch.expired_qty = item_data['expired_qty']
-            item_batch.reserved_qty = Decimal('0')
-            item_batch.status_code = 'A'
-            item_batch.comments_text = item_data['comments_text']
-            
-            add_audit_fields(item_batch, current_user, is_new=True)
-            
-            db.session.add(item_batch)
+            # Create or update itembatch record
+            # Use update_or_create for NOBATCH items to avoid duplicate key errors
+            # For regular batches, create new batch (duplicates already validated above)
+            if item_data['batch_no'].startswith('NOBATCH-'):
+                from app.services.batch_creation_service import BatchCreationService
+                item_batch = BatchCreationService.update_or_create_batch(
+                    inventory_id=warehouse.warehouse_id,
+                    item_id=item_data['item_id'],
+                    batch_no=item_data['batch_no'],
+                    usable_qty=item_data['usable_qty'],
+                    defective_qty=item_data['defective_qty'],
+                    expired_qty=item_data['expired_qty'],
+                    batch_date=item_data['batch_date'],
+                    expiry_date=item_data['expiry_date'],
+                    uom_code=item_data['uom_code'],
+                    avg_unit_value=item_data['avg_unit_value'],
+                    user_name=current_user.user_name
+                )
+            else:
+                # Regular batched items - create new batch
+                item_batch = ItemBatch()
+                item_batch.inventory_id = warehouse.warehouse_id
+                item_batch.item_id = item_data['item_id']
+                item_batch.batch_no = item_data['batch_no']
+                item_batch.batch_date = item_data['batch_date']
+                item_batch.expiry_date = item_data['expiry_date']
+                item_batch.uom_code = item_data['uom_code']
+                item_batch.avg_unit_value = item_data['avg_unit_value']
+                item_batch.usable_qty = item_data['usable_qty']
+                item_batch.defective_qty = item_data['defective_qty']
+                item_batch.expired_qty = item_data['expired_qty']
+                item_batch.reserved_qty = Decimal('0')
+                item_batch.status_code = 'A'
+                item_batch.comments_text = item_data['comments_text']
+                
+                add_audit_fields(item_batch, current_user, is_new=True)
+                
+                db.session.add(item_batch)
             
             # Update or create inventory record with optimistic locking
             inventory = Inventory.query.filter_by(
