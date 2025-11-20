@@ -25,6 +25,7 @@ from app.db.models import db, Donor, Donation
 from app.core.decorators import feature_required
 from app.core.audit import add_audit_fields
 from app.core.phone_utils import validate_phone_format, get_phone_validation_error
+from app.services.unique_validation_service import unique_validator
 
 donors_bp = Blueprint('donors', __name__, url_prefix='/donors')
 

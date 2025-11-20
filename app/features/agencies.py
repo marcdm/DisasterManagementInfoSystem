@@ -7,6 +7,7 @@ from app.db.models import db, Agency, Parish, Event, Warehouse, ReliefRqst
 from app.core.audit import add_audit_fields
 from app.core.phone_utils import validate_phone_format, get_phone_validation_error
 from app.core.decorators import feature_required
+from app.services.unique_validation_service import unique_validator
 import re
 
 agencies_bp = Blueprint('agencies', __name__)
@@ -38,10 +39,13 @@ def validate_agency_data(form_data, is_update=False, agency_id=None):
         errors['agency_name'] = 'Agency name cannot exceed 120 characters'
     else:
         agency_name_upper = agency_name.upper()
-        # Check uniqueness
-        existing = Agency.query.filter_by(agency_name=agency_name_upper).first()
-        if existing and (not is_update or existing.agency_id != agency_id):
-            errors['agency_name'] = f'An agency with the name "{agency_name_upper}" already exists'
+        # Check uniqueness using centralized validation service
+        is_unique, unique_error = unique_validator.validate_agency_name(
+            agency_name_upper,
+            current_id=agency_id if is_update else None
+        )
+        if not is_unique:
+            errors['agency_name'] = unique_error
         normalized_data['agency_name'] = agency_name_upper
     
     # 2. Agency Type - Mandatory, must be SHELTER or DISTRIBUTOR

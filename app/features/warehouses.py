@@ -34,6 +34,7 @@ from app.db.models import Warehouse, Parish, Custodian
 from app.core.decorators import feature_required
 from app.core.audit import add_audit_fields
 from app.core.phone_utils import validate_phone_format, get_phone_validation_error, PHONE_FORMAT_EXAMPLE
+from app.services.unique_validation_service import unique_validator
 
 warehouses_bp = Blueprint('warehouses', __name__, url_prefix='/warehouses')
 
@@ -81,14 +82,13 @@ def validate_warehouse_data(form_data, is_update=False, warehouse_id=None):
     if not warehouse_name:
         errors['warehouse_name'] = 'Warehouse name is required'
     else:
-        # Check uniqueness
-        query = Warehouse.query.filter(
-            db.func.upper(Warehouse.warehouse_name) == warehouse_name.upper()
+        # Check uniqueness using centralized validation service
+        is_unique, unique_error = unique_validator.validate_warehouse_name(
+            warehouse_name.upper(),  # Warehouse names are stored uppercase
+            current_id=warehouse_id if is_update else None
         )
-        if is_update and warehouse_id:
-            query = query.filter(Warehouse.warehouse_id != warehouse_id)
-        if query.first():
-            errors['warehouse_name'] = 'A warehouse with this name already exists'
+        if not is_unique:
+            errors['warehouse_name'] = unique_error
     
     # Warehouse Type validation
     if not warehouse_type:
