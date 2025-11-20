@@ -296,7 +296,7 @@ def _process_intake_submission(donation, warehouse):
             
             total_qty = usable_qty + defective_qty + expired_qty
             if total_qty == 0:
-                errors.append(f'Total quantity cannot be zero for {item.item_name}')
+                errors.append(f'{item.item_name}: At least one of Usable, Defective, or Expired quantity must be greater than zero')
                 continue
             
         except:
