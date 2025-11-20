@@ -263,8 +263,10 @@ def approve_package(reliefrqst_id):
                 current_user.email
             )
             if not success:
-                can_edit = False
+                # BLOCK ACCESS: Don't render page, redirect with blocking message
                 blocking_user = message.replace("Currently being prepared by ", "")
+                flash(f'This relief request is currently being prepared by {blocking_user}. Please try again later.', 'warning')
+                return redirect(url_for('packaging.pending_approval'))
         
         # Load warehouses
         warehouses = Warehouse.query.filter_by(status_code='A').order_by(Warehouse.warehouse_name).all()
@@ -844,8 +846,10 @@ def prepare_package(reliefrqst_id):
                 current_user.email
             )
             if not success:
-                can_edit = False
+                # BLOCK ACCESS: Don't render page, redirect with blocking message
                 blocking_user = message.replace("Currently being prepared by ", "")
+                flash(f'This relief request is currently being prepared by {blocking_user}. Please try again later.', 'warning')
+                return redirect(url_for('packaging.pending_fulfillment'))
         
         warehouses = Warehouse.query.filter_by(status_code='A').order_by(Warehouse.warehouse_name).all()
         
