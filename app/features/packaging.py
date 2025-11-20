@@ -485,9 +485,6 @@ def _approve_and_dispatch(relief_request, relief_pkg):
         
         db.session.commit()
         
-        # Release lock
-        lock_service.release_lock(relief_request.reliefrqst_id, current_user.user_id, force=True)
-        
         flash(f'Relief request #{relief_request.reliefrqst_id} approved and dispatched to inventory clerk', 'success')
         return redirect(url_for('packaging.transaction_summary', reliefpkg_id=relief_pkg.reliefpkg_id))
         
@@ -1147,8 +1144,6 @@ def _send_for_dispatch(relief_request):
         
         db.session.commit()
         
-        lock_service.release_lock(relief_request.reliefrqst_id, current_user.user_id, force=True)
-        
         flash(f'Relief request #{relief_request.reliefrqst_id} sent for dispatch', 'success')
         return redirect(url_for('packaging.pending_fulfillment'))
         
@@ -1399,9 +1394,6 @@ def cancel_preparation(reliefrqst_id):
         success, error_msg = reservation_service.release_all_reservations(reliefrqst_id)
         if not success:
             flash(f'Warning: Failed to release reservations: {error_msg}', 'warning')
-        
-        # Release lock
-        lock_service.release_lock(reliefrqst_id, current_user.user_id, release_reservations=False)
         
         # Commit the deletion of package items
         db.session.commit()
