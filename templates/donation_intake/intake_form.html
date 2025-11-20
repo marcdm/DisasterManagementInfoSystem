@@ -59,6 +59,15 @@
     background-color: #f8f9fa;
     border-radius: 0.25rem;
 }
+/* Hide number input spinner arrows */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type=number] {
+    -moz-appearance: textfield;
+}
 </style>
 {% endblock %}
 
@@ -224,13 +233,17 @@
                                     <div class="col-md-2">
                                         <label for="avg_unit_value_{{ di.item_id }}" class="field-label">Unit Cost ($J)</label>
                                         <input type="number" 
-                                               class="form-control form-control-sm qty-input" 
+                                               class="form-control form-control-sm qty-input unit-cost-input" 
                                                id="avg_unit_value_{{ di.item_id }}"
                                                name="avg_unit_value_{{ di.item_id }}" 
                                                step="0.01" 
                                                min="0.01"
+                                               max="99999999.99"
+                                               data-item-id="{{ di.item_id }}"
                                                placeholder="0.00"
+                                               oninput="validateUnitCost(this)"
                                                required>
+                                        <div class="invalid-feedback unit-cost-error-{{ di.item_id }}" style="display:none;"></div>
                                     </div>
                                     <div class="col-md-3">
                                         <label for="usable_qty_{{ di.item_id }}" class="field-label">Usable Qty</label>
@@ -238,11 +251,12 @@
                                                class="form-control form-control-sm qty-input" 
                                                id="usable_qty_{{ di.item_id }}"
                                                name="usable_qty_{{ di.item_id }}" 
-                                               step="0.0001" 
+                                               step="0.01" 
                                                min="0"
                                                value="{{ di.item_qty }}"
                                                data-expected="{{ di.item_qty }}"
                                                data-item-id="{{ di.item_id }}"
+                                               oninput="enforceDecimalPlaces(this, 2)"
                                                onchange="validateQuantities({{ di.item_id }})"
                                                required>
                                     </div>
@@ -252,10 +266,11 @@
                                                class="form-control form-control-sm qty-input" 
                                                id="defective_qty_{{ di.item_id }}"
                                                name="defective_qty_{{ di.item_id }}" 
-                                               step="0.0001" 
+                                               step="0.01" 
                                                min="0"
                                                value="0"
                                                data-item-id="{{ di.item_id }}"
+                                               oninput="enforceDecimalPlaces(this, 2)"
                                                onchange="validateQuantities({{ di.item_id }})">
                                     </div>
                                     <div class="col-md-3">
@@ -264,10 +279,11 @@
                                                class="form-control form-control-sm qty-input" 
                                                id="expired_qty_{{ di.item_id }}"
                                                name="expired_qty_{{ di.item_id }}" 
-                                               step="0.0001" 
+                                               step="0.01" 
                                                min="0"
                                                value="0"
                                                data-item-id="{{ di.item_id }}"
+                                               oninput="enforceDecimalPlaces(this, 2)"
                                                onchange="validateQuantities({{ di.item_id }})">
                                     </div>
                                 </div>
@@ -360,11 +376,11 @@
                     </div>
                     <div class="card-body">
                         <ul class="mb-0 small">
-                            <li><strong>Quantities</strong>: Usable + Defective + Expired must equal donated quantity</li>
+                            <li><strong>Quantities</strong>: Usable + Defective + Expired must equal donated quantity (max 2 decimal places)</li>
                             <li><strong>Batch Number</strong>: Required for batched items</li>
                             <li><strong>Batch Date</strong>: Cannot be in the future</li>
                             <li><strong>Expiry Date</strong>: Required for perishable items, must be future date</li>
-                            <li><strong>Unit Cost ($J)</strong>: Must be greater than 0</li>
+                            <li><strong>Unit Cost ($J)</strong>: Must be greater than 0, max 99,999,999.99 (max 2 decimal places)</li>
                             <li><strong>UOM</strong>: Must be selected from dropdown</li>
                         </ul>
                     </div>
@@ -375,6 +391,65 @@
 </div>
 
 <script>
+// Enforce maximum decimal places on numeric input
+function enforceDecimalPlaces(input, maxDecimals) {
+    let value = input.value;
+    
+    // If value is empty, do nothing
+    if (value === '') return;
+    
+    // Check if the value has more decimal places than allowed
+    const parts = value.split('.');
+    if (parts.length === 2 && parts[1].length > maxDecimals) {
+        // Truncate to max decimal places
+        input.value = parseFloat(value).toFixed(maxDecimals);
+    }
+}
+
+// Validate Unit Cost field (8.2 format: max 8 digits before decimal, 2 after)
+function validateUnitCost(input) {
+    const itemId = input.dataset.itemId;
+    const errorDiv = document.querySelector(`.unit-cost-error-${itemId}`);
+    let value = input.value;
+    
+    // Remove invalid indicator first
+    input.classList.remove('is-invalid');
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+    }
+    
+    // If empty, skip validation
+    if (value === '') return;
+    
+    const numValue = parseFloat(value);
+    
+    // Check max value (99999999.99)
+    if (numValue > 99999999.99) {
+        input.classList.add('is-invalid');
+        if (errorDiv) {
+            errorDiv.textContent = 'Unit cost cannot exceed 99,999,999.99';
+            errorDiv.style.display = 'block';
+        }
+        return;
+    }
+    
+    // Enforce 2 decimal places
+    const parts = value.split('.');
+    if (parts.length === 2 && parts[1].length > 2) {
+        input.value = parseFloat(value).toFixed(2);
+    }
+    
+    // Check digits before decimal (max 8)
+    if (parts[0].length > 8) {
+        input.classList.add('is-invalid');
+        if (errorDiv) {
+            errorDiv.textContent = 'Unit cost cannot have more than 8 digits before decimal';
+            errorDiv.style.display = 'block';
+        }
+    }
+}
+
 function validateQuantities(itemId) {
     const usableInput = document.querySelector(`input[name="usable_qty_${itemId}"]`);
     const defectiveInput = document.querySelector(`input[name="defective_qty_${itemId}"]`);
@@ -388,7 +463,8 @@ function validateQuantities(itemId) {
     const total = usable + defective + expired;
     const diff = Math.abs(total - expected);
     
-    if (diff > 0.0001) {
+    // Use tolerance of 0.01 since we're now limited to 2 decimal places
+    if (diff > 0.01) {
         usableInput.classList.add('is-invalid');
         defectiveInput.classList.add('is-invalid');
         expiredInput.classList.add('is-invalid');
@@ -401,19 +477,38 @@ function validateQuantities(itemId) {
 
 document.getElementById('intakeForm').addEventListener('submit', function(e) {
     let hasError = false;
+    let errorMessages = [];
     const itemIds = [...new Set([...document.querySelectorAll('[data-item-id]')].map(el => el.dataset.itemId))];
     
+    // Validate quantities
     itemIds.forEach(itemId => {
         validateQuantities(itemId);
         const usableInput = document.querySelector(`input[name="usable_qty_${itemId}"]`);
         if (usableInput.classList.contains('is-invalid')) {
             hasError = true;
+            errorMessages.push('Total quantities (Usable + Defective + Expired) must equal donated quantities for all items.');
+        }
+    });
+    
+    // Validate unit costs
+    const unitCostInputs = document.querySelectorAll('.unit-cost-input');
+    unitCostInputs.forEach(input => {
+        validateUnitCost(input);
+        if (input.classList.contains('is-invalid')) {
+            hasError = true;
+            const itemId = input.dataset.itemId;
+            const errorDiv = document.querySelector(`.unit-cost-error-${itemId}`);
+            if (errorDiv && errorDiv.textContent) {
+                errorMessages.push(errorDiv.textContent);
+            }
         }
     });
     
     if (hasError) {
         e.preventDefault();
-        alert('Error: Total quantities (Usable + Defective + Expired) must equal donated quantities for all items.');
+        // Show unique error messages
+        const uniqueErrors = [...new Set(errorMessages)];
+        alert('Validation Error:\n\n' + uniqueErrors.join('\n'));
         return false;
     }
 });
