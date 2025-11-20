@@ -801,7 +801,9 @@ def pending_fulfillment():
                          if r.status_code == rr_service.STATUS_SUBMITTED 
                          and not r.fulfillment_lock 
                          and not has_pending_approval(r)]),
-        'locked': len([r for r in all_requests if r.fulfillment_lock]),
+        'locked': len([r for r in all_requests 
+                      if r.fulfillment_lock 
+                      and r.status_code == rr_service.STATUS_PART_FILLED]),
         'pending_approval': len([r for r in all_requests if has_pending_approval(r)]),
         'approved': approved_packages_count
     }
