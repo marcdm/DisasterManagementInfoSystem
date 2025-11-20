@@ -76,7 +76,6 @@ class FeatureRegistry:
         # Master Data
         'warehouses_list': 'warehouses.list_warehouses',
         'items_list': 'items.list_items',
-        'locations_list': 'locations.list_locations',
         'events_list': 'events.list_events',
         'agencies_list': 'agencies.list_agencies',
         'donors_list': 'donors.list_donors',
@@ -304,17 +303,6 @@ class FeatureRegistry:
             'route': 'items.list_items',
             'url': '/items',
             'icon': 'bi-box-seam',
-            'category': 'master_data',
-            'navigation_group': 'master_data',
-            'priority': 3
-        },
-        'location_management': {
-            'name': 'Manage Locations',
-            'description': 'Manage storage locations within warehouses',
-            'roles': ['LOGISTICS_OFFICER', 'LOGISTICS_MANAGER', 'INVENTORY_CLERK', 'SYSTEM_ADMINISTRATOR'],
-            'route': 'locations.list_locations',
-            'url': '/locations',
-            'icon': 'bi-geo-alt',
             'category': 'master_data',
             'navigation_group': 'master_data',
             'priority': 3

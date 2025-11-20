@@ -41,7 +41,6 @@ from app.features.agencies import agencies_bp
 from app.features.custodians import custodians_bp
 from app.features.dashboard import dashboard_bp
 from app.features.transfers import transfers_bp
-from app.features.locations import locations_bp
 from app.features.notifications import notifications_bp
 from app.features.reports import reports_bp
 from app.features.account_requests import account_requests_bp
@@ -111,7 +110,6 @@ app.register_blueprint(donors_bp, url_prefix='/donors')
 app.register_blueprint(agencies_bp, url_prefix='/agencies')
 app.register_blueprint(custodians_bp, url_prefix='/custodians')
 app.register_blueprint(transfers_bp, url_prefix='/transfers')
-app.register_blueprint(locations_bp, url_prefix='/locations')
 app.register_blueprint(notifications_bp, url_prefix='/notifications')
 app.register_blueprint(reports_bp, url_prefix='/reports')
 app.register_blueprint(account_requests_bp)
