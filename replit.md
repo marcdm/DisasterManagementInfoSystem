@@ -8,8 +8,12 @@ DRIMS (Disaster Relief Inventory Management System) is a web-based platform for 
 - **Multi-Role Request Creation**: Updated `packaging.create_request_on_behalf` to support both LOGISTICS users (select any agency) and AGENCY users (auto-bound to their own agency).
 - **Template Enhancements**: Updated create request template with conditional rendering based on user type - logistics users see agency dropdown, agency users see read-only agency field.
 - **Dashboard Fixes**: Corrected Item model column references in inventory dashboard (`reorder_level` → `reorder_qty`). Removed inventory value calculation due to absence of cost data in schema.
-- **Donation Intake Form Updates**: Enforced 2 decimal places max for quantity fields (Usable, Defective, Expired), removed spinner arrows from all numeric inputs, added Unit Cost 8.2 format cap (max 99,999,999.99) with JavaScript validation.
+- **Donation Intake Form Updates**: 
+  - Enforced 2 decimal places max for quantity fields (Usable, Defective, Expired), removed spinner arrows from all numeric inputs, added Unit Cost 8.2 format cap (max 99,999,999.99) with JavaScript validation.
+  - Implemented dynamic usable quantity adjustment: Usable Qty auto-calculates in real-time as `Donated Qty - Defective - Expired` when defective/expired values change. Field is read-only with visual indication (light gray background).
+  - Updated validation rules on form to clearly reflect dynamic field behavior.
 - **Phone Number Field Standardization**: Aligned phone number field format between Creating Agency and Creating Donor forms. Both now use `phone-mask.js` for consistent formatting with pattern `+1 (XXX) XXX-XXXX`. Applied to both create and edit templates.
+- **Database Schema Fix**: Created missing `transfer_item` table that was dropped in migration 007 but never recreated. This table is required for Item model relationships to work correctly. Fixed issue preventing item status changes (activate/inactivate). Migration 008 applied successfully.
 
 ## User Preferences
 - **Communication style**: Simple, everyday language.
