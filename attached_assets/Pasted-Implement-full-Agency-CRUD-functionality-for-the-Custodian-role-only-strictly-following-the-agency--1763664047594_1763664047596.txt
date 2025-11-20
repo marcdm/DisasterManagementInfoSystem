@@ -1,0 +1,216 @@
+Implement full Agency CRUD functionality for the Custodian role only, strictly following the agency table schema and business rules.
+No database schema changes.
+Reuse DRIMS UI style, layout, and navigation.
+
+1. Role Restriction
+
+Only Custodian users may:
+
+Create agencies
+
+Edit agencies
+
+View full agency details
+
+Other roles may only view agency info where already exposed in existing workflows.
+
+Attempting to access Agency Maintenance without Custodian permission must show Access Denied.
+
+2. General CRUD Requirements
+
+Custodian must be able to:
+
+Create a new agency
+
+Update an existing agency
+
+View agency details
+
+Search and filter agencies
+
+Deletion is NOT allowed if the agency is referenced by any related record.
+
+Show clear error message if deletion is attempted.
+
+Agencies may be set to Inactive only if not referenced by active transactions.
+
+3. agency_name Rules
+
+Mandatory; cannot be blank.
+
+Must be stored in UPPERCASE:
+
+Auto-convert OR reject non-uppercase input.
+
+Must be unique across all agencies.
+
+Maximum length 120 chars; trim leading/trailing spaces before validation.
+
+On duplicate name, system must reject save with clear error.
+
+4. agency_type Rules
+
+Mandatory.
+
+Dropdown only, no free text.
+
+Allowed values:
+
+SHELTER
+
+DISTRIBUTOR
+
+System must validate that saved value matches database constraint codes.
+
+5. Address & Parish Rules
+Address
+
+address1_text mandatory.
+
+address2_text optional.
+
+Both max 255 chars, trimmed before saving.
+
+Parish
+
+parish_code mandatory.
+
+Must reference existing parish table.
+
+UI dropdown must be populated from parish master.
+
+Invalid parish from API or manual manipulation must be rejected clearly.
+
+6. Contact Information Rules
+contact_name
+
+Mandatory, max 50 chars, auto-convert to UPPERCASE.
+
+Reject if longer than 50.
+
+phone_no
+
+Mandatory, max 20 chars.
+
+Must use valid characters: digits, +, -, spaces.
+
+email_text
+
+Optional, max 100 chars.
+
+If present, must be a valid email format.
+
+7. Warehouse Relationship Rules
+
+warehouse_id optional but must follow business constraints:
+
+If agency_type = SHELTER
+
+warehouse_id must be NULL.
+
+UI must hide/disable warehouse selection.
+
+If agency_type = DISTRIBUTOR
+
+warehouse_id is required.
+
+UI must display dropdown of warehouse records.
+
+Incorrect combinations must block save
+
+e.g., SHELTER + warehouse selected → error
+
+DISTRIBUTOR + no warehouse selected → error
+
+8. status_code Rules
+
+Mandatory; dropdown only.
+
+Allowed values:
+
+A = Active
+
+I = Inactive
+
+If set to Inactive:
+
+Do NOT show in dropdowns for new operational transactions.
+
+Still visible in historical reports.
+
+If deactivation violates other business rules, block with clear error.
+
+9. Audit Fields (Auto-populated)
+On Create:
+
+create_by_id = current user
+
+create_dtime = system timestamp
+
+User cannot modify these.
+
+On Update:
+
+update_by_id = current user
+
+update_dtime = system timestamp
+
+Always reflects last update operation.
+
+10. Versioning & Concurrency (Optimistic Locking)
+
+version_nbr initialized on creation (e.g., 1).
+
+Increment version_nbr by 1 on every successful update.
+
+On update attempt:
+
+Compare submitted version_nbr with DB value.
+
+If mismatch, reject update and show message:
+“Record has been modified by another user. Please reload and try again.”
+
+11. Search, Filter & Display Requirements
+Search Criteria
+
+agency_name (partial, case-insensitive)
+
+agency_type
+
+parish_code
+
+status_code
+
+List View must show:
+
+agency_name
+
+agency_type
+
+parish_code
+
+contact_name
+
+phone_no
+
+status_code
+
+Detail View must show all fields, including:
+
+Address
+
+Contact details
+
+Warehouse (if distributor)
+
+Audit fields
+
+Version info
+
+UI Requirements
+
+Must reuse existing DRIMS UI styling and layout.
+
+Follow same form validation patterns as other DRIMS CRUD pages.
+
+Navigation structure must remain unmodified.

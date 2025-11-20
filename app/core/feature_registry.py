@@ -297,11 +297,11 @@ class FeatureRegistry:
         },
         'agency_management': {
             'name': 'Manage Agencies',
-            'description': 'Manage relief agencies',
-            'roles': ['SYSTEM_ADMINISTRATOR'],
+            'description': 'Manage relief agencies (Custodian-only)',
+            'roles': ['CUSTODIAN'],  # Restricted to CUSTODIAN only - master data table
             'route': 'agencies.list_agencies',
             'url': '/agencies',
-            'icon': 'bi-building',
+            'icon': 'bi-shop',
             'category': 'master_data',
             'navigation_group': 'master_data',
             'priority': 6
