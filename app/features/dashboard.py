@@ -295,13 +295,13 @@ def inventory_dashboard():
         Item.item_id, 
         Item.item_name,
         func.sum(Inventory.usable_qty).label('total_qty'),
-        Item.reorder_level
+        Item.reorder_qty
     ).join(Inventory).filter(
         Item.status_code == 'A'
     ).group_by(
-        Item.item_id, Item.item_name, Item.reorder_level
+        Item.item_id, Item.item_name, Item.reorder_qty
     ).having(
-        func.sum(Inventory.usable_qty) <= Item.reorder_level
+        func.sum(Inventory.usable_qty) <= Item.reorder_qty
     ).limit(10).all()
     
     total_inventory_value = db.session.query(
