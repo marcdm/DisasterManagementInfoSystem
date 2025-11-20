@@ -8,7 +8,7 @@ user_admin_bp = Blueprint('user_admin', __name__)
 
 @user_admin_bp.route('/')
 @login_required
-@role_required('SYSTEM_ADMINISTRATOR', 'SYS_ADMIN')
+@role_required('SYSTEM_ADMINISTRATOR', 'SYS_ADMIN', 'CUSTODIAN')
 def index():
     users = User.query.order_by(User.create_dtime.desc()).all()
     
@@ -37,7 +37,7 @@ def index():
 
 @user_admin_bp.route('/create', methods=['GET', 'POST'])
 @login_required
-@role_required('SYSTEM_ADMINISTRATOR', 'SYS_ADMIN')
+@role_required('SYSTEM_ADMINISTRATOR', 'SYS_ADMIN', 'CUSTODIAN')
 def create():
     
     if request.method == 'POST':
@@ -195,7 +195,7 @@ def create():
 
 @user_admin_bp.route('/<int:user_id>')
 @login_required
-@role_required('SYSTEM_ADMINISTRATOR', 'SYS_ADMIN')
+@role_required('SYSTEM_ADMINISTRATOR', 'SYS_ADMIN', 'CUSTODIAN')
 def view(user_id):
     
     user = User.query.get_or_404(user_id)
@@ -203,7 +203,7 @@ def view(user_id):
 
 @user_admin_bp.route('/<int:user_id>/edit', methods=['GET', 'POST'])
 @login_required
-@role_required('SYSTEM_ADMINISTRATOR', 'SYS_ADMIN')
+@role_required('SYSTEM_ADMINISTRATOR', 'SYS_ADMIN', 'CUSTODIAN')
 def edit(user_id):
     
     user = User.query.get_or_404(user_id)
@@ -495,7 +495,7 @@ def edit(user_id):
 
 @user_admin_bp.route('/<int:user_id>/deactivate', methods=['POST'])
 @login_required
-@role_required('SYSTEM_ADMINISTRATOR', 'SYS_ADMIN')
+@role_required('SYSTEM_ADMINISTRATOR', 'SYS_ADMIN', 'CUSTODIAN')
 def deactivate(user_id):
     
     if user_id == current_user.user_id:
@@ -511,7 +511,7 @@ def deactivate(user_id):
 
 @user_admin_bp.route('/<int:user_id>/activate', methods=['POST'])
 @login_required
-@role_required('SYSTEM_ADMINISTRATOR', 'SYS_ADMIN')
+@role_required('SYSTEM_ADMINISTRATOR', 'SYS_ADMIN', 'CUSTODIAN')
 def activate(user_id):
     
     user = User.query.get_or_404(user_id)

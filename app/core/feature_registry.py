@@ -393,7 +393,7 @@ class FeatureRegistry:
         'user_management': {
             'name': 'Manage Users',
             'description': 'Create and manage user accounts',
-            'roles': ['SYSTEM_ADMINISTRATOR'],
+            'roles': ['SYSTEM_ADMINISTRATOR', 'CUSTODIAN'],
             'route': 'user_admin.index',
             'url': '/users',
             'icon': 'bi-person-gear',
