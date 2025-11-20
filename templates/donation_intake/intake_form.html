@@ -289,6 +289,16 @@ input[type=number] {
                                                onchange="validateQuantities({{ di.item_id }})">
                                     </div>
                                 </div>
+                                
+                                <!-- Quantity Validation Error Messages -->
+                                <div class="row g-2 mt-1">
+                                    <div class="col-12">
+                                        <div class="invalid-feedback d-block qty-error-{{ di.item_id }}" style="display:none !important;">
+                                            <i class="bi bi-exclamation-circle"></i>
+                                            <span class="qty-error-text-{{ di.item_id }}"></span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         {% endfor %}
@@ -488,6 +498,8 @@ function validateQuantities(itemId) {
     const usableInput = document.querySelector(`input[name="usable_qty_${itemId}"]`);
     const defectiveInput = document.querySelector(`input[name="defective_qty_${itemId}"]`);
     const expiredInput = document.querySelector(`input[name="expired_qty_${itemId}"]`);
+    const errorDiv = document.querySelector(`.qty-error-${itemId}`);
+    const errorText = document.querySelector(`.qty-error-text-${itemId}`);
     
     const usable = parseFloat(usableInput.value) || 0;
     const defective = parseFloat(defectiveInput.value) || 0;
@@ -503,6 +515,12 @@ function validateQuantities(itemId) {
         defectiveInput.classList.add('is-invalid');
         expiredInput.classList.add('is-invalid');
         usableInput.dataset.zeroQtyError = 'true';
+        
+        // Show inline error message
+        if (errorDiv && errorText) {
+            errorText.textContent = 'At least one of Usable, Defective, or Expired quantity must be greater than zero.';
+            errorDiv.style.display = 'block';
+        }
     }
     // Use tolerance of 0.01 since we're now limited to 2 decimal places
     else if (diff > 0.01) {
@@ -510,11 +528,23 @@ function validateQuantities(itemId) {
         defectiveInput.classList.add('is-invalid');
         expiredInput.classList.add('is-invalid');
         delete usableInput.dataset.zeroQtyError;
+        
+        // Show inline error message for total mismatch
+        if (errorDiv && errorText) {
+            errorText.textContent = 'Total quantities (Usable + Defective + Expired) must equal donated quantity.';
+            errorDiv.style.display = 'block';
+        }
     } else {
         usableInput.classList.remove('is-invalid');
         defectiveInput.classList.remove('is-invalid');
         expiredInput.classList.remove('is-invalid');
         delete usableInput.dataset.zeroQtyError;
+        
+        // Hide inline error message
+        if (errorDiv && errorText) {
+            errorText.textContent = '';
+            errorDiv.style.display = 'none';
+        }
     }
 }
 
