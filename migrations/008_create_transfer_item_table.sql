@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS transfer_item
         CONSTRAINT c_transfer_item_1 CHECK (item_qty > 0),
     uom_code VARCHAR(10) NOT NULL
         CONSTRAINT fk_transfer_item_uom REFERENCES unitofmeasure(uom_code),
+    reason_text VARCHAR(255),
     
     -- Audit fields
     create_by_id VARCHAR(20) NOT NULL,
