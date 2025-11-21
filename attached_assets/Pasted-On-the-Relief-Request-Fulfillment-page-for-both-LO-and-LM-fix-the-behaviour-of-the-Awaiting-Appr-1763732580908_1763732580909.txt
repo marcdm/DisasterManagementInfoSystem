@@ -1,0 +1,51 @@
+On the Relief Request Fulfillment page (for both LO and LM), fix the behaviour of the “Awaiting Approval” and “Approved for Dispatch” tabs so that their counters and filtered lists are always accurate and stay in sync, without breaking any existing code, logic, behaviour, workflow, or database schema.
+
+Current issue:
+
+When the user is on Awaiting Approval, the tab correctly shows 1 in the counter and 1 row in the table.
+
+When the user then clicks Approved for Dispatch, the tab counter shows 10, but the table only shows 1 row, and all the other tab counters drop to 0.
+
+Similar inconsistencies happen when switching between these tabs for both LO and LM.
+
+Required behaviour:
+
+Counters must always match the grid results
+
+For every tab (Awaiting to be Filled, Being Prepared, Awaiting Approval, Approved for Dispatch, Approved (No Allocation)), the badge count must equal the number of rows currently returned for that tab’s filter.
+
+Example: if the Approved for Dispatch query/filter returns 1 record, the badge must display 1, not 10.
+
+Tab switching must not reset other counters to zero
+
+When the user switches from one tab to another, only the active tab’s list should change.
+
+The counters on the other tabs must continue to show the correct total for their own filters, not zero.
+
+Switching to Approved for Dispatch must not cause Awaiting Approval, Being Prepared, etc. to display 0 unless those lists are truly empty.
+
+Use existing filters and data
+
+Reuse the same filter/status logic currently used to populate each tab’s table.
+
+The counter for each tab should be computed using that same logic (e.g., status codes for Awaiting Approval vs Approved for Dispatch).
+
+Do this purely in the existing front-end / JavaScript layer using the data already returned by the current API endpoints.
+
+No breaking changes
+
+Do not change:
+
+Any workflow steps or status transitions.
+
+Any back-end business rules.
+
+Any database schema or queries.
+
+Only adjust the tab counting and tab-switch display logic so that:
+
+Each tab’s badge count is accurate.
+
+Each tab’s grid shows the correct filtered results.
+
+Switching tabs no longer causes counters on other tabs to reset incorrectly.

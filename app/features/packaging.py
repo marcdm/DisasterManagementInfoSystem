@@ -820,6 +820,8 @@ def pending_fulfillment():
     List all approved relief requests awaiting package preparation.
     Shows SUBMITTED (3) and PART_FILLED (5) requests for LO/LM to fulfill.
     Also shows approved packages (status='D') for informational purposes.
+    
+    Uses tab-specific dataset builders to ensure badge counts exactly match displayed rows.
     """
     from app.core.rbac import is_logistics_officer, is_logistics_manager
     if not (is_logistics_officer() or is_logistics_manager()):
@@ -827,296 +829,215 @@ def pending_fulfillment():
         abort(403)
     
     filter_type = request.args.get('filter', 'awaiting')
+    current_user_name = current_user.user_name
+    is_lm = is_logistics_manager()
     
-    # Handle approved_for_dispatch filter - shows approved packages WITH items allocated
-    if filter_type == 'approved_for_dispatch':
-        # Query approved packages (status='D') that haven't been handed over yet
-        # Exclude completed packages (status='C') and packages with received_dtime set
-        approved_packages = ReliefPkg.query.options(
+    # Helper functions
+    def has_pending_approval(req):
+        """Check if request has a package submitted for LM approval."""
+        return (req.status_code == rr_service.STATUS_PART_FILLED and
+                any(pkg.status_code == rr_service.PKG_STATUS_PENDING 
+                    and pkg.dispatch_dtime is None
+                    for pkg in req.packages))
+    
+    def has_dispatched_package(req):
+        """Check if request has any packages that have been approved and dispatched."""
+        return any(pkg.status_code == rr_service.PKG_STATUS_DISPATCHED 
+                   for pkg in req.packages)
+    
+    def is_lo_involved_with_request(req):
+        """Check if LO is involved with this request (created it or worked on its packages)."""
+        if req.create_by_id == current_user_name:
+            return True
+        return any(pkg.create_by_id == current_user_name or pkg.update_by_id == current_user_name 
+                  for pkg in req.packages)
+    
+    def is_lo_involved_with_package(pkg):
+        """Check if LO is involved with this package."""
+        return (pkg.create_by_id == current_user_name or 
+                pkg.update_by_id == current_user_name or
+                (pkg.relief_request and pkg.relief_request.create_by_id == current_user_name))
+    
+    # Tab-specific dataset builders - each returns the EXACT dataset to be displayed
+    def get_awaiting_requests():
+        """Get requests awaiting to be filled (SUBMITTED status)."""
+        all_requests = ReliefRqst.query.options(
+            joinedload(ReliefRqst.agency),
+            joinedload(ReliefRqst.eligible_event),
+            joinedload(ReliefRqst.status),
+            joinedload(ReliefRqst.items),
+            joinedload(ReliefRqst.packages)
+        ).filter(
+            ReliefRqst.status_code == rr_service.STATUS_SUBMITTED
+        ).order_by(ReliefRqst.create_dtime.desc()).all()
+        
+        results = []
+        for req in all_requests:
+            # Skip requests with pending approval or dispatched packages
+            if has_pending_approval(req) or has_dispatched_package(req):
+                continue
+            # Apply role filter
+            if is_lm or is_lo_involved_with_request(req):
+                results.append(req)
+        return results
+    
+    def get_in_progress_requests():
+        """Get requests being prepared (PART_FILLED status)."""
+        all_requests = ReliefRqst.query.options(
+            joinedload(ReliefRqst.agency),
+            joinedload(ReliefRqst.eligible_event),
+            joinedload(ReliefRqst.status),
+            joinedload(ReliefRqst.items),
+            joinedload(ReliefRqst.packages)
+        ).filter(
+            ReliefRqst.status_code == rr_service.STATUS_PART_FILLED
+        ).order_by(ReliefRqst.create_dtime.desc()).all()
+        
+        results = []
+        for req in all_requests:
+            # Skip requests with pending approval or dispatched packages
+            if has_pending_approval(req) or has_dispatched_package(req):
+                continue
+            # Apply role filter
+            if is_lm or is_lo_involved_with_request(req):
+                results.append(req)
+        return results
+    
+    def get_pending_approval_requests():
+        """Get requests with packages awaiting LM approval."""
+        all_requests = ReliefRqst.query.options(
+            joinedload(ReliefRqst.agency),
+            joinedload(ReliefRqst.eligible_event),
+            joinedload(ReliefRqst.status),
+            joinedload(ReliefRqst.items),
+            joinedload(ReliefRqst.packages)
+        ).filter(
+            ReliefRqst.status_code.in_([rr_service.STATUS_SUBMITTED, rr_service.STATUS_PART_FILLED])
+        ).order_by(ReliefRqst.create_dtime.desc()).all()
+        
+        results = []
+        for req in all_requests:
+            if not has_pending_approval(req):
+                continue
+            # Apply role filter
+            if is_lm or is_lo_involved_with_request(req):
+                results.append(req)
+        return results
+    
+    def get_approved_packages_with_items():
+        """Get approved packages WITH items allocated."""
+        all_packages = ReliefPkg.query.options(
             joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.agency),
             joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.eligible_event),
             joinedload(ReliefPkg.items).joinedload(ReliefPkgItem.item)
         ).filter(
             ReliefPkg.status_code == rr_service.PKG_STATUS_DISPATCHED,
-            ReliefPkg.received_dtime.is_(None)  # Exclude packages already handed over
+            ReliefPkg.received_dtime.is_(None)
         ).order_by(ReliefPkg.dispatch_dtime.desc()).all()
         
-        # Filter to only packages WITH items allocated AND user should see them
-        current_user_name = current_user.user_name
-        package_data = []
-        for pkg in approved_packages:
-            item_count = len(pkg.items)
-            
-            # Determine if user should see this package
-            if is_logistics_manager():
-                # LM: Can see all packages
-                user_should_see = True
-            else:
-                # LO: Can see packages they created/updated OR relief requests they created
-                user_should_see = (
-                    pkg.create_by_id == current_user_name or 
-                    pkg.update_by_id == current_user_name or
-                    (pkg.relief_request and pkg.relief_request.create_by_id == current_user_name)
-                )
-            
-            if item_count > 0 and user_should_see:  # Only packages with allocated items AND user can see
-                package_data.append({
-                    'package': pkg,
-                    'relief_request': pkg.relief_request,
-                    'item_count': item_count,
-                    'total_qty': sum(item.item_qty for item in pkg.items if item.item_qty)
-                })
-        
-        # Count approved packages with items (user-specific or all for LM)
-        total_approved = len(package_data)
-        awaiting_handover = len([p['package'] for p in package_data if not p['package'].received_dtime])
-        
-        # Count packages with no allocation for global counts
-        if is_logistics_manager():
-            # LM: Count all packages with no allocation
-            approved_no_allocation_count = len([pkg for pkg in approved_packages if len(pkg.items) == 0])
-        else:
-            # LO: Count only their packages with no allocation (or relief requests they created)
-            approved_no_allocation_count = len([pkg for pkg in approved_packages 
-                                               if len(pkg.items) == 0 
-                                               and (pkg.create_by_id == current_user_name or 
-                                                    pkg.update_by_id == current_user_name or
-                                                    (pkg.relief_request and pkg.relief_request.create_by_id == current_user_name))])
-        
-        return render_template('packaging/pending_fulfillment.html',
-                             requests=[],
-                             packages=package_data,
-                             counts={'approved': total_approved, 'awaiting_handover': awaiting_handover},
-                             global_counts={'approved': total_approved, 'approved_no_allocation': approved_no_allocation_count},
-                             current_filter=filter_type,
-                             now=datetime.now())
+        results = []
+        for pkg in all_packages:
+            # Only packages WITH items
+            if len(pkg.items) == 0:
+                continue
+            # Apply role filter
+            if is_lm or is_lo_involved_with_package(pkg):
+                results.append(pkg)
+        return results
     
-    # Handle approved_no_allocation filter - shows approved packages WITHOUT items allocated
-    if filter_type == 'approved_no_allocation':
-        # Query approved packages (status='D') that haven't been handed over yet
-        # Exclude completed packages (status='C') and packages with received_dtime set
-        all_approved_packages = ReliefPkg.query.options(
+    def get_approved_packages_no_items():
+        """Get approved packages WITHOUT items allocated."""
+        all_packages = ReliefPkg.query.options(
             joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.agency),
             joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.eligible_event),
             joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.items),
             joinedload(ReliefPkg.items).joinedload(ReliefPkgItem.item)
         ).filter(
             ReliefPkg.status_code == rr_service.PKG_STATUS_DISPATCHED,
-            ReliefPkg.received_dtime.is_(None)  # Exclude packages already handed over
+            ReliefPkg.received_dtime.is_(None)
         ).order_by(ReliefPkg.dispatch_dtime.desc()).all()
         
-        # Filter to only packages WITHOUT items allocated AND user should see them
-        current_user_name = current_user.user_name
+        results = []
+        for pkg in all_packages:
+            # Only packages WITHOUT items
+            if len(pkg.items) > 0:
+                continue
+            # Apply role filter
+            if is_lm or is_lo_involved_with_package(pkg):
+                results.append(pkg)
+        return results
+    
+    # Build ALL tab datasets and calculate counts from them
+    # This ensures badge counts EXACTLY match displayed rows
+    awaiting_requests = get_awaiting_requests()
+    in_progress_requests = get_in_progress_requests()
+    pending_approval_requests = get_pending_approval_requests()
+    approved_with_items = get_approved_packages_with_items()
+    approved_no_items = get_approved_packages_no_items()
+    
+    # Calculate counts from the EXACT datasets that will be displayed
+    all_tab_counts = {
+        'submitted': len(awaiting_requests),
+        'in_progress': len(in_progress_requests),
+        'pending_approval': len(pending_approval_requests),
+        'approved': len(approved_with_items),
+        'approved_no_allocation': len(approved_no_items)
+    }
+    
+    # Return the appropriate dataset based on filter_type
+    if filter_type == 'approved_for_dispatch':
+        # Show approved packages WITH items - use pre-built dataset
         package_data = []
-        for pkg in all_approved_packages:
-            # Determine if user should see this package
-            if is_logistics_manager():
-                # LM: Can see all packages
-                user_should_see = True
-            else:
-                # LO: Can see packages they created/updated OR relief requests they created
-                user_should_see = (
-                    pkg.create_by_id == current_user_name or 
-                    pkg.update_by_id == current_user_name or
-                    (pkg.relief_request and pkg.relief_request.create_by_id == current_user_name)
-                )
-            
-            if len(pkg.items) == 0 and user_should_see:  # Only packages with NO allocated items AND user can see
-                package_data.append({
-                    'package': pkg,
-                    'relief_request': pkg.relief_request,
-                    'item_count': 0,
-                    'total_qty': 0
-                })
-        
-        # Count packages with no allocation (user-specific or all for LM)
-        total_no_allocation = len(package_data)
-        
-        # Count packages with items for global counts
-        if is_logistics_manager():
-            # LM: Count all packages with items
-            approved_with_items_count = len([pkg for pkg in all_approved_packages if len(pkg.items) > 0])
-        else:
-            # LO: Count only their packages with items (or relief requests they created)
-            approved_with_items_count = len([pkg for pkg in all_approved_packages 
-                                            if len(pkg.items) > 0 
-                                            and (pkg.create_by_id == current_user_name or 
-                                                 pkg.update_by_id == current_user_name or
-                                                 (pkg.relief_request and pkg.relief_request.create_by_id == current_user_name))])
+        for pkg in approved_with_items:
+            package_data.append({
+                'package': pkg,
+                'relief_request': pkg.relief_request,
+                'item_count': len(pkg.items),
+                'total_qty': sum(item.item_qty for item in pkg.items if item.item_qty)
+            })
         
         return render_template('packaging/pending_fulfillment.html',
                              requests=[],
                              packages=package_data,
-                             counts={'approved_no_allocation': total_no_allocation},
-                             global_counts={'approved': approved_with_items_count, 'approved_no_allocation': total_no_allocation},
+                             counts=all_tab_counts,
+                             global_counts=all_tab_counts,
                              current_filter=filter_type,
                              now=datetime.now())
     
-    # Normal request-based filters
-    base_query = ReliefRqst.query.options(
-        joinedload(ReliefRqst.agency),
-        joinedload(ReliefRqst.eligible_event),
-        joinedload(ReliefRqst.status),
-        joinedload(ReliefRqst.items),
-        joinedload(ReliefRqst.packages)  # Load packages to check for pending approval
-    ).filter(
-        ReliefRqst.status_code.in_([rr_service.STATUS_SUBMITTED, rr_service.STATUS_PART_FILLED])
-    ).order_by(ReliefRqst.create_dtime.desc())
+    elif filter_type == 'approved_no_allocation':
+        # Show approved packages WITHOUT items - use pre-built dataset
+        package_data = []
+        for pkg in approved_no_items:
+            package_data.append({
+                'package': pkg,
+                'relief_request': pkg.relief_request,
+                'item_count': 0,
+                'total_qty': 0
+            })
+        
+        return render_template('packaging/pending_fulfillment.html',
+                             requests=[],
+                             packages=package_data,
+                             counts=all_tab_counts,
+                             global_counts=all_tab_counts,
+                             current_filter=filter_type,
+                             now=datetime.now())
     
-    all_requests = base_query.all()
-    
-    # Helper function to check if request has package pending LM approval
-    def has_pending_approval(req):
-        """
-        Check if request has a package submitted for LM approval.
-        
-        Differentiates between:
-        - Draft packages: request status=SUBMITTED, package status='P', dispatch_dtime=NULL (shows in "Being Prepared")
-        - Submitted packages: request status=PART_FILLED, package status='P', dispatch_dtime=NULL (shows in "Awaiting Approval")
-        
-        Key insight: When LO submits for approval, relief request status changes to PART_FILLED (line 1347)
-        """
-        return (req.status_code == rr_service.STATUS_PART_FILLED and
-                any(pkg.status_code == rr_service.PKG_STATUS_PENDING 
-                    and pkg.dispatch_dtime is None
-                    for pkg in req.packages))
-    
-    # Helper function to check if request has dispatched packages
-    def has_dispatched_package(req):
-        """
-        Check if request has any packages that have been approved and dispatched.
-        Dispatched packages should only appear in the "Approved for Dispatch" tab.
-        """
-        return any(pkg.status_code == rr_service.PKG_STATUS_DISPATCHED 
-                   for pkg in req.packages)
-    
-    # Helper function to check if current user has worked on this request
-    def is_user_involved(req):
-        """
-        Check if the current user should see this request.
-        
-        For Logistics Officers (LO):
-        - Shows packages the LO created or updated
-        - Shows packages tied to relief requests the LO created
-        
-        For Logistics Managers (LM):
-        - Shows ALL packages from all LOs and themselves
-        - Shows packages they verified or are awaiting their approval
-        """
-        current_user_name = current_user.user_name
-        
-        # LM: Can see all packages from all LOs and themselves
-        if is_logistics_manager():
-            # If request has any packages, LM can see it
-            return len(req.packages) > 0
-        
-        # LO: Can see packages they created/updated OR relief requests they created
-        for pkg in req.packages:
-            if (pkg.create_by_id == current_user_name or 
-                pkg.update_by_id == current_user_name or
-                req.create_by_id == current_user_name):
-                return True
-        
-        return False
-    
-    # Apply role-based filtering first
-    if is_logistics_manager():
-        # LM sees all requests
-        role_filtered_requests = all_requests
-    else:
-        # LO sees only requests they're involved with
-        role_filtered_requests = [r for r in all_requests if is_user_involved(r)]
-    
-    if filter_type == 'awaiting':
-        # Show all SUBMITTED requests (not yet partially filled)
-        # Exclude requests with dispatched packages (they belong in Approved for Dispatch tab)
-        filtered_requests = [r for r in role_filtered_requests 
-                           if r.status_code == rr_service.STATUS_SUBMITTED 
-                           and not has_pending_approval(r)
-                           and not has_dispatched_package(r)]
+    elif filter_type == 'awaiting':
+        filtered_requests = awaiting_requests
     elif filter_type == 'in_progress':
-        # Being Prepared: Show PART_FILLED requests (in active preparation)
-        # Exclude requests with dispatched packages (they belong in Approved for Dispatch tab)
-        filtered_requests = [r for r in role_filtered_requests 
-                           if r.status_code == rr_service.STATUS_PART_FILLED
-                           and not has_pending_approval(r)
-                           and not has_dispatched_package(r)]
+        filtered_requests = in_progress_requests
     elif filter_type == 'pending_approval':
-        # Show only requests with packages awaiting LM approval
-        filtered_requests = [r for r in role_filtered_requests if has_pending_approval(r)]
+        filtered_requests = pending_approval_requests
     else:
-        # "All" tab: Show only requests where current user is involved
-        filtered_requests = role_filtered_requests
-    
-    # Count approved packages for the tabs
-    # Get all approved packages and split by allocation status
-    all_approved_pkgs = ReliefPkg.query.options(
-        joinedload(ReliefPkg.items)
-    ).filter(
-        ReliefPkg.status_code == rr_service.PKG_STATUS_DISPATCHED
-    ).all()
-    
-    approved_with_items = len([pkg for pkg in all_approved_pkgs if len(pkg.items) > 0])
-    approved_no_allocation = len([pkg for pkg in all_approved_pkgs if len(pkg.items) == 0])
-    
-    # For LOs: Filter approved packages by user involvement
-    current_user_name = current_user.user_name
-    if is_logistics_manager():
-        # LM sees all packages
-        user_approved_pkgs = all_approved_pkgs
-    else:
-        # LO sees only packages they created or updated
-        user_approved_pkgs = [pkg for pkg in all_approved_pkgs 
-                             if pkg.create_by_id == current_user_name or pkg.update_by_id == current_user_name]
-    
-    user_approved_with_items = len([pkg for pkg in user_approved_pkgs if len(pkg.items) > 0])
-    user_approved_no_allocation = len([pkg for pkg in user_approved_pkgs if len(pkg.items) == 0])
-    
-    # Calculate separate counts for LO and LM using EXACT same base as their respective displays
-    # LO counts: use role_filtered_requests (filtered by is_user_involved)
-    lo_counts = {
-        'submitted': len([r for r in role_filtered_requests 
-                         if r.status_code == rr_service.STATUS_SUBMITTED 
-                         and not has_pending_approval(r)
-                         and not has_dispatched_package(r)]),
-        'in_progress': len([r for r in role_filtered_requests 
-                           if r.status_code == rr_service.STATUS_PART_FILLED
-                           and not has_pending_approval(r)
-                           and not has_dispatched_package(r)]),
-        'pending_approval': len([r for r in role_filtered_requests if has_pending_approval(r)]),
-        'approved': user_approved_with_items,
-        'approved_no_allocation': user_approved_no_allocation
-    }
-    
-    # LM counts: use all_requests (no user filtering)
-    lm_counts = {
-        'submitted': len([r for r in all_requests 
-                         if r.status_code == rr_service.STATUS_SUBMITTED 
-                         and not has_pending_approval(r)
-                         and not has_dispatched_package(r)]),
-        'in_progress': len([r for r in all_requests 
-                           if r.status_code == rr_service.STATUS_PART_FILLED
-                           and not has_pending_approval(r)
-                           and not has_dispatched_package(r)]),
-        'pending_approval': len([r for r in all_requests if has_pending_approval(r)]),
-        'approved': approved_with_items,
-        'approved_no_allocation': approved_no_allocation
-    }
-    
-    # Use the appropriate counts based on the current user's role
-    # This ensures badge counts match EXACTLY what's displayed for that role
-    if is_logistics_manager():
-        counts = lm_counts
-        global_counts = lm_counts
-    else:
-        counts = lo_counts
-        global_counts = lo_counts
+        # Default: show all requests user is involved with
+        filtered_requests = (awaiting_requests + in_progress_requests + pending_approval_requests)
     
     return render_template('packaging/pending_fulfillment.html',
                          requests=filtered_requests,
                          packages=[],
-                         counts=counts,
-                         global_counts=global_counts,
+                         counts=all_tab_counts,
+                         global_counts=all_tab_counts,
                          current_filter=filter_type,
                          STATUS_SUBMITTED=rr_service.STATUS_SUBMITTED,
                          STATUS_PART_FILLED=rr_service.STATUS_PART_FILLED)
