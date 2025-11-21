@@ -948,13 +948,15 @@ def pending_fulfillment():
         Check if request has a package submitted for LM approval.
         
         Differentiates between:
-        - Draft packages: status='P', verify_by_id=NULL, dispatch_dtime=NULL (shows in "Being Prepared")
-        - Submitted packages: status='P', verify_by_id!=NULL, dispatch_dtime=NULL (shows in "Awaiting Approval")
+        - Draft packages: request status=SUBMITTED, package status='P', dispatch_dtime=NULL (shows in "Being Prepared")
+        - Submitted packages: request status=PART_FILLED, package status='P', dispatch_dtime=NULL (shows in "Awaiting Approval")
+        
+        Key insight: When LO submits for approval, relief request status changes to PART_FILLED (line 1347)
         """
-        return any(pkg.status_code == rr_service.PKG_STATUS_PENDING 
-                   and pkg.dispatch_dtime is None 
-                   and pkg.verify_by_id is not None  # Only submitted packages have verify_by_id set
-                   for pkg in req.packages)
+        return (req.status_code == rr_service.STATUS_PART_FILLED and
+                any(pkg.status_code == rr_service.PKG_STATUS_PENDING 
+                    and pkg.dispatch_dtime is None
+                    for pkg in req.packages))
     
     # Helper function to check if request has dispatched packages
     def has_dispatched_package(req):
@@ -971,7 +973,8 @@ def pending_fulfillment():
         Check if the current user should see this request.
         
         For Logistics Officers (LO):
-        - Shows only packages the LO created or updated
+        - Shows packages the LO created or updated
+        - Shows packages tied to relief requests the LO created
         
         For Logistics Managers (LM):
         - Shows ALL packages from all LOs and themselves
@@ -984,9 +987,11 @@ def pending_fulfillment():
             # If request has any packages, LM can see it
             return len(req.packages) > 0
         
-        # LO: Can only see packages they created or updated
+        # LO: Can see packages they created/updated OR relief requests they created
         for pkg in req.packages:
-            if pkg.create_by_id == current_user_name or pkg.update_by_id == current_user_name:
+            if (pkg.create_by_id == current_user_name or 
+                pkg.update_by_id == current_user_name or
+                req.create_by_id == current_user_name):
                 return True
         
         return False
@@ -1006,8 +1011,8 @@ def pending_fulfillment():
                            and not has_pending_approval(r)
                            and not has_dispatched_package(r)]
     elif filter_type == 'pending_approval':
-        # Show only requests with packages awaiting LM approval
-        filtered_requests = [r for r in all_requests if has_pending_approval(r)]
+        # Show only requests with packages awaiting LM approval AND user is involved
+        filtered_requests = [r for r in all_requests if has_pending_approval(r) and is_user_involved(r)]
     else:
         # "All" tab: Show only requests where current user is involved
         filtered_requests = [r for r in all_requests if is_user_involved(r)]
