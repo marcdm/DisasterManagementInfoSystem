@@ -217,8 +217,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 1. Donations Timeline Chart
     const donationsTimelineData = {{ donations_timeline | tojson }};
-    const donationsLabels = donationsTimelineData.map(d => new Date(d[0]).toLocaleDateString());
-    const donationsValues = donationsTimelineData.map(d => d[1]);
+    const donationsLabels = donationsTimelineData.labels.map(d => new Date(d).toLocaleDateString());
+    const donationsValues = donationsTimelineData.values;
 
     new Chart(document.getElementById('donationsTimelineChart'), {
         type: 'line',
@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 2. Requests & Fulfillment Timeline Chart
     const requestsTimelineData = {{ requests_timeline | tojson }};
     const fulfilledTimelineData = {{ fulfilled_timeline | tojson }};
-    const timelineLabels = requestsTimelineData.map(d => new Date(d[0]).toLocaleDateString());
+    const timelineLabels = requestsTimelineData.labels.map(d => new Date(d).toLocaleDateString());
 
     new Chart(document.getElementById('requestsTimelineChart'), {
         type: 'line',
@@ -258,7 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
             datasets: [
                 {
                     label: 'Requests Submitted',
-                    data: requestsTimelineData.map(d => d[1]),
+                    data: requestsTimelineData.values,
                     borderColor: 'rgb(255, 193, 7)',
                     backgroundColor: 'rgba(255, 193, 7, 0.1)',
                     tension: 0.4,
@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 {
                     label: 'Requests Fulfilled',
-                    data: fulfilledTimelineData.map(d => d[1]),
+                    data: fulfilledTimelineData.values,
                     borderColor: 'rgb(25, 135, 84)',
                     backgroundColor: 'rgba(25, 135, 84, 0.1)',
                     tension: 0.4,
@@ -321,8 +321,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 4. Top Agencies Chart
     const topAgencies = {{ top_agencies | tojson }};
-    const agencyLabels = topAgencies.map(a => a[0]);
-    const agencyValues = topAgencies.map(a => a[1]);
+    const agencyLabels = topAgencies.labels;
+    const agencyValues = topAgencies.values;
 
     new Chart(document.getElementById('topAgenciesChart'), {
         type: 'bar',

@@ -12,6 +12,8 @@ DRIMS (Disaster Relief Inventory Management System) is a web-based platform for 
   - Consistent navigation patterns throughout the application
 
 ## Recent Updates (November 21, 2025)
+- **Operations Dashboard for Executives**: Created new executive-level Operations Dashboard (`/executive/operations`) with read-only KPIs and Chart.js visualizations for system-wide donations, relief requests, and fulfillment metrics. Accessible only to ODPEM_DG, ODPEM_DDG, and ODPEM_DIR_PEOD roles.
+- **Executive Dashboard Routing**: Updated main dashboard routing to send executive roles (DG, Deputy DG, Director PEOD) to Operations Dashboard by default. Director Dashboard (eligibility workflow) remains accessible via navigation menu at `/director/dashboard`.
 - **Relief Request Tab Counters**: All tab counters now show exact counts matching the number of requests in each tab's list using identical filtering logic. Added "All Requests" tab showing total count. Reorganized tabs: All Requests, Pending Review, Approved, Drafts, Completed.
 - **Relief Request Sorting**: All relief request lists now sort by newest first (`.order_by(request_date.desc())` or `.order_by(create_dtime.desc())`), including main lists, workflow tabs, and eligibility queue.
 - **Dynamic Status Dropdown**: Fixed batch allocation drawer to properly update status dropdowns by calling main page's `updateAllocation()` function.

@@ -68,7 +68,7 @@ def index():
     ).limit(10).all()
     
     # Donations timeline (by week)
-    donations_timeline = db.session.query(
+    donations_timeline_raw = db.session.query(
         func.date_trunc('week', Donation.received_date).label('week'),
         func.count(Donation.donation_id).label('count')
     ).filter(
@@ -78,6 +78,12 @@ def index():
     ).order_by(
         'week'
     ).all()
+    
+    # Convert to JSON-serializable format
+    donations_timeline = {
+        'labels': [row.week.strftime('%Y-%m-%d') if row.week else '' for row in donations_timeline_raw],
+        'values': [int(row.count) for row in donations_timeline_raw]
+    }
     
     # =======================
     # RELIEF REQUEST METRICS
@@ -150,7 +156,7 @@ def index():
     ).count()
     
     # Top requesting agencies (by fulfilled requests)
-    top_agencies = db.session.query(
+    top_agencies_raw = db.session.query(
         Agency.agency_name,
         func.count(ReliefRqst.reliefrqst_id).label('count')
     ).join(
@@ -164,8 +170,14 @@ def index():
         desc('count')
     ).limit(10).all()
     
+    # Convert to JSON-serializable format
+    top_agencies = {
+        'labels': [row.agency_name for row in top_agencies_raw],
+        'values': [int(row.count) for row in top_agencies_raw]
+    }
+    
     # Relief requests timeline (by week)
-    requests_timeline = db.session.query(
+    requests_timeline_raw = db.session.query(
         func.date_trunc('week', ReliefRqst.create_dtime).label('week'),
         func.count(ReliefRqst.reliefrqst_id).label('count')
     ).filter(
@@ -177,7 +189,7 @@ def index():
     ).all()
     
     # Fulfilled requests timeline (by week)
-    fulfilled_timeline = db.session.query(
+    fulfilled_timeline_raw = db.session.query(
         func.date_trunc('week', ReliefRqst.action_dtime).label('week'),
         func.count(ReliefRqst.reliefrqst_id).label('count')
     ).filter(
@@ -188,6 +200,17 @@ def index():
     ).order_by(
         'week'
     ).all()
+    
+    # Convert to JSON-serializable format
+    requests_timeline = {
+        'labels': [row.week.strftime('%Y-%m-%d') if row.week else '' for row in requests_timeline_raw],
+        'values': [int(row.count) for row in requests_timeline_raw]
+    }
+    
+    fulfilled_timeline = {
+        'labels': [row.week.strftime('%Y-%m-%d') if row.week else '' for row in fulfilled_timeline_raw],
+        'values': [int(row.count) for row in fulfilled_timeline_raw]
+    }
     
     # =======================
     # AVERAGE TIME METRICS
@@ -221,7 +244,6 @@ def index():
         # Donation KPIs
         'total_donations': total_donations,
         'total_donation_items': total_donation_items,
-        'donations_by_donor': donations_by_donor,
         'donations_timeline': donations_timeline,
         # Relief Request KPIs
         'total_requests': total_requests,

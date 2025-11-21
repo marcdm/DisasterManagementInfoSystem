@@ -34,7 +34,9 @@ def index():
     if primary_role == 'SYSTEM_ADMINISTRATOR':
         return admin_dashboard()
     elif primary_role in ['ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD']:
-        return director_dashboard()
+        # Route executive roles to Operations Dashboard
+        from flask import redirect, url_for
+        return redirect(url_for('operations_dashboard.index'))
     elif primary_role == 'LOGISTICS_MANAGER':
         return logistics_dashboard()
     elif primary_role == 'LOGISTICS_OFFICER':
