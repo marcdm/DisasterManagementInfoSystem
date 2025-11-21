@@ -130,6 +130,10 @@ const BatchAllocation = (function() {
             if (allocatedBatchIds.length > 0) {
                 params.append('allocated_batch_ids', allocatedBatchIds.join(','));
             }
+            // Include current allocations so API can "release" them when calculating available qty
+            if (Object.keys(currentAllocations).length > 0) {
+                params.append('current_allocations', JSON.stringify(currentAllocations));
+            }
             
             const url = `/packaging/api/item/${itemId}/batches?${params.toString()}`;
             console.log('Fetching batches from:', url);

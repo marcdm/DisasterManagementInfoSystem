@@ -367,7 +367,8 @@ class BatchAllocationService:
         item_id: int,
         remaining_qty: Decimal,
         required_uom: str = None,
-        allocated_batch_ids: List[int] = None
+        allocated_batch_ids: List[int] = None,
+        current_allocations: dict = None
     ) -> Tuple[List[ItemBatch], Decimal, Decimal]:
         """
         Get batches for the drawer display with warehouse-based filtering and sorting.
@@ -377,11 +378,17 @@ class BatchAllocationService:
         Early Stopping: For each warehouse, stops loading batches once cumulative quantity 
         meets or exceeds remaining_qty.
         
+        Important: When current_allocations is provided, those quantities are "released" from
+        reserved_qty when calculating available_qty. This allows LM to re-allocate freely
+        when editing existing package allocations.
+        
         Args:
             item_id: Item ID
             remaining_qty: Remaining quantity to fulfill
             required_uom: Required unit of measure
             allocated_batch_ids: List of batch IDs that are already allocated (for editing)
+            current_allocations: Dict mapping batch_id -> qty for current package's allocations
+                                 (these are "released" from reserved_qty when calculating available)
             
         Returns:
             Tuple of:
@@ -397,6 +404,13 @@ class BatchAllocationService:
         # Get all available batches (with available qty > 0)
         all_batches = BatchAllocationService.get_available_batches(item_id, required_uom=required_uom)
         allocated_batch_ids_set = set(allocated_batch_ids or [])
+        current_allocations = current_allocations or {}
+        
+        # Helper function to calculate effective available quantity
+        # This "releases" current package's allocations from reserved_qty
+        def calc_available_qty(batch):
+            released_qty = current_allocations.get(batch.batch_id, Decimal('0'))
+            return batch.usable_qty - (batch.reserved_qty - released_qty)
         
         # Group batches by warehouse first (before sorting)
         warehouse_groups = {}
@@ -408,14 +422,16 @@ class BatchAllocationService:
                     'total_available': Decimal('0')
                 }
             
-            available_qty = batch.usable_qty - batch.reserved_qty
+            available_qty = calc_available_qty(batch)
+            is_allocated = batch.batch_id in allocated_batch_ids_set
             
             # Skip batches with zero or negative available inventory
-            if available_qty <= 0:
+            # EXCEPT if they're already allocated (need to show them for editing)
+            if available_qty <= 0 and not is_allocated:
                 continue
             
             warehouse_groups[warehouse_id]['batches'].append(batch)
-            warehouse_groups[warehouse_id]['total_available'] += available_qty
+            warehouse_groups[warehouse_id]['total_available'] += max(Decimal('0'), available_qty)
         
         # Filter out warehouses with zero total available quantity
         warehouse_groups = {
@@ -441,7 +457,7 @@ class BatchAllocationService:
             
             for batch in wh_data['batches']:
                 is_allocated = batch.batch_id in allocated_batch_ids_set
-                available_qty = batch.usable_qty - batch.reserved_qty
+                available_qty = calc_available_qty(batch)
                 
                 # Always include allocated batches with available inventory (for editing)
                 if is_allocated:
@@ -466,7 +482,7 @@ class BatchAllocationService:
         # Calculate total available and shortfall
         cumulative_available = Decimal('0')
         for batch in limited_batches:
-            available_qty = batch.usable_qty - batch.reserved_qty
+            available_qty = calc_available_qty(batch)
             cumulative_available += available_qty
         
         shortfall = max(Decimal('0'), remaining_qty - cumulative_available)

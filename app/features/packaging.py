@@ -1823,6 +1823,7 @@ def get_item_batches(item_id):
         remaining_qty = request.args.get('remaining_qty', type=float)
         required_uom = request.args.get('required_uom', type=str)
         allocated_batch_ids_str = request.args.get('allocated_batch_ids', type=str)
+        current_allocations_str = request.args.get('current_allocations', type=str)
         
         # Parse allocated batch IDs from comma-separated string
         allocated_batch_ids = []
@@ -1831,6 +1832,17 @@ def get_item_batches(item_id):
                 allocated_batch_ids = [int(bid) for bid in allocated_batch_ids_str.split(',') if bid.strip()]
             except ValueError:
                 pass  # Ignore invalid batch IDs
+        
+        # Parse current allocations from JSON (batch_id -> quantity mapping)
+        current_allocations = {}
+        if current_allocations_str:
+            try:
+                import json
+                current_allocations = json.loads(current_allocations_str)
+                # Convert keys to int and values to Decimal (JSON keys are strings)
+                current_allocations = {int(k): Decimal(str(v)) for k, v in current_allocations.items()}
+            except (ValueError, json.JSONDecodeError):
+                pass  # Ignore invalid JSON
         
         # Get item to check if it's batched
         item = Item.query.get(item_id)
@@ -1844,7 +1856,8 @@ def get_item_batches(item_id):
                 item_id,
                 Decimal(str(remaining_qty)),
                 required_uom,
-                allocated_batch_ids
+                allocated_batch_ids,
+                current_allocations
             )
             
             # Debug logging
@@ -1859,7 +1872,9 @@ def get_item_batches(item_id):
             # Format batches with priority groups
             result = []
             for batch, priority_group in batch_groups:
-                available_qty = batch.usable_qty - batch.reserved_qty
+                # Calculate available_qty: release current package's allocations from reserved_qty
+                released_qty = current_allocations.get(batch.batch_id, Decimal('0'))
+                available_qty = batch.usable_qty - (batch.reserved_qty - released_qty)
                 batch_info = {
                     'batch_id': batch.batch_id,
                     'batch_no': batch.batch_no,
