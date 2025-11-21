@@ -997,6 +997,10 @@ def pending_fulfillment():
     user_approved_with_items = len([pkg for pkg in user_approved_pkgs if len(pkg.items) > 0])
     user_approved_no_allocation = len([pkg for pkg in user_approved_pkgs if len(pkg.items) == 0])
     
+    # For badge counts: Use user-involved requests (all requests the user should see)
+    # This ensures badge counts are correct regardless of which tab is active
+    user_requests = [r for r in all_requests if is_user_involved(r)]
+    
     global_counts = {
         'submitted': len([r for r in all_requests 
                          if r.status_code == rr_service.STATUS_SUBMITTED 
@@ -1011,16 +1015,18 @@ def pending_fulfillment():
         'approved_no_allocation': approved_no_allocation
     }
     
+    # Calculate user-scoped counts from ALL user requests (not just filtered by current tab)
+    # This ensures badge counts show correct numbers on all tabs
     filtered_counts = {
-        'submitted': len([r for r in filtered_requests 
+        'submitted': len([r for r in user_requests 
                          if r.status_code == rr_service.STATUS_SUBMITTED 
                          and not has_pending_approval(r)
                          and not has_dispatched_package(r)]),
-        'in_progress': len([r for r in filtered_requests 
+        'in_progress': len([r for r in user_requests 
                            if r.status_code == rr_service.STATUS_PART_FILLED
                            and not has_pending_approval(r)
                            and not has_dispatched_package(r)]),
-        'pending_approval': len([r for r in filtered_requests if has_pending_approval(r)]),
+        'pending_approval': len([r for r in user_requests if has_pending_approval(r)]),
         'approved': user_approved_with_items,
         'approved_no_allocation': user_approved_no_allocation
     }
