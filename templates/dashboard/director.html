@@ -155,7 +155,7 @@
                 </td>
                 <td>
                     {% if req.status_code == 1 and has_feature('eligibility_review') %}
-                        <a href="{{ url_for('eligibility.review_request', reliefrqst_id=req.reliefrqst_id) }}" 
+                        <a href="{{ url_for('eligibility.review_request', request_id=req.reliefrqst_id) }}" 
                            class="btn btn-relief-primary btn-sm">
                             <i class="bi bi-clipboard-check me-1"></i> Review
                         </a>

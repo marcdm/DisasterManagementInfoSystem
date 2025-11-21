@@ -25,6 +25,25 @@ from app.core.audit import add_audit_fields
 from app.core.exceptions import OptimisticLockError
 
 
+def _validate_version_nbr(entity_name, expected_version, actual_version):
+    """
+    Validate version_nbr for optimistic locking.
+    Raises OptimisticLockError if versions don't match.
+    
+    Args:
+        entity_name: User-friendly name of the entity (e.g., "relief request", "package")
+        expected_version: Version sent from UI
+        actual_version: Current version in database
+    """
+    if expected_version is None:
+        raise OptimisticLockError(f"Version number is required for {entity_name}")
+    
+    if int(expected_version) != int(actual_version):
+        raise OptimisticLockError(
+            f"This {entity_name} has been updated by another user. Please refresh the page and try again."
+        )
+
+
 packaging_bp = Blueprint('packaging', __name__, url_prefix='/packaging')
 
 
@@ -371,16 +390,20 @@ def approve_package(reliefrqst_id):
     
     action = request.form.get('action')
     
+    # Extract version numbers for optimistic locking
+    relief_request_version = request.form.get('relief_request_version')
+    package_version = request.form.get('package_version')
+    
     if action == 'save_draft':
-        return _save_draft_approval(relief_request, relief_pkg)
+        return _save_draft_approval(relief_request, relief_pkg, relief_request_version, package_version)
     elif action == 'approve_and_dispatch':
-        return _approve_and_dispatch(relief_request, relief_pkg)
+        return _approve_and_dispatch(relief_request, relief_pkg, relief_request_version, package_version)
     else:
         flash('Invalid action', 'danger')
         return redirect(url_for('packaging.approve_package', reliefrqst_id=reliefrqst_id))
 
 
-def _save_draft_approval(relief_request, relief_pkg):
+def _save_draft_approval(relief_request, relief_pkg, relief_request_version, package_version):
     """
     LM saves draft changes during approval workflow.
     
@@ -392,6 +415,12 @@ def _save_draft_approval(relief_request, relief_pkg):
     - Concurrency control via optimistic locking (version_nbr)
     """
     try:
+        # OPTIMISTIC LOCKING: Validate relief request version
+        _validate_version_nbr("relief request", relief_request_version, relief_request.version_nbr)
+        
+        # OPTIMISTIC LOCKING: Validate package version
+        _validate_version_nbr("package", package_version, relief_pkg.version_nbr)
+        
         # Process batch allocations and update ReliefPkgItem
         new_allocations = _process_allocations(relief_request, validate_complete=False)
         
@@ -429,7 +458,7 @@ def _save_draft_approval(relief_request, relief_pkg):
         
     except OptimisticLockError as e:
         db.session.rollback()
-        flash('This relief package has been updated by another user. Please refresh and try again.', 'warning')
+        flash(str(e), 'warning')
         return redirect(url_for('packaging.approve_package', reliefrqst_id=relief_request.reliefrqst_id))
     except ValueError as e:
         db.session.rollback()
@@ -441,7 +470,7 @@ def _save_draft_approval(relief_request, relief_pkg):
         return redirect(url_for('packaging.approve_package', reliefrqst_id=relief_request.reliefrqst_id))
 
 
-def _approve_and_dispatch(relief_request, relief_pkg):
+def _approve_and_dispatch(relief_request, relief_pkg, relief_request_version, package_version):
     """
     LM approves package and dispatches to Inventory Clerk.
     - Validates allocations
@@ -452,6 +481,12 @@ def _approve_and_dispatch(relief_request, relief_pkg):
     - Releases lock
     """
     try:
+        # OPTIMISTIC LOCKING: Validate relief request version
+        _validate_version_nbr("relief request", relief_request_version, relief_request.version_nbr)
+        
+        # OPTIMISTIC LOCKING: Validate package version
+        _validate_version_nbr("package", package_version, relief_pkg.version_nbr)
+        
         # Process and validate allocations (can be partial)
         new_allocations = _process_allocations(relief_request, validate_complete=False)
         
@@ -1083,7 +1118,9 @@ def prepare_package(reliefrqst_id):
             
             item_inventory_map[item.item_id] = inventories
         
-        existing_packages = ReliefPkg.query.filter_by(reliefrqst_id=reliefrqst_id).all()
+        # Get existing package for this relief request (should only be one)
+        existing_package = ReliefPkg.query.filter_by(reliefrqst_id=reliefrqst_id).first()
+        existing_packages = [existing_package] if existing_package else []
         
         existing_allocations = {}
         existing_batch_allocations = {}
@@ -1140,6 +1177,7 @@ def prepare_package(reliefrqst_id):
         
         return render_template('packaging/prepare.html',
                              relief_request=relief_request,
+                             existing_package=existing_package,
                              warehouses=warehouses,
                              item_inventory_map=item_inventory_map,
                              existing_allocations=existing_allocations,
@@ -1149,18 +1187,22 @@ def prepare_package(reliefrqst_id):
     
     action = request.form.get('action')
     
+    # Extract version numbers for optimistic locking
+    relief_request_version = request.form.get('relief_request_version')
+    package_version = request.form.get('package_version')
+    
     if action == 'save_draft':
-        return _save_draft(relief_request)
+        return _save_draft(relief_request, relief_request_version, package_version)
     elif action == 'submit_for_approval':
-        return _submit_for_approval(relief_request)
+        return _submit_for_approval(relief_request, relief_request_version, package_version)
     elif action == 'send_for_dispatch':
-        return _send_for_dispatch(relief_request)
+        return _send_for_dispatch(relief_request, relief_request_version, package_version)
     else:
         flash('Invalid action', 'danger')
         return redirect(url_for('packaging.prepare_package', reliefrqst_id=reliefrqst_id))
 
 
-def _save_draft(relief_request):
+def _save_draft(relief_request, relief_request_version, package_version):
     """
     Save packaging progress as draft.
     
@@ -1175,6 +1217,14 @@ def _save_draft(relief_request):
     Concurrency control is handled via optimistic locking (version_nbr).
     """
     try:
+        # OPTIMISTIC LOCKING: Validate relief request version
+        _validate_version_nbr("relief request", relief_request_version, relief_request.version_nbr)
+        
+        # OPTIMISTIC LOCKING: Validate package version if it exists
+        existing_pkg = ReliefPkg.query.filter_by(reliefrqst_id=relief_request.reliefrqst_id).first()
+        if existing_pkg and package_version:
+            _validate_version_nbr("package", package_version, existing_pkg.version_nbr)
+        
         # Process and validate allocations (creates ReliefPkgItem records in pending transaction)
         new_allocations = _process_allocations(relief_request, validate_complete=False)
         
@@ -1212,7 +1262,7 @@ def _save_draft(relief_request):
         
     except OptimisticLockError as e:
         db.session.rollback()
-        flash('This relief package has been updated by another user. Please refresh and try again.', 'warning')
+        flash(str(e), 'warning')
         return redirect(url_for('packaging.prepare_package', reliefrqst_id=relief_request.reliefrqst_id))
     except ValueError as e:
         db.session.rollback()
@@ -1224,7 +1274,7 @@ def _save_draft(relief_request):
         return redirect(url_for('packaging.prepare_package', reliefrqst_id=relief_request.reliefrqst_id))
 
 
-def _submit_for_approval(relief_request):
+def _submit_for_approval(relief_request, relief_request_version, package_version):
     """
     Submit package for Logistics Manager approval (LO only) - allows partial allocations.
     Workflow: LO fulfills → Submit to LM → LM approves → Dispatch to Inventory Clerk
@@ -1239,9 +1289,16 @@ def _submit_for_approval(relief_request):
         return redirect(url_for('packaging.prepare_package', reliefrqst_id=relief_request.reliefrqst_id))
     
     try:
+        # OPTIMISTIC LOCKING: Validate relief request version
+        _validate_version_nbr("relief request", relief_request_version, relief_request.version_nbr)
+        
         # SUBMIT-ONCE GUARD: Prevent multiple LOs from submitting the same relief request
         # Check if package already exists and is ALREADY in PENDING status (submitted for LM approval)
         existing_pkg = ReliefPkg.query.filter_by(reliefrqst_id=relief_request.reliefrqst_id).first()
+        
+        # OPTIMISTIC LOCKING: Validate package version if it exists
+        if existing_pkg and package_version:
+            _validate_version_nbr("package", package_version, existing_pkg.version_nbr)
         
         # Store the current package version for optimistic locking check (before processing)
         pkg_version_before = existing_pkg.version_nbr if existing_pkg else None
@@ -1339,7 +1396,7 @@ def _submit_for_approval(relief_request):
         return redirect(url_for('packaging.prepare_package', reliefrqst_id=relief_request.reliefrqst_id))
 
 
-def _send_for_dispatch(relief_request):
+def _send_for_dispatch(relief_request, relief_request_version, package_version):
     """
     Send package for dispatch (LM only).
     Workflow: LM fulfills directly → Dispatch to Inventory Clerk (bypasses approval)
@@ -1350,6 +1407,14 @@ def _send_for_dispatch(relief_request):
         return redirect(url_for('packaging.prepare_package', reliefrqst_id=relief_request.reliefrqst_id))
     
     try:
+        # OPTIMISTIC LOCKING: Validate relief request version
+        _validate_version_nbr("relief request", relief_request_version, relief_request.version_nbr)
+        
+        # OPTIMISTIC LOCKING: Validate package version if it exists
+        existing_pkg = ReliefPkg.query.filter_by(reliefrqst_id=relief_request.reliefrqst_id).first()
+        if existing_pkg and package_version:
+            _validate_version_nbr("package", package_version, existing_pkg.version_nbr)
+        
         # Process and validate allocations (must be complete)
         new_allocations = _process_allocations(relief_request, validate_complete=True)
         

@@ -549,6 +549,9 @@
             <!-- Items Table -->
             <div class="table-responsive-mobile">
                 <form method="POST" id="packagingForm" action="{{ url_for('packaging.approve_package', reliefrqst_id=relief_request.reliefrqst_id) }}">
+                    {# Hidden fields for optimistic locking #}
+                    <input type="hidden" name="relief_request_version" id="relief_request_version" value="{{ relief_request.version_nbr }}">
+                    <input type="hidden" name="package_version" id="package_version" value="{{ relief_pkg.version_nbr }}">
                     <table class="items-table">
                     <thead>
                         <tr>

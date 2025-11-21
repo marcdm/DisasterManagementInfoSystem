@@ -1,0 +1,73 @@
+Fix concurrency (multi-user) issues across Relief Requests and Fulfillment by enforcing optimistic locking and preventing silent overwrites. Do NOT change the database schema; use existing version_nbr fields.
+
+1. Problem
+
+Multiple users (LOs, LMs, Inventory Clerks) can open the same relief request / fulfillment / batch at the same time.
+
+Each user can make changes and save, and the last save silently overwrites the other user’s work.
+
+This creates inconsistent data and user confusion (classic concurrency / “lost update” issue).
+
+2. General Requirement – Optimistic Locking
+
+For all key entities involved in the fulfillment flow (e.g. reliefrqst, reliefpkg, reliefpkg_item, itembatch, inventory – use the existing schema):
+
+The UI must always send the current version_nbr along with the user’s changes.
+
+On every Save Draft, Submit for Approval, Approve & Dispatch, and Update Allocation, the backend must:
+
+Read the current version_nbr from the database.
+
+Compare it with the version_nbr sent from the UI.
+
+If they do not match, treat this as a concurrency conflict and reject the update.
+
+3. Behaviour on Version Conflict
+
+If any involved record (package header, item, batch, inventory) has a mismatched version_nbr:
+
+Do not apply any changes (no partial save).
+
+Return a clear, friendly error to the user, for example:
+
+“This record has been updated by another user. Please refresh the page and try again.”
+
+The user must remain on the same screen with their entered data still visible (if possible) so they can review and re-apply after refresh.
+
+4. Behaviour on Successful Save
+
+If all version_nbr values match:
+
+Apply the changes inside one atomic transaction (all-or-nothing).
+
+Increment version_nbr by 1 for each updated record (header, items, batches, inventory rows).
+
+Return the new version_nbr values to the UI so the next operation uses the updated versions.
+
+5. Where to Apply This
+
+At minimum, implement this optimistic locking behaviour for:
+
+Prepare Relief Package (LO/LM allocation, Save Draft, Submit to LM).
+
+Approve Relief Package (LM adjustments, Save Draft, Approve & Dispatch).
+
+Inventory Clerk dispatch actions (where itembatch/inventory are updated).
+
+Any place where two different users might reasonably open and edit the same request/package/batch must use this version_nbr concurrency check.
+
+6. No Hard Locks
+
+Remove any reliance on custom “code locks” or implicit assumptions that only one user will be editing.
+
+Do not block access based on a lock flag; instead, rely solely on optimistic locking via version_nbr to handle concurrency.
+
+7. UI Expectations
+
+When a concurrency conflict happens, show a non-technical message explaining that:
+
+Someone else has changed the record,
+
+The user needs to reload and re-apply their changes.
+
+Keep DRIMS styling and layout; this change is about behaviour and validation, not visual design.
