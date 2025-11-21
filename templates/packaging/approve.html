@@ -761,8 +761,15 @@ function loadInventory(itemId, warehouseId) {
         .then(response => response.json())
         .then(data => {
             const usable = parseFloat(data.usable_qty || 0);
+            const reserved = parseFloat(data.reserved_qty || 0);
+            
+            // Store both usable and reserved quantities
             stockElement.dataset.usableQty = usable;
-            stockElement.dataset.originalQty = usable;
+            stockElement.dataset.reservedQty = reserved;
+            
+            // Calculate original available as usable - reserved (consistent with DB logic)
+            const originalAvailable = Math.max(0, usable - reserved);
+            stockElement.dataset.originalQty = originalAvailable;
             
             // Update display with current allocation
             updateWarehouseStock(itemId, warehouseId);
@@ -779,21 +786,26 @@ function updateWarehouseStock(itemId, warehouseId) {
     const stockElement = document.getElementById(`stock_${itemId}_${warehouseId}`);
     const allocationInput = document.getElementById(`allocation_${itemId}_${warehouseId}`);
     
-    const originalQty = parseFloat(stockElement.dataset.originalQty || 0);
+    const usableQty = parseFloat(stockElement.dataset.usableQty || 0);
+    const reservedQty = parseFloat(stockElement.dataset.reservedQty || 0);
+    const originalAvailable = parseFloat(stockElement.dataset.originalQty || 0);
     const allocated = parseFloat(allocationInput.value || 0);
-    const remaining = Math.max(0, originalQty - allocated);
+    const remaining = Math.max(0, originalAvailable - allocated);
     
     stockElement.textContent = remaining.toFixed(0);
     
+    // Build tooltip with detailed breakdown
+    const tooltip = `Usable: ${usableQty.toFixed(0)}, Reserved (other packages): ${reservedQty.toFixed(0)}, Available: ${originalAvailable.toFixed(0)}, Allocated (this package): ${allocated.toFixed(0)}, Remaining: ${remaining.toFixed(0)}`;
+    
     if (remaining === 0) {
         stockElement.style.color = '#dc3545';
-        stockElement.title = `No stock remaining (${allocated} allocated from ${originalQty} available)`;
+        stockElement.title = tooltip;
     } else if (allocated > 0) {
         stockElement.style.color = '#f57c00';
-        stockElement.title = `${remaining} remaining (${allocated} allocated from ${originalQty} available)`;
+        stockElement.title = tooltip;
     } else {
         stockElement.style.color = '#212529';
-        stockElement.title = '';
+        stockElement.title = tooltip;
     }
 }
 
