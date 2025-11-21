@@ -172,6 +172,7 @@ def logistics_dashboard():
         'requests': requests,
         'current_filter': current_filter,
         'counts': counts,
+        'global_counts': counts,  # For LMs: global counts; For LOs: their own counts
         'low_stock_count': low_stock_count,
         'total_inventory_value': total_inventory_value,
         'STATUS_SUBMITTED': rr_service.STATUS_SUBMITTED,
