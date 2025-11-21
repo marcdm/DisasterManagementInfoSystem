@@ -536,10 +536,15 @@ def lo_dashboard():
     
     # ========== TOP ITEMS ALLOCATED ==========
     
+    # Query top items allocated by LO (properly join ReliefPkgItem -> Item -> ReliefPkg)
     top_items = db.session.query(
         Item.item_name,
         func.sum(ReliefPkgItem.item_qty).label('total_qty')
-    ).join(ReliefPkgItem).join(ReliefPkg).filter(
+    ).select_from(ReliefPkgItem).join(
+        Item, ReliefPkgItem.item_id == Item.item_id
+    ).join(
+        ReliefPkg, ReliefPkgItem.reliefpkg_id == ReliefPkg.reliefpkg_id
+    ).filter(
         or_(
             ReliefPkg.create_by_id == current_user_name,
             ReliefPkg.update_by_id == current_user_name
