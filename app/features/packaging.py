@@ -1239,9 +1239,21 @@ def _submit_for_approval(relief_request):
         return redirect(url_for('packaging.prepare_package', reliefrqst_id=relief_request.reliefrqst_id))
     
     try:
-        # Check if package already exists and is pending (BEFORE processing allocations)
-        # This prevents duplicate notifications when LO resubmits an already-pending package
+        # SUBMIT-ONCE GUARD: Prevent multiple LOs from submitting the same relief request
+        # Check if package already exists and is ALREADY submitted for LM approval
         existing_pkg = ReliefPkg.query.filter_by(reliefrqst_id=relief_request.reliefrqst_id).first()
+        
+        # A package is considered "already submitted" if:
+        # 1. It exists AND
+        # 2. Status is PENDING ('P') AND
+        # 3. verify_by_id is set (indicating submission to LM, not just a draft)
+        if existing_pkg and existing_pkg.status_code == rr_service.PKG_STATUS_PENDING and existing_pkg.verify_by_id:
+            flash('This relief request has already been submitted to the Logistics Manager for approval by another user.', 'warning')
+            return redirect(url_for('packaging.pending_fulfillment'))
+        
+        # Store the current package version for optimistic locking check
+        pkg_version_before = existing_pkg.version_nbr if existing_pkg else None
+        
         was_already_pending = existing_pkg and existing_pkg.status_code == rr_service.PKG_STATUS_PENDING
         
         # Process and validate allocations
@@ -1251,6 +1263,17 @@ def _submit_for_approval(relief_request):
         relief_pkg = ReliefPkg.query.filter_by(reliefrqst_id=relief_request.reliefrqst_id).first()
         if not relief_pkg:
             raise ValueError('Failed to create relief package')
+        
+        # OPTIMISTIC LOCKING CHECK: Verify package hasn't been submitted by another LO
+        # If package existed before and another LO has already set verify_by_id in a parallel transaction,
+        # the version_nbr will have changed
+        if pkg_version_before is not None and relief_pkg.version_nbr != pkg_version_before:
+            # Package was modified by another user (likely submitted)
+            # Re-check if it's now in submitted state
+            if relief_pkg.status_code == rr_service.PKG_STATUS_PENDING and relief_pkg.verify_by_id:
+                flash('This relief request has already been submitted to the Logistics Manager for approval by another user.', 'warning')
+                db.session.rollback()
+                return redirect(url_for('packaging.pending_fulfillment'))
         
         # Mark package as submitted for approval by setting verify_by_id
         # This differentiates submitted packages from drafts (where verify_by_id=NULL)
