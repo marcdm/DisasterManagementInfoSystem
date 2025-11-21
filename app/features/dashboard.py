@@ -18,6 +18,7 @@ from app.core.feature_registry import FeatureRegistry
 from app.core.rbac import has_role
 from datetime import datetime, timedelta
 from collections import defaultdict
+from app.utils.timezone import now as jamaica_now
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -367,7 +368,7 @@ def lo_dashboard():
         abort(403)
     
     current_user_name = current_user.user_name
-    now = datetime.now()
+    now = jamaica_now()
     
     # Date ranges
     today = now.date()

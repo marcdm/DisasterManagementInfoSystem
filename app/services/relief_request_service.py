@@ -13,6 +13,7 @@ from app.db.models import (
     ReliefPkg, ReliefPkgItem, DBIntake, DBIntakeItem, Role
 )
 from app.core.exceptions import OptimisticLockError
+from app.utils.timezone import now as jamaica_now
 
 
 # Status codes mapping (from reliefrqst_status lookup table)
@@ -114,7 +115,7 @@ def create_draft_request(agency_id: int, urgency_ind: str, eligible_event_id: Op
         raise ValueError(f"User with email {user_email} not found")
     
     relief_request.create_by_id = user.user_name
-    relief_request.create_dtime = datetime.now()
+    relief_request.create_dtime = jamaica_now()
     
     db.session.add(relief_request)
     db.session.flush()
@@ -273,7 +274,7 @@ def create_dispatch_notifications(relief_request: ReliefRqst) -> None:
     ).all()
     
     event_name = relief_request.eligible_event.event_name if relief_request.eligible_event else "N/A"
-    dispatch_date = datetime.now().strftime('%Y-%m-%d')
+    dispatch_date = jamaica_now().strftime('%Y-%m-%d')
     
     for user in agency_users:
         # Create in-app notification
@@ -512,7 +513,7 @@ def submit_eligibility_decision(reliefrqst_id: int, decision: str, reason: Optio
     
     # Record the decision using user_name field
     relief_request.review_by_id = reviewer.user_name
-    relief_request.review_dtime = datetime.now()
+    relief_request.review_dtime = jamaica_now()
     
     if decision == 'N':
         # Mark as INELIGIBLE and set review fields
@@ -521,7 +522,7 @@ def submit_eligibility_decision(reliefrqst_id: int, decision: str, reason: Optio
         relief_request.status_code = STATUS_INELIGIBLE
         relief_request.status_reason_desc = reason.strip() if reason else None
         relief_request.action_by_id = reviewer.user_name
-        relief_request.action_dtime = datetime.now()
+        relief_request.action_dtime = jamaica_now()
         relief_request.version_nbr += 1
         
         db.session.flush()
