@@ -811,13 +811,15 @@ def pending_fulfillment():
     
     # Handle approved_for_dispatch filter - shows approved packages WITH items allocated
     if filter_type == 'approved_for_dispatch':
-        # Query approved packages (status='D') with items allocated
+        # Query approved packages (status='D') that haven't been handed over yet
+        # Exclude completed packages (status='C') and packages with received_dtime set
         approved_packages = ReliefPkg.query.options(
             joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.agency),
             joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.eligible_event),
             joinedload(ReliefPkg.items).joinedload(ReliefPkgItem.item)
         ).filter(
-            ReliefPkg.status_code == rr_service.PKG_STATUS_DISPATCHED
+            ReliefPkg.status_code == rr_service.PKG_STATUS_DISPATCHED,
+            ReliefPkg.received_dtime.is_(None)  # Exclude packages already handed over
         ).order_by(ReliefPkg.dispatch_dtime.desc()).all()
         
         # Filter to only packages WITH items allocated AND user should see them
@@ -872,14 +874,16 @@ def pending_fulfillment():
     
     # Handle approved_no_allocation filter - shows approved packages WITHOUT items allocated
     if filter_type == 'approved_no_allocation':
-        # Query all approved packages (status='D')
+        # Query approved packages (status='D') that haven't been handed over yet
+        # Exclude completed packages (status='C') and packages with received_dtime set
         all_approved_packages = ReliefPkg.query.options(
             joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.agency),
             joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.eligible_event),
             joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.items),
             joinedload(ReliefPkg.items).joinedload(ReliefPkgItem.item)
         ).filter(
-            ReliefPkg.status_code == rr_service.PKG_STATUS_DISPATCHED
+            ReliefPkg.status_code == rr_service.PKG_STATUS_DISPATCHED,
+            ReliefPkg.received_dtime.is_(None)  # Exclude packages already handed over
         ).order_by(ReliefPkg.dispatch_dtime.desc()).all()
         
         # Filter to only packages WITHOUT items allocated AND user should see them
