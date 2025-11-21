@@ -34,22 +34,22 @@
     <!-- Summary Metrics -->
     {% set summary_metrics = [
         {
-            'icon': 'check-circle',
-            'label': 'Submitted',
-            'value': counts.get('submitted', 0),
-            'variant': 'success'
-        },
-        {
-            'icon': 'pencil-square',
-            'label': 'Drafts',
-            'value': counts.get('draft', 0),
-            'variant': 'secondary'
+            'icon': 'list-check',
+            'label': 'All Requests',
+            'value': counts.get('all', 0),
+            'variant': 'primary'
         },
         {
             'icon': 'hourglass-split',
-            'label': 'Awaiting Approval',
+            'label': 'Pending Review',
             'value': counts.get('awaiting', 0),
             'variant': 'warning'
+        },
+        {
+            'icon': 'check-circle',
+            'label': 'Approved',
+            'value': counts.get('submitted', 0),
+            'variant': 'success'
         },
         {
             'icon': 'clipboard-check',
@@ -62,28 +62,36 @@
 
     <!-- Filter Tabs -->
     <nav class="filter-tabs" role="navigation" aria-label="Relief request status filters">
-        <a href="{{ url_for('requests.list_requests', filter='submitted') }}" 
-           class="filter-tab {% if current_filter == 'submitted' or not current_filter %}active{% endif %}"
-           aria-current="{% if current_filter == 'submitted' or not current_filter %}page{% endif %}">
-            Submitted for Fulfillment
-            {% if counts.get('submitted', 0) > 0 %}
-            <span class="filter-tab-count" aria-label="{{ counts.get('submitted', 0) }} submitted">{{ counts.get('submitted', 0) }}</span>
-            {% endif %}
-        </a>
-        <a href="{{ url_for('requests.list_requests', filter='draft') }}" 
-           class="filter-tab {% if current_filter == 'draft' %}active{% endif %}"
-           aria-current="{% if current_filter == 'draft' %}page{% endif %}">
-            Draft Requests
-            {% if counts.get('draft', 0) > 0 %}
-            <span class="filter-tab-count" aria-label="{{ counts.get('draft', 0) }} drafts">{{ counts.get('draft', 0) }}</span>
+        <a href="{{ url_for('requests.list_requests', filter='all') }}" 
+           class="filter-tab {% if current_filter == 'all' %}active{% endif %}"
+           aria-current="{% if current_filter == 'all' %}page{% endif %}">
+            All Requests
+            {% if counts.get('all', 0) > 0 %}
+            <span class="filter-tab-count" aria-label="{{ counts.get('all', 0) }} total">{{ counts.get('all', 0) }}</span>
             {% endif %}
         </a>
         <a href="{{ url_for('requests.list_requests', filter='awaiting') }}" 
            class="filter-tab {% if current_filter == 'awaiting' %}active{% endif %}"
            aria-current="{% if current_filter == 'awaiting' %}page{% endif %}">
-            Awaiting Approval
+            Pending Review
             {% if counts.get('awaiting', 0) > 0 %}
             <span class="filter-tab-count" aria-label="{{ counts.get('awaiting', 0) }} awaiting">{{ counts.get('awaiting', 0) }}</span>
+            {% endif %}
+        </a>
+        <a href="{{ url_for('requests.list_requests', filter='submitted') }}" 
+           class="filter-tab {% if current_filter == 'submitted' or not current_filter %}active{% endif %}"
+           aria-current="{% if current_filter == 'submitted' or not current_filter %}page{% endif %}">
+            Approved
+            {% if counts.get('submitted', 0) > 0 %}
+            <span class="filter-tab-count" aria-label="{{ counts.get('submitted', 0) }} approved">{{ counts.get('submitted', 0) }}</span>
+            {% endif %}
+        </a>
+        <a href="{{ url_for('requests.list_requests', filter='draft') }}" 
+           class="filter-tab {% if current_filter == 'draft' %}active{% endif %}"
+           aria-current="{% if current_filter == 'draft' %}page{% endif %}">
+            Drafts
+            {% if counts.get('draft', 0) > 0 %}
+            <span class="filter-tab-count" aria-label="{{ counts.get('draft', 0) }} drafts">{{ counts.get('draft', 0) }}</span>
             {% endif %}
         </a>
         <a href="{{ url_for('requests.list_requests', filter='completed') }}" 

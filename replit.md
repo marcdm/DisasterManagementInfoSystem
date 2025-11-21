@@ -11,6 +11,11 @@ DRIMS (Disaster Relief Inventory Management System) is a web-based platform for 
   - Easy to use and user-friendly across all features
   - Consistent navigation patterns throughout the application
 
+## Recent Updates (November 21, 2025)
+- **Relief Request Tab Counters**: All tab counters now show exact counts matching the number of requests in each tab's list using identical filtering logic. Added "All Requests" tab showing total count. Reorganized tabs: All Requests, Pending Review, Approved, Drafts, Completed.
+- **Relief Request Sorting**: All relief request lists now sort by newest first (`.order_by(request_date.desc())` or `.order_by(create_dtime.desc())`), including main lists, workflow tabs, and eligibility queue.
+- **Dynamic Status Dropdown**: Fixed batch allocation drawer to properly update status dropdowns by calling main page's `updateAllocation()` function.
+
 ## System Architecture
 The application employs a modular blueprint architecture with a database-first approach, built upon a pre-existing ODPEM `aidmgmt-3.sql` schema.
 

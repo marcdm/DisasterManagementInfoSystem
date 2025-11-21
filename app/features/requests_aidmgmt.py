@@ -56,14 +56,19 @@ def list_requests():
         flash('You do not have permission to view relief requests.', 'danger')
         abort(403)
     
-    # Calculate counts for filter tabs
+    # Calculate counts for filter tabs - each count uses the EXACT same logic as its corresponding filter
     counts = {
         'submitted': base_query.filter(ReliefRqst.status_code.in_([
             rr_service.STATUS_SUBMITTED, rr_service.STATUS_PART_FILLED
         ])).count(),
         'draft': base_query.filter_by(status_code=rr_service.STATUS_DRAFT).count(),
         'awaiting': base_query.filter_by(status_code=rr_service.STATUS_AWAITING_APPROVAL).count(),
-        'completed': base_query.filter_by(status_code=rr_service.STATUS_FILLED).count()
+        'completed': base_query.filter_by(status_code=rr_service.STATUS_FILLED).count(),
+        'processing': base_query.filter(ReliefRqst.status_code.in_([
+            rr_service.STATUS_AWAITING_APPROVAL, rr_service.STATUS_PART_FILLED
+        ])).count(),  # Legacy filter count
+        'dispatched': base_query.filter_by(status_code=rr_service.STATUS_CLOSED).count(),  # Legacy filter count
+        'all': base_query.count()  # Total count of all requests visible to user
     }
     
     # Apply status filter with full backward compatibility
