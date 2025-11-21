@@ -156,6 +156,18 @@ class FeatureRegistry:
             'navigation_group': 'dashboard',
             'priority': 25
         },
+        'operations_dashboard': {
+            'name': 'Operations Dashboard',
+            'description': 'Executive performance metrics for donations and relief fulfillment',
+            'roles': ['ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD'],
+            'route': 'operations_dashboard.index',
+            'url': '/executive/operations',
+            'icon': 'bi-graph-up',
+            'category': 'analytics',
+            'dashboard_widget': None,
+            'navigation_group': 'dashboard',
+            'priority': 24
+        },
         
         # =================================================================
         # PACKAGE FULFILLMENT (Logistics Officers & Managers)
