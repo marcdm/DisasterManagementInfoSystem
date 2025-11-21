@@ -60,6 +60,61 @@ class BatchAllocationService:
         return query.all()
     
     @staticmethod
+    def sort_batches_for_drawer(batches: List[ItemBatch], item: Item) -> List[ItemBatch]:
+        """
+        Sort batches for drawer display based ONLY on can_expire_flag.
+        Ignores item.issuance_order field to ensure consistent FEFO/FIFO behavior.
+        
+        Drawer Sorting Rules (per warehouse):
+        - If can_expire_flag = TRUE: Sort by earliest expiry_date, then oldest batch_date
+        - If can_expire_flag = FALSE: Sort by oldest batch_date (FIFO)
+        
+        Args:
+            batches: List of batches to sort (already filtered for available qty > 0)
+            item: Item object with can_expire_flag
+            
+        Returns:
+            Sorted list of batches
+        """
+        today = date.today()
+        
+        # Filter out expired batches if item can expire
+        # NULL expiry dates are treated as "never expires" and are allowed
+        if item.can_expire_flag:
+            active_batches = [
+                b for b in batches 
+                if not b.expiry_date or b.expiry_date >= today
+            ]
+        else:
+            active_batches = batches
+        
+        # Filter out batches with zero available quantity
+        active_batches = [
+            b for b in active_batches 
+            if (b.usable_qty - b.reserved_qty) > 0
+        ]
+        
+        # Sort based ONLY on can_expire_flag (ignore issuance_order)
+        if item.can_expire_flag:
+            # FEFO: Sort by earliest expiry date, then oldest batch date
+            return sorted(
+                active_batches,
+                key=lambda b: (
+                    b.expiry_date is None,  # NULL expiry dates go to end
+                    b.expiry_date if b.expiry_date else date.max, 
+                    b.batch_date if b.batch_date else date.max
+                )
+            )
+        else:
+            # FIFO: Sort by oldest batch date
+            return sorted(
+                active_batches, 
+                key=lambda b: (
+                    b.batch_date if b.batch_date else date.min
+                )
+            )
+    
+    @staticmethod
     def sort_batches_by_allocation_rule(batches: List[ItemBatch], item: Item) -> List[ItemBatch]:
         """
         Sort batches according to FEFO/FIFO rules based on item configuration.
@@ -369,9 +424,10 @@ class BatchAllocationService:
             if wh_data['total_available'] > 0
         }
         
-        # Sort batches WITHIN each warehouse using FEFO/FIFO rules
+        # Sort batches WITHIN each warehouse using drawer-specific FEFO/FIFO rules
+        # (ignores issuance_order, only uses can_expire_flag)
         for warehouse_id, wh_data in warehouse_groups.items():
-            wh_data['batches'] = BatchAllocationService.sort_batches_by_allocation_rule(
+            wh_data['batches'] = BatchAllocationService.sort_batches_for_drawer(
                 wh_data['batches'],
                 item
             )
