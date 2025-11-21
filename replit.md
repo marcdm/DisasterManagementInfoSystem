@@ -4,6 +4,15 @@
 DRIMS (Disaster Relief Inventory Management System) is a web-based platform for the Government of Jamaica's ODPEM, designed to manage the entire lifecycle of disaster relief supplies. This includes inventory tracking, donation management, relief request processing, and distribution across multiple warehouses. The system aims to ensure compliance with government processes, support disaster event coordination, supply allocation, and provide robust user administration with Role-Based Access Control (RBAC). Its core purpose is to deliver a modern, efficient, and user-friendly solution for disaster preparedness and response, emphasizing security and comprehensive management capabilities such as inventory transfers, location tracking, analytics, and reporting.
 
 ## Recent Changes (November 21, 2025)
+- **Batch Drawer Warehouse and Batch Filtering Logic**: Implemented strict warehouse and batch filtering rules for the batch selection drawer to ensure proper FEFO/FIFO ordering:
+  - **Warehouse Filtering**: Drawer only displays warehouses where the item's total (usable_qty - reserved_qty) > 0
+  - **Batch Filtering**: Within each warehouse, only batches with (usable_qty - reserved_qty) > 0 are shown
+  - **Per-Warehouse Sorting**: Created new `sort_batches_for_drawer()` method that ignores `item.issuance_order` and sorts based solely on `can_expire_flag`:
+    - If `can_expire_flag = TRUE`: Sort by earliest expiry_date first, then oldest batch_date (FEFO)
+    - If `can_expire_flag = FALSE`: Sort by oldest batch_date (FIFO)
+  - **Early Stopping**: For each warehouse independently, stops loading batches once that warehouse's cumulative available quantity meets or exceeds the remaining requested quantity
+  - **No Cross-Warehouse Ordering**: Each warehouse maintains its own independent FEFO/FIFO sort order
+  - This ensures consistent, predictable batch selection regardless of how items are configured in the system
 - **Fixed Select Batches Button JavaScript Escaping**: Corrected JavaScript syntax error in "Select Batches" button onclick handler by using `| tojson` filter to properly escape item descriptions. Previously, item names containing special characters (like single quotes in "Infant's Formula") would break the JavaScript and prevent the batch drawer from opening.
 - **Fixed SQL Type Mismatch in Dashboard**: Changed dashboard filter queries from `filter_by(status_code=...)` to `filter(ReliefRqst.status_code == ...)` to avoid column ambiguity when both ReliefRqst and ReliefPkg tables are joined (both have status_code columns with different data types).
 - **Proper Package Lifecycle State Transitions in Approved for Dispatch Tab**: Fixed filtering logic in "Approved for Dispatch" and "Approved (No Allocation)" tabs to exclude packages that have been handed over by Inventory Officers. Both tabs now filter for packages with status='D' (PKG_STATUS_DISPATCHED) AND received_dtime=NULL, ensuring packages disappear from these tabs once the handover is complete (status='C' or received_dtime set). This maintains accurate workflow visibility where LOs only see packages still awaiting handover, not those already completed.
