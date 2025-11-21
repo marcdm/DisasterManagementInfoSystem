@@ -96,12 +96,12 @@ def logistics_dashboard():
             ReliefRqst.fulfillment_lock.has()
         ).order_by(desc(ReliefRqst.request_date)).all()
     elif current_filter == 'ready':
-        requests = base_query.filter_by(
-            status_code=rr_service.STATUS_PART_FILLED
+        requests = base_query.filter(
+            ReliefRqst.status_code == rr_service.STATUS_PART_FILLED
         ).order_by(desc(ReliefRqst.request_date)).all()
     elif current_filter == 'completed':
-        requests = base_query.filter_by(
-            status_code=rr_service.STATUS_FILLED
+        requests = base_query.filter(
+            ReliefRqst.status_code == rr_service.STATUS_FILLED
         ).order_by(desc(ReliefRqst.action_dtime)).all()
     else:  # 'all'
         requests = base_query.filter(
@@ -151,8 +151,12 @@ def logistics_dashboard():
             'in_progress': ReliefRqst.query.filter(
                 ReliefRqst.fulfillment_lock.has()
             ).count(),
-            'ready': ReliefRqst.query.filter_by(status_code=rr_service.STATUS_PART_FILLED).count(),
-            'completed': ReliefRqst.query.filter_by(status_code=rr_service.STATUS_FILLED).count(),
+            'ready': ReliefRqst.query.filter(
+                ReliefRqst.status_code == rr_service.STATUS_PART_FILLED
+            ).count(),
+            'completed': ReliefRqst.query.filter(
+                ReliefRqst.status_code == rr_service.STATUS_FILLED
+            ).count(),
         }
     
     counts['all'] = sum(counts.values())
