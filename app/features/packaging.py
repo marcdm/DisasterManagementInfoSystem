@@ -1550,23 +1550,28 @@ def _process_allocations(relief_request, validate_complete=False):
         db.session.add(relief_pkg)
         db.session.flush()  # Get the reliefpkg_id
     
-    # CRITICAL: Capture existing allocations BEFORE deletion for reservation delta calculation
+    # CRITICAL: Capture existing allocations BEFORE modification for reservation delta calculation
     existing_pkg_items = ReliefPkgItem.query.filter_by(reliefpkg_id=relief_pkg.reliefpkg_id).all()
     existing_allocations_map = {}
+    existing_records_map = {}  # Map composite key to ReliefPkgItem object for upsert logic
     items_with_existing_pkg_records = set()  # Track which items have allocation activity
     for pkg_item in existing_pkg_items:
         # Track by (item_id, inventory_id, batch_id) for batch-level reservations
         # fr_inventory_id IS the warehouse_id (inventory_id in the composite PK)
         key = (pkg_item.item_id, pkg_item.fr_inventory_id, pkg_item.batch_id)
         existing_allocations_map[key] = pkg_item.item_qty
+        # Store the actual object for upsert logic (respecting composite PK)
+        # Composite key: (reliefpkg_id, fr_inventory_id, batch_id, item_id)
+        record_key = (pkg_item.reliefpkg_id, pkg_item.fr_inventory_id, pkg_item.batch_id, pkg_item.item_id)
+        existing_records_map[record_key] = pkg_item
         # Track items that have ReliefPkgItem records (allocation activity)
         items_with_existing_pkg_records.add(pkg_item.item_id)
     
     # Store old allocations on relief_request object for access in save/submit functions
     relief_request._old_allocations = existing_allocations_map
     
-    # Now clear existing package items to rebuild from form data
-    ReliefPkgItem.query.filter_by(reliefpkg_id=relief_pkg.reliefpkg_id).delete()
+    # Track which records we're keeping/updating (to delete orphaned records later)
+    processed_record_keys = set()
     
     for item in relief_request.items:
         item_id = item.item_id
@@ -1724,24 +1729,49 @@ def _process_allocations(relief_request, validate_complete=False):
         
         item.version_nbr += 1
         
-        # Create ReliefPkgItem records for each batch allocation (including zero-qty)
+        # Create or update ReliefPkgItem records for each batch allocation (including zero-qty)
         # CRITICAL: Zero-qty records serve as markers that the drawer was opened/used
         # This ensures has_allocation_activity persists across page reloads
+        # UPSERT LOGIC: Respect composite PK (reliefpkg_id, fr_inventory_id, batch_id, item_id)
         for batch_id, inventory_id, allocated_qty, uom_code in batch_allocations:
-            pkg_item = ReliefPkgItem(
-                reliefpkg_id=relief_pkg.reliefpkg_id,
-                fr_inventory_id=inventory_id,
-                item_id=item_id,
-                batch_id=batch_id,  # REQUIRED in new schema
-                item_qty=allocated_qty,  # Can be zero
-                uom_code=uom_code,
-                create_by_id=current_user.user_name,
-                create_dtime=jamaica_now(),
-                update_by_id=current_user.user_name,
-                update_dtime=jamaica_now(),
-                version_nbr=1
-            )
-            db.session.add(pkg_item)
+            # Composite primary key for this allocation
+            record_key = (relief_pkg.reliefpkg_id, inventory_id, batch_id, item_id)
+            
+            # Check if record already exists
+            if record_key in existing_records_map:
+                # UPDATE existing record
+                pkg_item = existing_records_map[record_key]
+                pkg_item.item_qty = allocated_qty
+                pkg_item.uom_code = uom_code
+                pkg_item.update_by_id = current_user.user_name
+                pkg_item.update_dtime = jamaica_now()
+                pkg_item.version_nbr += 1
+            else:
+                # INSERT new record
+                pkg_item = ReliefPkgItem(
+                    reliefpkg_id=relief_pkg.reliefpkg_id,
+                    fr_inventory_id=inventory_id,
+                    item_id=item_id,
+                    batch_id=batch_id,  # REQUIRED in new schema
+                    item_qty=allocated_qty,  # Can be zero
+                    uom_code=uom_code,
+                    create_by_id=current_user.user_name,
+                    create_dtime=jamaica_now(),
+                    update_by_id=current_user.user_name,
+                    update_dtime=jamaica_now(),
+                    version_nbr=1
+                )
+                db.session.add(pkg_item)
+            
+            # Track that we processed this record (keep it, don't delete)
+            processed_record_keys.add(record_key)
+    
+    # Delete orphaned records (allocations removed by user)
+    # These are records that exist in the database but weren't in the new form submission
+    for record_key, pkg_item in existing_records_map.items():
+        if record_key not in processed_record_keys:
+            # This record was not processed (user removed this allocation)
+            db.session.delete(pkg_item)
     
     return new_allocations
 
