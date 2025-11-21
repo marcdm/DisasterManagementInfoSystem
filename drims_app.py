@@ -2,10 +2,11 @@
 DRIMS - Disaster Relief Inventory Management System
 Main Flask Application
 """
+import os
 from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from authlib.integrations.flask_client import OAuth
 from werkzeug.security import check_password_hash
-import os
 
 from app.db import db, init_db
 from app.db.models import User, Role, Event, Warehouse, Item, Inventory, Agency, ReliefRqst
@@ -19,6 +20,13 @@ init_db(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+# configure OIDC
+oauth = OAuth(app)
+oauth.register(
+    name='keycloak',
+    **app.config['KEYCLOAK_REG']
+)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -157,7 +165,7 @@ def index():
     """Redirect to role-based dashboard"""
     return redirect(url_for('dashboard.index'))
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login-local', methods=['GET', 'POST'])
 def login():
     """User login"""
     if current_user.is_authenticated:
@@ -177,6 +185,20 @@ def login():
             flash('Invalid email or password', 'danger')
     
     return render_template('login.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def oidc_login():
+    redir_url = url_for('oidc_continue', _external=True)
+    return oauth.keycloak.authorize_redirect(redirect_uri)
+
+
+@app.route('/login/continue')
+def oidc_continue():
+    token = oauth.keycloak.authorize_access_token()
+    kc_user = oauth.keycloak.parse_id_token(token)
+    print(f"Received token {token}\n\nUser = {kc_user}")
+    # user = User.query.filter_by(email=email).first()
+    return redirect("/")
 
 @app.route('/test-feature-components')
 @login_required
