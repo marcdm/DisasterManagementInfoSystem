@@ -1903,30 +1903,40 @@ def get_item_batches(item_id):
             # Format batches with priority groups
             result = []
             for batch, priority_group in batch_groups:
-                # Calculate available_qty: release current package's allocations from reserved_qty
-                released_qty = current_allocations.get(batch.batch_id, Decimal('0'))
-                available_qty = safe_decimal(batch.usable_qty) - (safe_decimal(batch.reserved_qty) - released_qty)
-                batch_info = {
-                    'batch_id': batch.batch_id,
-                    'batch_no': batch.batch_no,
-                    'batch_date': batch.batch_date.isoformat() if batch.batch_date else None,
-                    'expiry_date': batch.expiry_date.isoformat() if batch.expiry_date else None,
-                    'warehouse_id': batch.inventory.inventory_id,
-                    'warehouse_name': batch.inventory.warehouse.warehouse_name,
-                    'inventory_id': batch.inventory_id,
-                    'usable_qty': float(safe_decimal(batch.usable_qty)),
-                    'reserved_qty': float(safe_decimal(batch.reserved_qty)),
-                    'available_qty': float(available_qty),
-                    'defective_qty': float(safe_decimal(batch.defective_qty)),
-                    'expired_qty': float(safe_decimal(batch.expired_qty)),
-                    'uom_code': batch.uom_code,
-                    'size_spec': batch.size_spec,
-                    'is_expired': batch.is_expired,
-                    'status_code': batch.status_code,
-                    'priority_group': priority_group
-                }
-                result.append(batch_info)
-                print(f"DEBUG batch: {batch.batch_id} ({batch.batch_no}) - warehouse={batch_info['warehouse_name']}, expiry={batch_info['expiry_date']}, batch_date={batch_info['batch_date']}, available={available_qty}")
+                try:
+                    # Calculate available_qty: release current package's allocations from reserved_qty
+                    released_qty = current_allocations.get(batch.batch_id, Decimal('0'))
+                    usable_qty = safe_decimal(batch.usable_qty)
+                    reserved_qty = safe_decimal(batch.reserved_qty)
+                    available_qty = usable_qty - (reserved_qty - released_qty)
+                    
+                    batch_info = {
+                        'batch_id': batch.batch_id,
+                        'batch_no': batch.batch_no,
+                        'batch_date': batch.batch_date.isoformat() if batch.batch_date else None,
+                        'expiry_date': batch.expiry_date.isoformat() if batch.expiry_date else None,
+                        'warehouse_id': batch.inventory.inventory_id,
+                        'warehouse_name': batch.inventory.warehouse.warehouse_name,
+                        'inventory_id': batch.inventory_id,
+                        'usable_qty': float(usable_qty),
+                        'reserved_qty': float(reserved_qty),
+                        'available_qty': float(available_qty),
+                        'defective_qty': float(safe_decimal(batch.defective_qty)),
+                        'expired_qty': float(safe_decimal(batch.expired_qty)),
+                        'uom_code': batch.uom_code,
+                        'size_spec': batch.size_spec,
+                        'is_expired': batch.is_expired,
+                        'status_code': batch.status_code,
+                        'priority_group': priority_group
+                    }
+                    result.append(batch_info)
+                    print(f"DEBUG batch: {batch.batch_id} ({batch.batch_no}) - warehouse={batch_info['warehouse_name']}, expiry={batch_info['expiry_date']}, batch_date={batch_info['batch_date']}, available={available_qty}")
+                except Exception as e:
+                    # Log error but continue processing other batches - don't block the user
+                    import traceback
+                    print(f"WARNING: Skipping batch {batch.batch_id} due to error: {str(e)}")
+                    print(traceback.format_exc())
+                    continue
             
             return jsonify({
                 'item_id': item_id,
@@ -1947,25 +1957,35 @@ def get_item_batches(item_id):
             for wh_id, batch_list in warehouse_batches.items():
                 result[wh_id] = []
                 for batch in batch_list:
-                    available_qty = safe_decimal(batch.usable_qty) - safe_decimal(batch.reserved_qty)
-                    result[wh_id].append({
-                        'batch_id': batch.batch_id,
-                        'batch_no': batch.batch_no,
-                        'batch_date': batch.batch_date.isoformat() if batch.batch_date else None,
-                        'expiry_date': batch.expiry_date.isoformat() if batch.expiry_date else None,
-                        'warehouse_id': batch.inventory.inventory_id,
-                        'warehouse_name': batch.inventory.warehouse.warehouse_name,
-                        'inventory_id': batch.inventory_id,
-                        'usable_qty': float(safe_decimal(batch.usable_qty)),
-                        'reserved_qty': float(safe_decimal(batch.reserved_qty)),
-                        'available_qty': float(available_qty),
-                        'defective_qty': float(safe_decimal(batch.defective_qty)),
-                        'expired_qty': float(safe_decimal(batch.expired_qty)),
-                        'uom_code': batch.uom_code,
-                        'size_spec': batch.size_spec,
-                        'is_expired': batch.is_expired,
-                        'status_code': batch.status_code
-                    })
+                    try:
+                        usable_qty = safe_decimal(batch.usable_qty)
+                        reserved_qty = safe_decimal(batch.reserved_qty)
+                        available_qty = usable_qty - reserved_qty
+                        
+                        result[wh_id].append({
+                            'batch_id': batch.batch_id,
+                            'batch_no': batch.batch_no,
+                            'batch_date': batch.batch_date.isoformat() if batch.batch_date else None,
+                            'expiry_date': batch.expiry_date.isoformat() if batch.expiry_date else None,
+                            'warehouse_id': batch.inventory.inventory_id,
+                            'warehouse_name': batch.inventory.warehouse.warehouse_name,
+                            'inventory_id': batch.inventory_id,
+                            'usable_qty': float(usable_qty),
+                            'reserved_qty': float(reserved_qty),
+                            'available_qty': float(available_qty),
+                            'defective_qty': float(safe_decimal(batch.defective_qty)),
+                            'expired_qty': float(safe_decimal(batch.expired_qty)),
+                            'uom_code': batch.uom_code,
+                            'size_spec': batch.size_spec,
+                            'is_expired': batch.is_expired,
+                            'status_code': batch.status_code
+                        })
+                    except Exception as e:
+                        # Log error but continue processing other batches - don't block the user
+                        import traceback
+                        print(f"WARNING: Skipping batch {batch.batch_id} in warehouse {wh_id} due to error: {str(e)}")
+                        print(traceback.format_exc())
+                        continue
             
             return jsonify({
                 'item_id': item_id,
@@ -1976,18 +1996,23 @@ def get_item_batches(item_id):
                 'batches': result
             })
         
-    except InvalidOperation as e:
-        # Handle decimal conversion errors gracefully
-        import traceback
-        print(f"ERROR in get_item_batches: Decimal conversion error: {str(e)}")
-        print(traceback.format_exc())
-        return jsonify({'error': 'Invalid numeric value encountered. Please refresh and try again.'}), 500
     except Exception as e:
-        # Log full error for debugging
+        # Only return 500 for truly unexpected system failures
+        # Log error with full traceback for debugging
         import traceback
-        print(f"ERROR in get_item_batches: {str(e)}")
+        print(f"CRITICAL ERROR in get_item_batches: {str(e)}")
         print(traceback.format_exc())
-        return jsonify({'error': str(e)}), 500
+        
+        # Return a minimal response so drawer can still display (even if empty)
+        # instead of blocking the user completely
+        return jsonify({
+            'item_id': item_id,
+            'item_name': 'Unknown',
+            'is_batched': False,
+            'can_expire': False,
+            'issuance_order': 'FEFO',
+            'batches': []
+        }), 200
 
 
 @packaging_bp.route('/api/item/<int:item_id>/auto-allocate', methods=['POST'])

@@ -17,6 +17,7 @@ from app.db.models import Item, ItemBatch, Inventory, Warehouse
 def safe_decimal(value, default=Decimal("0")):
     """
     Safely convert a value to Decimal, handling None, empty strings, and invalid values.
+    This function NEVER raises exceptions - it always returns a valid Decimal.
     
     Args:
         value: The value to convert (can be None, Decimal, int, float, str)
@@ -30,11 +31,14 @@ def safe_decimal(value, default=Decimal("0")):
     if isinstance(value, Decimal):
         return value
     try:
-        return Decimal(str(value))
-    except (InvalidOperation, ValueError, TypeError):
-        # Log for debugging if needed
-        # import logging
-        # logging.warning(f"safe_decimal: Invalid value '{value}', using default {default}")
+        # Convert to string first to handle int/float/etc.
+        str_value = str(value).strip()
+        if str_value == '' or str_value.lower() == 'none':
+            return default
+        return Decimal(str_value)
+    except (InvalidOperation, ValueError, TypeError, AttributeError) as e:
+        # Log internally for debugging but NEVER raise to user
+        print(f"WARNING: safe_decimal conversion failed for value '{value}' (type: {type(value).__name__}): {str(e)}. Using default {default}")
         return default
 
 

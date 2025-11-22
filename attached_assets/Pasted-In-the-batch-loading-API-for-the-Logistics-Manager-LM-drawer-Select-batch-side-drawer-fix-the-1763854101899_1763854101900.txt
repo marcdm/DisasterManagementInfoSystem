@@ -1,0 +1,135 @@
+In the batch-loading API for the Logistics Manager (LM) drawer (“Select batch” side drawer), fix the error:
+
+Failed to load batches: Invalid numeric value encountered. Please refresh and try again.
+
+Do this without breaking any existing code, logic, workflows, behaviour, UI, or database schema, and without undoing any security fixes already implemented.
+
+1. Change Error Handling Behaviour
+
+The endpoint that loads batches for the LM drawer currently:
+
+Validates numeric fields (e.g. usable_qty, reserved_qty, allocated_qty, etc.).
+
+Raises or returns an error like “Invalid numeric value encountered” when a bad/invalid numeric value is found.
+
+✅ Required change:
+
+Do NOT fail the entire request when a single row has bad numeric data.
+
+Instead, for each row:
+
+Handle invalid numeric values gracefully.
+
+Either:
+
+Default invalid values to 0, or
+
+Skip that specific batch row while still returning the rest.
+
+The response to the frontend should still be 200 OK with a valid JSON payload of batches, unless a truly unexpected server failure occurs.
+
+2. Safe Decimal Conversion – Never Throw to the User
+
+Update the numeric conversion utility so it never causes the API to respond with an error to the user.
+
+Example pattern (Python-style):
+
+from decimal import Decimal, InvalidOperation
+
+def safe_decimal(value, default=Decimal("0")):
+    if value is None:
+        return default
+    if isinstance(value, Decimal):
+        return value
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError):
+        # LOG the bad value internally, but DO NOT break the API response
+        # e.g. logger.warning("Invalid numeric value for batch: %r", value)
+        return default
+
+
+Then, in the batch-loading logic:
+
+usable_qty = safe_decimal(row.usable_qty)
+reserved_qty = safe_decimal(row.reserved_qty)
+available = usable_qty - reserved_qty
+
+
+Important:
+
+Do not re-raise an exception or return an error message like “Invalid numeric value encountered” to the frontend from this helper.
+
+All invalid numeric data must be handled silently (with internal logging only).
+
+3. Per-row Robustness Instead of Global Failure
+
+In the loop that builds the list of batches for the response:
+
+Wrap per-row calculations in a safe block so one bad row doesn’t kill the whole response.
+
+For example:
+
+batches = []
+for row in query_results:
+    try:
+        usable_qty = safe_decimal(row.usable_qty)
+        reserved_qty = safe_decimal(row.reserved_qty)
+        available = usable_qty - reserved_qty
+
+        # Apply Set A / Set B / filtering rules as already defined
+        # Only append if it passes the existing business rules
+        batches.append({
+            # existing fields...
+        })
+    except Exception as e:
+        # Log and skip this row; do NOT fail the whole API
+        # logger.error("Error processing batch %s: %s", row.batch_id, e)
+        continue
+
+
+Result:
+
+The drawer still loads with all valid batches.
+
+Any problematic rows are skipped or defaulted to 0, but the user is not blocked.
+
+4. Don’t Break Anything Else
+
+When implementing this:
+
+Do NOT:
+
+Change any database schema, tables, columns, triggers, or constraints.
+
+Change any business workflows (LO, LM, warehouse, agency, approvals, etc.).
+
+Change the LM drawer UI, layout, or existing data structure expected by the frontend.
+
+Do NOT remove or weaken any of the previously added security controls:
+
+CSP, security headers, TLS hardening, cookie flags, SRI, cache-control, autocomplete fixes, static directory protection, header sanitization, error-page hardening, email obfuscation, POST-only sensitive parameters, etc.
+
+Only make the batch-loading code more tolerant of bad numeric data so that:
+
+The API always returns a valid batch list (unless there’s a true system failure).
+
+The user no longer sees the error:
+
+“Failed to load batches: Invalid numeric value encountered. Please refresh and try again.”
+
+5. Expected Outcome
+
+Clicking “Select batch” → side drawer:
+
+Works without any error popup.
+
+Loads the same batches as before using the Set A / Set B union & filtering rules.
+
+If there are bad numeric values in some batches:
+
+They are defaulted to 0 or skipped.
+
+A developer can see them in logs, but end users are not blocked.
+
+No workflows, logic, security headers, or schemas are broken or changed.
