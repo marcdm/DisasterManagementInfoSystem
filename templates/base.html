@@ -607,6 +607,10 @@
             font-size: 0.875rem;
         }
     </style>
+    
+    <!-- CSP-compliant utilities -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/csp-utilities.css') }}">
+    
     {% block extra_styles %}{% endblock %}
 </head>
 <body>
@@ -1131,6 +1135,11 @@
             });
         });
     </script>
+    
+    <!-- Global CSP-compliant utilities (authenticated users only) -->
+    {% if current_user.is_authenticated %}
+    <script src="{{ url_for('static', filename='js/form-utils.js') }}" nonce="{{ csp_nonce() }}" defer></script>
+    {% endif %}
     
     <!-- Page-specific scripts -->
     {% block scripts %}
