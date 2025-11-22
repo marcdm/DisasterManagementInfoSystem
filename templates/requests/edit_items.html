@@ -18,7 +18,7 @@
             <div class="alert-banner alert-banner-{{ 'success' if category == 'success' else 'info' }}" role="alert">
                 <i class="bi bi-{{ 'check-circle-fill' if category == 'success' else 'info-circle-fill' }}"></i>
                 <div class="alert-banner-content">{{ message }}</div>
-                <button type="button" class="alert-banner-close" onclick="this.parentElement.remove()" aria-label="Close">
+                <button type="button" class="alert-banner-close" data-action="close-alert" aria-label="Close">
                     <i class="bi bi-x"></i>
                 </button>
             </div>
