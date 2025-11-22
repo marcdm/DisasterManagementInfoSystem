@@ -1885,7 +1885,7 @@ def get_item_batches(item_id):
         if remaining_qty is not None:
             limited_batches, total_available, shortfall = BatchAllocationService.get_limited_batches_for_drawer(
                 item_id,
-                Decimal(str(remaining_qty)),
+                safe_decimal(remaining_qty),
                 required_uom,
                 allocated_batch_ids,
                 current_allocations
@@ -1994,7 +1994,7 @@ def auto_allocate_item(item_id):
     """
     try:
         data = request.get_json()
-        requested_qty = Decimal(str(data.get('requested_qty', 0)))
+        requested_qty = safe_decimal(data.get('requested_qty', 0))
         warehouse_id = data.get('warehouse_id')
         
         if requested_qty <= 0:
