@@ -1,0 +1,87 @@
+Update the application’s cookie configuration to ensure all session cookies and authentication cookies follow modern security standards.
+Apply these changes globally and without breaking any existing logic, workflows, behaviour, or database schema.
+
+Required Fixes
+
+Add Secure attribute to all session/auth cookies
+
+All cookies used for login/session must include:
+
+Secure → Cookie only sent over HTTPS.
+
+Add HttpOnly attribute
+
+Prevent JavaScript access (XSS protection).
+
+Must not break any existing JS behaviour.
+
+If a cookie absolutely requires JS access, do NOT modify that cookie — only session/auth cookies.
+
+Add SameSite protection
+
+Set:
+
+SameSite=Strict
+
+If Strict breaks existing cross-domain login or redirects, fall back to:
+
+SameSite=Lax
+
+But prefer Strict unless it causes functional problems.
+
+Implementation Requirements
+
+Apply this via global cookie/session configuration, not per-route changes.
+
+Ensure ALL existing logic keeps working:
+
+No impact on authentication flow.
+
+No impact on redirects or dashboards.
+
+No breaking of agency, logistics, dispatch, or approval workflows.
+
+No break to mobile responsiveness or UI rendering.
+
+Do NOT modify:
+
+Any database tables, schema, triggers, or stored data.
+
+Any existing backend logic or business rules.
+
+Any user roles or permissions.
+
+Technical Rules
+
+For Flask: update app.config or session_cookie_settings.
+
+For Express: use app.use(session({...})) with secure attributes.
+
+For Django: update SESSION_COOKIE settings.
+
+For Replit-hosted apps: apply framework-level cookie security configuration.
+
+Apply these settings:
+
+Secure = True
+HttpOnly = True
+SameSite = 'Strict'
+
+
+If Strict breaks redirects or OAuth-like flows, fallback to:
+
+SameSite = 'Lax'
+
+Expected Outcome
+
+Security scans must confirm:
+
+Session cookies now include Secure.
+
+HttpOnly is present.
+
+SameSite attribute is present and not None.
+
+All system behaviour remains identical from a user perspective.
+
+No existing code, logic, workflow, UI, or DB schema is changed or broken.

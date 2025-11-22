@@ -17,3 +17,7 @@ class Config:
     GOJ_GOLD = '#FFD100'
     
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024
+    
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
