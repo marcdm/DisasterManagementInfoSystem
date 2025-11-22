@@ -54,7 +54,7 @@ const BatchAllocation = (function() {
         if (elements.applyBtn) elements.applyBtn.addEventListener('click', applyAllocations);
         if (elements.overlay) elements.overlay.addEventListener('click', closeDrawer);
         
-        // Expose open function globally
+        // Expose open function globally (for backwards compatibility)
         window.openBatchDrawer = openDrawer;
     }
     
@@ -895,6 +895,22 @@ const BatchAllocation = (function() {
             day: 'numeric'
         });
     }
+    
+    // Event delegation for batch selection buttons (CSP-compliant)
+    // Registered at module level to work across page navigations
+    document.addEventListener('click', function(event) {
+        const button = event.target.closest('.select-batches-btn');
+        if (button) {
+            // Ensure elements are initialized before opening drawer
+            if (!elements.drawer) {
+                init();
+            }
+            const itemId = parseInt(button.dataset.itemId);
+            const itemName = JSON.parse(button.dataset.itemName || '"Unknown Item"');
+            const requestedQty = parseFloat(button.dataset.requestedQty);
+            openDrawer(itemId, itemName, requestedQty);
+        }
+    });
     
     // Initialize on DOM ready
     if (document.readyState === 'loading') {
