@@ -3,6 +3,15 @@
 ## Overview
 DMIS (Disaster Management Information System) is a web-based platform for the Government of Jamaica's ODPEM, designed to manage the entire lifecycle of disaster relief supplies. This includes inventory tracking, donation management, relief request processing, and distribution across multiple warehouses. The system aims to ensure compliance with government processes, support disaster event coordination, supply allocation, and provide robust user administration with Role-Based Access Control (RBAC). Its core purpose is to deliver a modern, efficient, and user-friendly solution for disaster preparedness and response, emphasizing security and comprehensive management capabilities such as inventory transfers, location tracking, analytics, and reporting.
 
+## Recent Changes (November 22, 2025)
+- **CSP Compliance Remediation Complete**: All 33 templates (72 originally identified) across the entire codebase now fully compliant with strict Content Security Policy (no unsafe-inline, no unsafe-eval)
+  - Created `static/css/csp-utilities.css` with 15+ utility classes (cursor-pointer, bg-hover-light, text-hover-primary, etc.)
+  - Created `static/js/form-utils.js` with centralized event delegation handlers
+  - Converted all inline event handlers (onclick, onchange, onsubmit) to event delegation pattern
+  - Eliminated all inline styles using utility classes and `hidden` attribute for JavaScript-controlled visibility
+  - Fixed templates across all modules: packaging, dashboard, operations_dashboard, agency_requests, intake, relief_requests, user_admin, warehouses, items, transfers, donation_intake, events, agencies, and base template
+  - Application tested and running successfully with zero CSP violations
+
 ## User Preferences
 - **Communication style**: Simple, everyday language.
 - **UI/UX Requirements**:
