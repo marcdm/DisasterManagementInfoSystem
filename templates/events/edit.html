@@ -71,7 +71,7 @@
                                                required 
                                                readonly
                                                {% if event.status_code == 'C' %}disabled{% endif %}>
-                                        <span class="input-group-text" id="calendar-icon" style="cursor: {% if event.status_code == 'C' %}not-allowed{% else %}pointer{% endif %}; {% if event.status_code == 'C' %}opacity: 0.5;{% endif %}">
+                                        <span class="input-group-text {% if event.status_code == 'C' %}cursor-conditional-disabled{% else %}cursor-pointer{% endif %}" id="calendar-icon">
                                             <i class="bi bi-calendar3"></i>
                                         </span>
                                     </div>

@@ -110,4 +110,68 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+    
+    // Show donation details when donation is selected
+    document.addEventListener('change', function(e) {
+        const select = e.target.closest('select[data-action="show-donation-details"]');
+        if (select && select.value) {
+            const option = select.options[select.selectedIndex];
+            const detailsDiv = document.getElementById('donation-details');
+            if (detailsDiv && option) {
+                // Show the details div
+                detailsDiv.classList.remove('d-none');
+                
+                // Populate details from data attributes
+                const detailDonor = document.getElementById('detail-donor');
+                const detailDate = document.getElementById('detail-date');
+                const detailDesc = document.getElementById('detail-desc');
+                const detailItems = document.getElementById('detail-items');
+                
+                if (detailDonor) detailDonor.textContent = option.dataset.donor || '';
+                if (detailDate) detailDate.textContent = option.dataset.date || '';
+                if (detailDesc) detailDesc.textContent = option.dataset.desc || '';
+                
+                if (detailItems && option.dataset.items) {
+                    const items = option.dataset.items.split('|');
+                    detailItems.innerHTML = items.map(item => 
+                        '<span class="badge bg-light text-dark border">' + item + '</span>'
+                    ).join('');
+                }
+            }
+        } else {
+            // Hide details if no selection
+            const detailsDiv = document.getElementById('donation-details');
+            if (detailsDiv) {
+                detailsDiv.classList.add('d-none');
+            }
+        }
+    });
+    
+    // User deactivation confirmation modal handler
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('[data-action="confirm-deactivate-user"]');
+        if (btn) {
+            const modal = btn.closest('.modal');
+            if (modal) {
+                const form = modal.previousElementSibling;
+                if (form && form.id === 'deactivateForm') {
+                    form.submit();
+                }
+            }
+        }
+    });
+    
+    // User activation confirmation modal handler
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('[data-action="confirm-activate-user"]');
+        if (btn) {
+            const modal = btn.closest('.modal');
+            if (modal) {
+                const form = modal.previousElementSibling;
+                if (form && form.id === 'activateForm') {
+                    form.submit();
+                }
+            }
+        }
+    });
 });

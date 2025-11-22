@@ -134,6 +134,7 @@
 /* === Opacity Utilities === */
 .opacity-50 { opacity: 0.5 !important; }
 .opacity-75 { opacity: 0.75 !important; }
+.opacity-90 { opacity: 0.9 !important; }
 
 /* === Background Gradient Utilities === */
 .bg-gradient-primary {
@@ -146,10 +147,12 @@
 .shadow-danger { box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important; }
 
 /* === Icon Size Utilities === */
+.icon-xxxl { font-size: 4rem !important; }
 .icon-xxl { font-size: 4rem !important; }
 .icon-xl { font-size: 3rem !important; }
 .icon-lg { font-size: 2.5rem !important; }
 .icon-md { font-size: 2rem !important; }
+.icon-xxs { font-size: 0.5rem !important; }
 
 /* === Table Column Width Utilities === */
 .w-10 { width: 10% !important; }
@@ -164,3 +167,18 @@
 
 /* === Max Width Utilities === */
 .max-w-250 { max-width: 250px !important; }
+
+/* === Warning Button Colors === */
+.btn-warning-custom { background-color: #ffc107 !important; color: #000 !important; }
+
+/* === White Space Utilities === */
+.ws-pre-wrap { white-space: pre-wrap !important; }
+
+/* === Conditional Cursor + Opacity === */
+.cursor-conditional-disabled { cursor: not-allowed !important; opacity: 0.5 !important; }
+
+/* === Sticky Top with Offset === */
+.sticky-top-1 { position: sticky !important; top: 1rem !important; }
+
+/* === Offcanvas Width === */
+.offcanvas-width-400 { width: 400px !important; }
