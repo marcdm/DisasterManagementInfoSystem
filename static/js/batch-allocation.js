@@ -81,7 +81,7 @@ const BatchAllocation = (function() {
         // Show drawer
         elements.overlay.classList.add('active');
         elements.drawer.classList.add('active');
-        document.body.style.overflow = 'hidden';
+        document.body.classList.add('body-no-scroll');
         
         // Load batches
         loadBatches(itemId);
@@ -93,7 +93,7 @@ const BatchAllocation = (function() {
     function closeDrawer() {
         elements.overlay.classList.remove('active');
         elements.drawer.classList.remove('active');
-        document.body.style.overflow = '';
+        document.body.classList.remove('body-no-scroll');
         
         // Reset state after animation
         setTimeout(() => {
@@ -234,18 +234,17 @@ const BatchAllocation = (function() {
         
         // Create new warning
         const warning = document.createElement('div');
-        warning.className = 'batch-shortfall-warning';
-        warning.style.cssText = 'background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;';
+        warning.className = 'batch-drawer-warning';
         warning.innerHTML = `
-            <div style="display: flex; align-items: start; gap: 12px;">
-                <i class="bi bi-exclamation-triangle-fill" style="color: #ff9800; font-size: 20px;"></i>
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #856404; margin-bottom: 4px;">Insufficient Stock</div>
-                    <div style="color: #856404; font-size: 14px;">
+            <div class="batch-drawer-warning-content">
+                <i class="bi bi-exclamation-triangle-fill batch-drawer-warning-icon"></i>
+                <div class="batch-drawer-warning-body">
+                    <div class="batch-drawer-warning-title">Insufficient Stock</div>
+                    <div class="batch-drawer-warning-text">
                         Maximum available: <strong>${formatNumber(totalAvailable)}</strong> | 
                         Shortfall: <strong>${formatNumber(shortfall)}</strong>
                     </div>
-                    <div style="color: #856404; font-size: 13px; margin-top: 4px;">
+                    <div class="batch-drawer-warning-note">
                         Partial fulfillment allowed. The request cannot be fully satisfied with current stock.
                     </div>
                 </div>
@@ -424,9 +423,9 @@ const BatchAllocation = (function() {
             section.scrollIntoView({ behavior: 'smooth', block: 'start' });
             
             // Flash highlight
-            section.style.backgroundColor = '#e8f5e9';
+            section.classList.add('batch-highlight');
             setTimeout(() => {
-                section.style.backgroundColor = '';
+                section.classList.remove('batch-highlight');
             }, 1000);
         }
     }
@@ -437,7 +436,8 @@ const BatchAllocation = (function() {
     function showJumpControl() {
         const control = document.getElementById('warehouseJumpControl');
         if (control) {
-            control.style.display = 'block';
+            control.classList.remove('d-none');
+            control.classList.add('d-block');
         }
     }
     
@@ -447,7 +447,8 @@ const BatchAllocation = (function() {
     function hideJumpControl() {
         const control = document.getElementById('warehouseJumpControl');
         if (control) {
-            control.style.display = 'none';
+            control.classList.remove('d-block');
+            control.classList.add('d-none');
         }
     }
     
@@ -758,9 +759,7 @@ const BatchAllocation = (function() {
                 } else {
                     // Create summary div if it doesn't exist
                     const newSummary = document.createElement('div');
-                    newSummary.className = 'text-muted';
-                    newSummary.style.fontSize = '0.75rem';
-                    newSummary.style.marginTop = '0.25rem';
+                    newSummary.className = 'text-muted text-small mt-1';
                     newSummary.textContent = `${warehouseCount} warehouse${warehouseCount > 1 ? 's' : ''}`;
                     selectBtn.parentElement.appendChild(newSummary);
                 }
@@ -840,32 +839,37 @@ const BatchAllocation = (function() {
      * Show loading state
      */
     function showLoading() {
-        elements.batchList.style.display = 'none';
-        elements.emptyState.style.display = 'none';
-        elements.loadingState.style.display = 'flex';
+        elements.batchList.classList.add('d-none');
+        elements.emptyState.classList.add('d-none');
+        elements.loadingState.classList.remove('d-none');
+        elements.loadingState.classList.add('d-flex');
     }
     
     /**
      * Hide loading state
      */
     function hideLoading() {
-        elements.loadingState.style.display = 'none';
-        elements.batchList.style.display = 'flex';
+        elements.loadingState.classList.add('d-none');
+        elements.loadingState.classList.remove('d-flex');
+        elements.batchList.classList.remove('d-none');
+        elements.batchList.classList.add('d-flex');
     }
     
     /**
      * Show empty state
      */
     function showEmptyState() {
-        elements.batchList.style.display = 'none';
-        elements.emptyState.style.display = 'block';
+        elements.batchList.classList.add('d-none');
+        elements.emptyState.classList.remove('d-none');
+        elements.emptyState.classList.add('d-block');
     }
     
     /**
      * Hide empty state
      */
     function hideEmptyState() {
-        elements.emptyState.style.display = 'none';
+        elements.emptyState.classList.add('d-none');
+        elements.emptyState.classList.remove('d-block');
     }
     
     /**
