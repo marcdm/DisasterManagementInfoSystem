@@ -6,6 +6,11 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/batch-drawer.css') }}">
 <style>
+/* Hide Save Draft button from UI while keeping backend functionality intact */
+button[name="action"][value="save_draft"] {
+    display: none !important;
+}
+
 .page-header {
     display: flex;
     align-items: center;
@@ -612,7 +617,7 @@
                                 <button 
                                     type="button" 
                                     class="btn btn-outline select-batches-btn"
-                                    onclick="openBatchDrawer({{ item.item_id }}, '{{ item.item.item_desc if item.item else 'Unknown Item' }}', {{ item.request_qty }})"
+                                    onclick='openBatchDrawer({{ item.item_id }}, {{ (item.item.item_desc if item.item else "Unknown Item") | tojson }}, {{ item.request_qty }})'
                                     data-item-id="{{ item.item_id }}">
                                     <i class="bi bi-box-seam"></i>
                                     Select Batches
@@ -656,6 +661,7 @@
                                     data-requested-qty="{{ item.request_qty }}"
                                     data-auto-status="{{ auto }}"
                                     data-allowed-codes="{{ allowed|join(',') }}"
+                                    data-has-allocation-activity="{{ 'true' if status_opts.get('has_allocation_activity', False) else 'false' }}"
                                     onchange="toggleReasonField({{ item.item_id }})"
                                     {% if is_read_only %}disabled{% endif %}>
                                     {% for code in allowed %}
@@ -826,8 +832,15 @@ function loadInventory(itemId, warehouseId) {
         .then(response => response.json())
         .then(data => {
             const usable = parseFloat(data.usable_qty || 0);
+            const reserved = parseFloat(data.reserved_qty || 0);
+            
+            // Store both usable and reserved quantities
             stockElement.dataset.usableQty = usable;
-            stockElement.dataset.originalQty = usable;
+            stockElement.dataset.reservedQty = reserved;
+            
+            // Calculate original available as usable - reserved (consistent with DB logic)
+            const originalAvailable = Math.max(0, usable - reserved);
+            stockElement.dataset.originalQty = originalAvailable;
             
             // Update display with current allocation
             updateWarehouseStock(itemId, warehouseId);
@@ -844,21 +857,26 @@ function updateWarehouseStock(itemId, warehouseId) {
     const stockElement = document.getElementById(`stock_${itemId}_${warehouseId}`);
     const allocationInput = document.getElementById(`allocation_${itemId}_${warehouseId}`);
     
-    const originalQty = parseFloat(stockElement.dataset.originalQty || 0);
+    const usableQty = parseFloat(stockElement.dataset.usableQty || 0);
+    const reservedQty = parseFloat(stockElement.dataset.reservedQty || 0);
+    const originalAvailable = parseFloat(stockElement.dataset.originalQty || 0);
     const allocated = parseFloat(allocationInput.value || 0);
-    const remaining = Math.max(0, originalQty - allocated);
+    const remaining = Math.max(0, originalAvailable - allocated);
     
     stockElement.textContent = remaining.toFixed(0);
     
+    // Build tooltip with detailed breakdown
+    const tooltip = `Usable: ${usableQty.toFixed(0)}, Reserved (other packages): ${reservedQty.toFixed(0)}, Available: ${originalAvailable.toFixed(0)}, Allocated (this package): ${allocated.toFixed(0)}, Remaining: ${remaining.toFixed(0)}`;
+    
     if (remaining === 0) {
         stockElement.style.color = '#dc3545';
-        stockElement.title = `No stock remaining (${allocated} allocated from ${originalQty} available)`;
+        stockElement.title = tooltip;
     } else if (allocated > 0) {
         stockElement.style.color = '#f57c00';
-        stockElement.title = `${remaining} remaining (${allocated} allocated from ${originalQty} available)`;
+        stockElement.title = tooltip;
     } else {
         stockElement.style.color = '#212529';
-        stockElement.title = '';
+        stockElement.title = tooltip;
     }
 }
 
@@ -900,7 +918,20 @@ function updateStatusDropdown(itemId, allocated, requested) {
     const statusDropdown = document.getElementById(`status_${itemId}`);
     if (!statusDropdown) return;
     
-    const currentValue = statusDropdown.value;
+    // Check if item has allocation activity from server-provided data attribute
+    // Once drawer is opened and saved, this flag is set to true and persists
+    let hasAllocationActivity = statusDropdown.dataset.hasAllocationActivity === 'true';
+    
+    // If not set yet, check if batch allocations exist in DOM
+    if (!hasAllocationActivity) {
+        const allocationInputs = document.querySelectorAll(`input[name^="batch_allocation_${itemId}_"]`);
+        hasAllocationActivity = allocationInputs.length > 0;
+    }
+    
+    // Update the flag (will persist even if allocations are cleared)
+    if (hasAllocationActivity) {
+        statusDropdown.dataset.hasAllocationActivity = 'true';
+    }
     
     // Determine default status based on allocation rules
     let defaultStatus;
@@ -911,8 +942,13 @@ function updateStatusDropdown(itemId, allocated, requested) {
         defaultStatus = 'F';  // FILLED
         shouldLock = true;
     } else if (allocated === 0) {
-        // Case 2: No Allocation - Default to UNAVAILABLE
-        defaultStatus = 'U';  // UNAVAILABLE
+        if (!hasAllocationActivity) {
+            // Case 2a: Initial Load - No allocation activity yet
+            defaultStatus = 'R';  // REQUESTED
+        } else {
+            // Case 2b: After allocation activity with zero allocation
+            defaultStatus = 'U';  // UNAVAILABLE
+        }
         shouldLock = false;
     } else if (allocated > 0 && allocated < requested) {
         // Case 3: Partially Allocated - Default to PARTLY FILLED
@@ -924,7 +960,7 @@ function updateStatusDropdown(itemId, allocated, requested) {
         shouldLock = false;
     } else {
         // Fallback
-        defaultStatus = 'U';
+        defaultStatus = hasAllocationActivity ? 'U' : 'R';
         shouldLock = false;
     }
     
@@ -945,10 +981,10 @@ function updateStatusDropdown(itemId, allocated, requested) {
     }
     
     // Update allowed options based on allocation state
-    updateAllowedStatusOptions(itemId, allocated, requested, defaultStatus);
+    updateAllowedStatusOptions(itemId, allocated, requested, defaultStatus, hasAllocationActivity);
 }
 
-function updateAllowedStatusOptions(itemId, allocated, requested, defaultStatus) {
+function updateAllowedStatusOptions(itemId, allocated, requested, defaultStatus, hasAllocationActivity) {
     const statusDropdown = document.getElementById(`status_${itemId}`);
     if (!statusDropdown) return;
     
@@ -959,8 +995,13 @@ function updateAllowedStatusOptions(itemId, allocated, requested, defaultStatus)
         // Case 1: Fully Allocated - Only FILLED allowed, dropdown locked
         allowedCodes = ['F'];  // FILLED only
     } else if (allocated === 0) {
-        // Case 2: No Allocation - UNAVAILABLE, DENIED, AWAITING AVAILABILITY
-        allowedCodes = ['U', 'D', 'W'];  // UNAVAILABLE, DENIED, AWAITING AVAILABILITY
+        if (!hasAllocationActivity) {
+            // Case 2a: Initial Load - REQUESTED, UNAVAILABLE, DENIED, AWAITING AVAILABILITY
+            allowedCodes = ['R', 'U', 'D', 'W'];
+        } else {
+            // Case 2b: After allocation activity - UNAVAILABLE, DENIED, AWAITING AVAILABILITY (no REQUESTED)
+            allowedCodes = ['U', 'D', 'W'];
+        }
     } else if (allocated > 0 && allocated < requested) {
         // Case 3: Partially Allocated - PARTLY FILLED, ALLOWED LIMIT
         allowedCodes = ['P', 'L'];  // PARTLY FILLED, ALLOWED LIMIT
@@ -969,7 +1010,7 @@ function updateAllowedStatusOptions(itemId, allocated, requested, defaultStatus)
         allowedCodes = ['F'];
     } else {
         // Fallback
-        allowedCodes = ['U', 'D', 'W'];
+        allowedCodes = hasAllocationActivity ? ['U', 'D', 'W'] : ['R', 'U', 'D', 'W'];
     }
     
     // Store status map from template
@@ -1132,15 +1173,17 @@ function validateAllAllocations() {
     let valid = true;
     const errors = [];
     
-    // Validate individual allocations against stock
+    // Validate individual allocations against available stock (usable - reserved)
     document.querySelectorAll('.allocation-input').forEach(input => {
         const itemId = input.dataset.itemId;
         const warehouseId = input.dataset.warehouseId;
         const allocated = parseFloat(input.value || 0);
         const stockElement = document.getElementById(`stock_${itemId}_${warehouseId}`);
         const usableQty = parseFloat(stockElement.dataset.usableQty || 0);
+        const reservedQty = parseFloat(stockElement.dataset.reservedQty || 0);
+        const availableQty = usableQty - reservedQty;
         
-        if (allocated > usableQty) {
+        if (allocated > availableQty) {
             valid = false;
             input.style.borderColor = '#dc3545';
             input.style.boxShadow = '0 0 0 0.2rem rgba(220,53,69,.25)';

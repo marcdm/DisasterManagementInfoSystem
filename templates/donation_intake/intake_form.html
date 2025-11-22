@@ -182,22 +182,30 @@ input[type=number] {
                                     <div class="col-md-3">
                                         <label for="batch_no_{{ di.item_id }}" class="field-label">Batch No</label>
                                         <input type="text" 
-                                               class="form-control form-control-sm" 
+                                               class="form-control form-control-sm batch-no-input" 
                                                id="batch_no_{{ di.item_id }}"
                                                name="batch_no_{{ di.item_id }}" 
+                                               data-item-id="{{ di.item_id }}"
+                                               data-is-batched="{{ 'true' if di.item.is_batched_flag else 'false' }}"
                                                placeholder="{% if di.item.is_batched_flag %}Required{% else %}Optional{% endif %}"
                                                {% if di.item.is_batched_flag %}required{% endif %}
+                                               oninput="validateBatchPairing({{ di.item_id }})"
+                                               onblur="validateBatchPairing({{ di.item_id }})"
                                                style="text-transform: uppercase;">
                                     </div>
                                     <div class="col-md-3">
                                         <label for="batch_date_{{ di.item_id }}" class="field-label">Batch Date</label>
                                         <input type="text" 
-                                               class="form-control form-control-sm iso-date-picker batch-date" 
+                                               class="form-control form-control-sm iso-date-picker batch-date batch-date-input" 
                                                id="batch_date_{{ di.item_id }}"
                                                name="batch_date_{{ di.item_id }}" 
+                                               data-item-id="{{ di.item_id }}"
+                                               data-is-batched="{{ 'true' if di.item.is_batched_flag else 'false' }}"
                                                data-max-date="{{ today }}"
                                                placeholder="YYYY-MM-DD"
-                                               required>
+                                               {% if di.item.is_batched_flag %}required{% endif %}
+                                               onchange="validateBatchPairing({{ di.item_id }})"
+                                               onblur="validateBatchPairing({{ di.item_id }})">
                                     </div>
                                     <div class="col-md-4">
                                         <label for="expiry_date_{{ di.item_id }}" class="field-label">Expiry Date</label>
@@ -205,9 +213,16 @@ input[type=number] {
                                                class="form-control form-control-sm iso-date-picker expiry-date" 
                                                id="expiry_date_{{ di.item_id }}"
                                                name="expiry_date_{{ di.item_id }}" 
+                                               data-item-id="{{ di.item_id }}"
+                                               data-can-expire="{{ 'true' if di.item.can_expire_flag else 'false' }}"
                                                data-min-date="{{ today }}"
-                                               placeholder="YYYY-MM-DD"
-                                               {% if di.item.can_expire_flag %}required{% endif %}>
+                                               placeholder="{% if di.item.can_expire_flag %}YYYY-MM-DD{% else %}Not applicable{% endif %}"
+                                               {% if di.item.can_expire_flag %}required{% else %}disabled{% endif %}
+                                               {% if not di.item.can_expire_flag %}style="background-color: #f8f9fa; cursor: not-allowed;"{% endif %}>
+                                        <div class="invalid-feedback expiry-error-{{ di.item_id }}" style="display:none;">
+                                            <i class="bi bi-exclamation-circle"></i>
+                                            <span class="expiry-error-text-{{ di.item_id }}"></span>
+                                        </div>
                                     </div>
                                 </div>
                                 
@@ -287,6 +302,16 @@ input[type=number] {
                                                data-item-id="{{ di.item_id }}"
                                                oninput="enforceDecimalPlaces(this, 2); autoAdjustUsableQty({{ di.item_id }});"
                                                onchange="validateQuantities({{ di.item_id }})">
+                                    </div>
+                                </div>
+                                
+                                <!-- Batch Pairing Validation Error Messages -->
+                                <div class="row g-2 mt-1">
+                                    <div class="col-12">
+                                        <div class="invalid-feedback d-block batch-pair-error-{{ di.item_id }}" style="display:none;">
+                                            <i class="bi bi-exclamation-circle"></i>
+                                            <span class="batch-pair-error-text-{{ di.item_id }}"></span>
+                                        </div>
                                     </div>
                                 </div>
                                 
@@ -391,7 +416,7 @@ input[type=number] {
                             <li><strong>Usable Qty</strong>: Auto-calculated (read-only). Formula: Donated Qty - Defective - Expired</li>
                             <li><strong>Defective/Expired</strong>: Enter amounts as needed. Usable qty adjusts automatically in real-time (max 2 decimal places)</li>
                             <li><strong>Usable Qty Cannot Be Zero</strong>: At least some portion of the donation must be usable. Cannot mark entire donation as defective/expired.</li>
-                            <li><strong>Batch Number</strong>: Required for batched items</li>
+                            <li><strong>Batch Number & Batch Date (Paired)</strong>: For batched items, both are required. For non-batched items, both are optional but must be paired (if you enter one, you must enter the other)</li>
                             <li><strong>Batch Date</strong>: Cannot be in the future</li>
                             <li><strong>Expiry Date</strong>: Required for perishable items, must be future date</li>
                             <li><strong>Unit Cost ($J)</strong>: Must be greater than 0, max 99,999,999.99 (max 2 decimal places)</li>
@@ -548,10 +573,146 @@ function validateQuantities(itemId) {
     }
 }
 
+// Validate batch number and batch date pairing (deterministic clear-then-validate workflow)
+function validateBatchPairing(itemId) {
+    const batchNoInput = document.querySelector(`input[name="batch_no_${itemId}"]`);
+    const batchDateInput = document.querySelector(`input[name="batch_date_${itemId}"]`);
+    const errorDiv = document.querySelector(`.batch-pair-error-${itemId}`);
+    const errorText = document.querySelector(`.batch-pair-error-text-${itemId}`);
+    
+    if (!batchNoInput || !batchDateInput) return true; // No inputs to validate
+    
+    // Step 1: Clear existing error states (deterministic reset)
+    batchNoInput.classList.remove('is-invalid');
+    batchDateInput.classList.remove('is-invalid');
+    if (errorDiv && errorText) {
+        errorText.textContent = '';
+        errorDiv.style.display = 'none';
+    }
+    
+    // Step 2: Read current values
+    const batchNo = batchNoInput.value.trim();
+    const batchDate = batchDateInput.value.trim();
+    const isBatched = batchNoInput.dataset.isBatched === 'true';
+    
+    // Step 3: Evaluate validation rules and reapply errors only if failing
+    if (isBatched) {
+        // Batched items: both fields are always required
+        if (!batchNo && !batchDate) {
+            // Both missing
+            batchNoInput.classList.add('is-invalid');
+            batchDateInput.classList.add('is-invalid');
+            if (errorDiv && errorText) {
+                errorText.textContent = 'Batch number and date are required for batched items.';
+                errorDiv.style.display = 'block';
+            }
+            return false;
+        } else if (!batchNo) {
+            // Only batch number missing
+            batchNoInput.classList.add('is-invalid');
+            if (errorDiv && errorText) {
+                errorText.textContent = 'Batch number is required for batched items.';
+                errorDiv.style.display = 'block';
+            }
+            return false;
+        } else if (!batchDate) {
+            // Only batch date missing
+            batchDateInput.classList.add('is-invalid');
+            if (errorDiv && errorText) {
+                errorText.textContent = 'Batch date is required for batched items.';
+                errorDiv.style.display = 'block';
+            }
+            return false;
+        }
+        // Both present - valid
+        return true;
+    } else {
+        // Non-batched items: enforce pairing (both filled or both empty)
+        const hasBatchNo = batchNo.length > 0;
+        const hasBatchDate = batchDate.length > 0;
+        
+        if (hasBatchNo && !hasBatchDate) {
+            // Has batch number but no batch date
+            batchDateInput.classList.add('is-invalid');
+            if (errorDiv && errorText) {
+                errorText.textContent = 'Please enter a Batch Date when a Batch No is provided.';
+                errorDiv.style.display = 'block';
+            }
+            return false;
+        } else if (!hasBatchNo && hasBatchDate) {
+            // Has batch date but no batch number
+            batchNoInput.classList.add('is-invalid');
+            if (errorDiv && errorText) {
+                errorText.textContent = 'Please enter a Batch No when a Batch Date is provided.';
+                errorDiv.style.display = 'block';
+            }
+            return false;
+        }
+        
+        // Either both are filled or both are empty - valid
+        return true;
+    }
+}
+
+// Validate expiry date for items that can expire
+function validateExpiryDate(itemId) {
+    const expiryInput = document.querySelector(`input[name="expiry_date_${itemId}"]`);
+    const errorDiv = document.querySelector(`.expiry-error-${itemId}`);
+    const errorText = document.querySelector(`.expiry-error-text-${itemId}`);
+    
+    if (!expiryInput) return true; // No input to validate
+    
+    // Clear existing error states
+    expiryInput.classList.remove('is-invalid');
+    if (errorDiv && errorText) {
+        errorText.textContent = '';
+        errorDiv.style.display = 'none';
+    }
+    
+    const canExpire = expiryInput.dataset.canExpire === 'true';
+    const expiryValue = expiryInput.value.trim();
+    
+    // Only validate if item can expire
+    if (canExpire && !expiryValue) {
+        expiryInput.classList.add('is-invalid');
+        if (errorDiv && errorText) {
+            errorText.textContent = 'Expiry Date is required for items that can expire.';
+            errorDiv.style.display = 'block';
+        }
+        return false;
+    }
+    
+    return true;
+}
+
 document.getElementById('intakeForm').addEventListener('submit', function(e) {
     let hasError = false;
     let errorMessages = [];
     const itemIds = [...new Set([...document.querySelectorAll('[data-item-id]')].map(el => el.dataset.itemId))];
+    
+    // Validate batch pairing
+    itemIds.forEach(itemId => {
+        const isValid = validateBatchPairing(itemId);
+        if (!isValid) {
+            hasError = true;
+            const errorDiv = document.querySelector(`.batch-pair-error-text-${itemId}`);
+            if (errorDiv && errorDiv.textContent) {
+                errorMessages.push(errorDiv.textContent);
+            }
+        }
+    });
+    
+    // Validate expiry dates
+    itemIds.forEach(itemId => {
+        const isValid = validateExpiryDate(itemId);
+        if (!isValid) {
+            hasError = true;
+            const errorDiv = document.querySelector(`.expiry-error-text-${itemId}`);
+            if (errorDiv && errorDiv.textContent) {
+                errorMessages.push(errorDiv.textContent);
+            }
+        }
+    });
     
     // Validate quantities
     itemIds.forEach(itemId => {
@@ -599,6 +760,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const dateInputs = document.querySelectorAll('.iso-date-picker');
     
     dateInputs.forEach(function(input) {
+        // Skip disabled inputs (e.g., expiry date for non-expirable items)
+        if (input.disabled) {
+            return;
+        }
+        
         const maxDate = input.getAttribute('data-max-date');
         const minDate = input.getAttribute('data-min-date');
         

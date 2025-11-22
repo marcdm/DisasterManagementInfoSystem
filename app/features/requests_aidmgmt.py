@@ -10,7 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.db import db
 from app.db.models import ReliefRqst, ReliefRqstItem, Agency, Item, Event, UnitOfMeasure
-from app.core.rbac import agency_user_required, is_admin, is_logistics_manager, is_logistics_officer, can_access_relief_request
+from app.core.rbac import agency_user_required, is_admin, is_logistics_manager, is_logistics_officer, can_access_relief_request, is_director_level
 from app.core.decorators import feature_required
 from app.core.exceptions import OptimisticLockError
 from app.services import relief_request_service as rr_service
@@ -36,9 +36,12 @@ def list_requests():
     # Support both 'filter' and 'status' params for backward compatibility
     status_filter = request.args.get('filter') or request.args.get('status', 'submitted')
     
+    # Check if user is in read-only mode (director-level executives)
+    is_read_only = is_director_level()
+    
     # Base query with eager loading
-    if is_logistics_manager() or is_logistics_officer():
-        # Logistics users see all requests
+    if is_logistics_manager() or is_logistics_officer() or is_director_level():
+        # Logistics users and director-level executives see all requests
         base_query = ReliefRqst.query.options(
             db.joinedload(ReliefRqst.agency),
             db.joinedload(ReliefRqst.items).joinedload(ReliefRqstItem.item).joinedload(Item.default_uom),
@@ -56,14 +59,19 @@ def list_requests():
         flash('You do not have permission to view relief requests.', 'danger')
         abort(403)
     
-    # Calculate counts for filter tabs
+    # Calculate counts for filter tabs - each count uses the EXACT same logic as its corresponding filter
     counts = {
         'submitted': base_query.filter(ReliefRqst.status_code.in_([
             rr_service.STATUS_SUBMITTED, rr_service.STATUS_PART_FILLED
         ])).count(),
         'draft': base_query.filter_by(status_code=rr_service.STATUS_DRAFT).count(),
         'awaiting': base_query.filter_by(status_code=rr_service.STATUS_AWAITING_APPROVAL).count(),
-        'completed': base_query.filter_by(status_code=rr_service.STATUS_FILLED).count()
+        'completed': base_query.filter_by(status_code=rr_service.STATUS_FILLED).count(),
+        'processing': base_query.filter(ReliefRqst.status_code.in_([
+            rr_service.STATUS_AWAITING_APPROVAL, rr_service.STATUS_PART_FILLED
+        ])).count(),  # Legacy filter count
+        'dispatched': base_query.filter_by(status_code=rr_service.STATUS_CLOSED).count(),  # Legacy filter count
+        'all': base_query.count()  # Total count of all requests visible to user
     }
     
     # Apply status filter with full backward compatibility
@@ -95,6 +103,7 @@ def list_requests():
                          requests=requests_list,
                          current_filter=status_filter,
                          counts=counts,
+                         is_read_only=is_read_only,
                          STATUS_DRAFT=rr_service.STATUS_DRAFT,
                          STATUS_SUBMITTED=rr_service.STATUS_SUBMITTED,
                          STATUS_CLOSED=rr_service.STATUS_CLOSED,
@@ -215,6 +224,9 @@ def view_request(request_id):
             'variant': 'success'
         })
     
+    # Check if user is in read-only mode (director-level executives)
+    is_read_only = is_director_level()
+    
     return render_template('relief_requests/details.html',
                          request=relief_request,
                          total_requested=total_requested,
@@ -225,7 +237,8 @@ def view_request(request_id):
                          receive_date=receive_date,
                          confirmed_by=confirmed_by,
                          confirmed_agency=confirmed_agency,
-                         timeline_events=timeline_events)
+                         timeline_events=timeline_events,
+                         is_read_only=is_read_only)
 
 
 @requests_bp.route('/<int:request_id>/edit', methods=['GET', 'POST'])

@@ -1,0 +1,84 @@
+On the Logistics Manager – Approve / Prepare Relief Package page, update the Select Batches side drawer so that the quantities shown and used for allocation come from the reliefpkg_item table, while still using the existing FIFO/FEFO rules.
+Please do not break any existing code, logic, workflows, behaviour, or database schema.
+
+Requirements
+
+Data source for LM side drawer
+
+When the LM clicks Select Batches for an item on the Approve Relief Package page:
+
+The side drawer must load batch-level allocations for that item from the reliefpkg_item table, not by re-deriving them from the request or inventory alone.
+
+For the current reliefpkg_id and item_id:
+
+Fetch all matching rows from reliefpkg_item:
+
+reliefpkg_id
+
+fr_inventory_id (warehouse)
+
+batch_id
+
+item_id
+
+item_qty
+
+uom_code
+
+Use these rows to pre-populate the drawer’s batch lines (warehouse + batch + allocated quantity).
+
+Preserve FIFO/FEFO behaviour
+
+Even though the LM drawer now sources quantities from reliefpkg_item:
+
+Keep the existing FEFO/FIFO ordering logic for how batches are displayed:
+
+If the item can expire → sort by earliest expiry date, then batch date.
+
+If the item does not expire → sort by oldest batch date (FIFO).
+
+The drawer must:
+
+Respect the same “earliest/oldest first” rules as before.
+
+Still enforce any FEFO/FIFO-based constraints when LM increases/reduces allocations.
+
+Pre-populated allocations
+
+When the drawer opens:
+
+For each (fr_inventory_id, batch_id, item_id) in reliefpkg_item:
+
+Show that batch row with item_qty pre-filled as the current allocated quantity.
+
+Any batches not in reliefpkg_item but still available in itembatch/inventory may be shown as additional options (following FIFO/FEFO), but their initial allocated quantity should be 0.
+
+Save / update behaviour
+
+When LM edits quantities in the drawer and saves:
+
+Update the corresponding reliefpkg_item rows:
+
+If a (reliefpkg_id, fr_inventory_id, batch_id, item_id) entry already exists → update item_qty and audit/version fields.
+
+If a new batch is used (not previously in reliefpkg_item) → insert a new row.
+
+Ensure this is consistent with:
+
+itembatch.reserved_qty
+
+inventory.reserved_qty
+
+Perform all updates in the same transaction as the rest of the Approve/Save logic.
+
+Constraints
+
+Do not change the database schema or primary keys.
+
+Do not alter existing status transitions, queues, or workflows (Awaiting Approval, Approved for Dispatch, etc.).
+
+Only change the data source and mapping logic for the LM side drawer so that:
+
+The LM always sees and edits batch allocations that originate from reliefpkg_item,
+
+While the batch display order and rules continue to follow the existing FIFO/FEFO logic.

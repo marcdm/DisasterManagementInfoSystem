@@ -1,0 +1,111 @@
+The bug with **usable vs reserved quantities and “Available Quantity” in the Select Batches side drawer is still present after the previous changes. Please correct the logic so the UI is fully consistent with the database.
+Do NOT break any existing code, workflows, behaviour, or modify the database schema.
+
+1. Current Problem (LM re-allocation)
+
+Flow:
+
+LO prepares allocations and submits to LM.
+
+LM opens Select Batches for an item and reallocates.
+
+Symptoms (see screenshot):
+
+The “Available Quantity” and the “Maximum available / Shortfall” banner in the drawer do not match the true stock state from the database.
+
+The UI appears to reduce “available” as if usable_qty has already been decreased, even though in the database:
+
+Only reserved_qty increases.
+
+usable_qty is not reduced until Send/Approve Dispatch.
+
+Result:
+
+The drawer shows the wrong available quantity and behaves as if stock is more constrained than it really is.
+
+2. Required Core Rule
+
+Before dispatch, database behaviour is the source of truth:
+
+For each itembatch:
+
+usable_qty stays unchanged while the package is still in preparation/approval.
+
+reserved_qty holds all provisional allocations.
+
+Available stock for selection must always be calculated as:
+
+available_qty = usable_qty - reserved_qty
+
+
+and never by mutating usable_qty in code.
+
+3. Fix the Side Drawer Logic
+
+For both LO and LM, especially when LM re-opens the drawer:
+
+When opening the drawer:
+
+For each batch row:
+
+Get the latest usable_qty and reserved_qty from the API / model.
+
+Compute:
+available_qty = usable_qty - reserved_qty
+and display this as “Available Quantity”.
+
+The yellow banner (“Maximum available | Shortfall”) must also be computed using the same available_qty values summed across all batches and warehouses.
+
+While editing allocations in the drawer (client-side):
+
+Do not directly subtract from usable_qty in code.
+
+Track only:
+
+The current allocation for this package, and
+
+The resulting reserved_qty = previous reserved for this package + new allocation (or use deltas).
+
+When showing updated “Available Quantity” in the UI after a user types a new allocation:
+
+Recalculate available as:
+available_on_screen = usable_qty - (reserved_qty + new_allocation_for_this_package_delta)
+
+But do not overwrite usable_qty—it is just an input to the calculation.
+
+On Save / Save Draft:
+
+Persist changes the same way the database already does:
+
+Adjust reserved_qty in itembatch.
+
+Adjust reserved_qty totals in inventory.
+
+Do not decrement usable_qty on Save Draft or LM adjustments; that still happens only at Send/Approve Dispatch.
+
+4. Consistency Checks
+
+After your fix, the following must always hold when the drawer opens or after any allocation edit (before dispatch):
+
+For each batch:
+    displayed Available Quantity == itembatch.usable_qty - itembatch.reserved_qty (including this package’s draft allocation)
+
+For each item + warehouse:
+    banner "Maximum available" == sum of Available Quantity across its batches
+
+
+Re-opening the drawer for the same item (after LO or LM allocations) must recompute from the database values, not reuse any stale client-side decremented usable_qty.
+
+5. Constraints
+
+Do not change:
+
+Any database schema.
+
+Status/workflow (Awaiting Approval, Approved for Dispatch, etc.).
+
+FEFO/FIFO ordering, filtering, or other validation rules.
+
+Only correct the calculation and display of Available Quantity and the internal logic so that:
+
+usable_qty is never modified in front-end/middle-tier before dispatch, and

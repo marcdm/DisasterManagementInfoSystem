@@ -55,6 +55,7 @@ from app.features.account_requests import account_requests_bp
 from app.features.eligibility import eligibility_bp
 from app.features.odpem_director import director_bp
 from app.features.profile import profile_bp
+from app.features.operations_dashboard import operations_dashboard_bp
 from app.core.status import get_status_label, get_status_badge_class
 from app.core.rbac import (
     has_role, has_all_roles, has_warehouse_access,
@@ -92,14 +93,7 @@ app.jinja_env.globals.update(
     get_feature_details=get_feature_details
 )
 
-@app.template_filter('format_date')
-def format_date_filter(date_val, format_str='%Y-%m-%d'):
-    """Format date to YYYY-MM-DD (or custom format)"""
-    if date_val is None:
-        return ''
-    if isinstance(date_val, str):
-        return date_val
-    return date_val.strftime(format_str)
+# Date formatting filter moved below to use timezone utilities
 
 app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
 app.register_blueprint(events_bp)
@@ -124,6 +118,7 @@ app.register_blueprint(account_requests_bp)
 app.register_blueprint(eligibility_bp)
 app.register_blueprint(director_bp)
 app.register_blueprint(profile_bp)
+app.register_blueprint(operations_dashboard_bp)
 
 @app.template_filter('status_badge')
 def status_badge_filter(status_code, entity_type):
@@ -177,7 +172,7 @@ def login():
         
         user = User.query.filter_by(email=email).first()
         
-        if user and check_password_hash(user.password_hash, password):
+        if user and password and check_password_hash(user.password_hash, password):
             login_user(user)
             next_page = request.args.get('next')
             return redirect(next_page if next_page else url_for('dashboard.index'))

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict PRq9hX58qlP0czki0MzTC6MrVRPhwgxwVfj6y37aV5rzgOURALdHhRxkmjF1yAj
+\restrict 27Tp6XNxTmBHNpT4T5yXsEoY6SERqawpmnbWlRRU3D2ZBBLzgZHZlgecxVbweKX
 
 -- Dumped from database version 16.9 (415ebe8)
 -- Dumped by pg_dump version 16.10
@@ -18,292 +18,6 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
-ALTER TABLE IF EXISTS ONLY public.xfreturn_item DROP CONSTRAINT IF EXISTS xfreturn_item_xfreturn_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.xfreturn_item DROP CONSTRAINT IF EXISTS xfreturn_item_uom_code_fkey;
-ALTER TABLE IF EXISTS ONLY public.warehouse DROP CONSTRAINT IF EXISTS warehouse_parish_code_fkey;
-ALTER TABLE IF EXISTS ONLY public.warehouse DROP CONSTRAINT IF EXISTS warehouse_custodian_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.user_warehouse DROP CONSTRAINT IF EXISTS user_warehouse_warehouse_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.user_warehouse DROP CONSTRAINT IF EXISTS user_warehouse_user_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.user_warehouse DROP CONSTRAINT IF EXISTS user_warehouse_assigned_by_fkey;
-ALTER TABLE IF EXISTS ONLY public.user_role DROP CONSTRAINT IF EXISTS user_role_user_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.user_role DROP CONSTRAINT IF EXISTS user_role_role_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.user_role DROP CONSTRAINT IF EXISTS user_role_assigned_by_fkey;
-ALTER TABLE IF EXISTS ONLY public."user" DROP CONSTRAINT IF EXISTS user_assigned_warehouse_id_fkey;
-ALTER TABLE IF EXISTS ONLY public."user" DROP CONSTRAINT IF EXISTS user_agency_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.transfer_request DROP CONSTRAINT IF EXISTS transfer_request_to_warehouse_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.transfer_request DROP CONSTRAINT IF EXISTS transfer_request_reviewed_by_fkey;
-ALTER TABLE IF EXISTS ONLY public.transfer_request DROP CONSTRAINT IF EXISTS transfer_request_requested_by_fkey;
-ALTER TABLE IF EXISTS ONLY public.transfer_request DROP CONSTRAINT IF EXISTS transfer_request_item_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.transfer_request DROP CONSTRAINT IF EXISTS transfer_request_from_warehouse_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.transaction DROP CONSTRAINT IF EXISTS transaction_warehouse_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.transaction DROP CONSTRAINT IF EXISTS transaction_item_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.transaction DROP CONSTRAINT IF EXISTS transaction_event_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.transaction DROP CONSTRAINT IF EXISTS transaction_donor_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.rtintake DROP CONSTRAINT IF EXISTS rtintake_xfreturn_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.rtintake_item DROP CONSTRAINT IF EXISTS rtintake_item_uom_code_fkey;
-ALTER TABLE IF EXISTS ONLY public.rtintake_item DROP CONSTRAINT IF EXISTS rtintake_item_location3_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.rtintake_item DROP CONSTRAINT IF EXISTS rtintake_item_location2_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.rtintake_item DROP CONSTRAINT IF EXISTS rtintake_item_location1_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.reliefpkg DROP CONSTRAINT IF EXISTS reliefpkg_reliefrqst_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.relief_request_fulfillment_lock DROP CONSTRAINT IF EXISTS relief_request_fulfillment_lock_reliefrqst_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.relief_request_fulfillment_lock DROP CONSTRAINT IF EXISTS relief_request_fulfillment_lock_fulfiller_user_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.notification DROP CONSTRAINT IF EXISTS notification_warehouse_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.notification DROP CONSTRAINT IF EXISTS notification_user_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.notification DROP CONSTRAINT IF EXISTS notification_reliefrqst_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.item_location DROP CONSTRAINT IF EXISTS item_location_location_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.xfreturn DROP CONSTRAINT IF EXISTS fk_xfreturn_to_warehouse;
-ALTER TABLE IF EXISTS ONLY public.xfreturn_item DROP CONSTRAINT IF EXISTS fk_xfreturn_item_inventory;
-ALTER TABLE IF EXISTS ONLY public.xfreturn DROP CONSTRAINT IF EXISTS fk_xfreturn_fr_warehouse;
-ALTER TABLE IF EXISTS ONLY public.transfer DROP CONSTRAINT IF EXISTS fk_transfer_warehouse2;
-ALTER TABLE IF EXISTS ONLY public.transfer DROP CONSTRAINT IF EXISTS fk_transfer_warehouse1;
-ALTER TABLE IF EXISTS ONLY public.transfer DROP CONSTRAINT IF EXISTS fk_transfer_event;
-ALTER TABLE IF EXISTS ONLY public.rtintake DROP CONSTRAINT IF EXISTS fk_rtintake_warehouse;
-ALTER TABLE IF EXISTS ONLY public.rtintake_item DROP CONSTRAINT IF EXISTS fk_rtintake_item_intake;
-ALTER TABLE IF EXISTS ONLY public.role_permission DROP CONSTRAINT IF EXISTS fk_role_permission_role;
-ALTER TABLE IF EXISTS ONLY public.role_permission DROP CONSTRAINT IF EXISTS fk_role_permission_perm;
-ALTER TABLE IF EXISTS ONLY public.reliefrqst DROP CONSTRAINT IF EXISTS fk_reliefrqst_reliefrqst_status;
-ALTER TABLE IF EXISTS ONLY public.reliefrqst_item DROP CONSTRAINT IF EXISTS fk_reliefrqst_item_reliefrqstitem_status;
-ALTER TABLE IF EXISTS ONLY public.reliefrqst_item DROP CONSTRAINT IF EXISTS fk_reliefrqst_item_reliefrqst;
-ALTER TABLE IF EXISTS ONLY public.reliefrqst_item DROP CONSTRAINT IF EXISTS fk_reliefrqst_item_item;
-ALTER TABLE IF EXISTS ONLY public.reliefrqst DROP CONSTRAINT IF EXISTS fk_reliefrqst_event;
-ALTER TABLE IF EXISTS ONLY public.reliefrqst DROP CONSTRAINT IF EXISTS fk_reliefrqst_agency;
-ALTER TABLE IF EXISTS ONLY public.reliefpkg DROP CONSTRAINT IF EXISTS fk_reliefpkg_warehouse;
-ALTER TABLE IF EXISTS ONLY public.reliefpkg_item DROP CONSTRAINT IF EXISTS fk_reliefpkg_item_unitofmeasure;
-ALTER TABLE IF EXISTS ONLY public.reliefpkg_item DROP CONSTRAINT IF EXISTS fk_reliefpkg_item_reliefpkg;
-ALTER TABLE IF EXISTS ONLY public.reliefpkg_item DROP CONSTRAINT IF EXISTS fk_reliefpkg_item_itembatch;
-ALTER TABLE IF EXISTS ONLY public.reliefpkg DROP CONSTRAINT IF EXISTS fk_reliefpkg_event;
-ALTER TABLE IF EXISTS ONLY public.reliefpkg DROP CONSTRAINT IF EXISTS fk_reliefpkg_agency;
-ALTER TABLE IF EXISTS ONLY public.location DROP CONSTRAINT IF EXISTS fk_location_warehouse;
-ALTER TABLE IF EXISTS ONLY public.itembatch DROP CONSTRAINT IF EXISTS fk_itembatch_warehouse;
-ALTER TABLE IF EXISTS ONLY public.itembatch DROP CONSTRAINT IF EXISTS fk_itembatch_unitofmeasure;
-ALTER TABLE IF EXISTS ONLY public.itembatch DROP CONSTRAINT IF EXISTS fk_itembatch_item;
-ALTER TABLE IF EXISTS ONLY public.item DROP CONSTRAINT IF EXISTS fk_item_unitofmeasure;
-ALTER TABLE IF EXISTS ONLY public.item_location DROP CONSTRAINT IF EXISTS fk_item_location_inventory;
-ALTER TABLE IF EXISTS ONLY public.item DROP CONSTRAINT IF EXISTS fk_item_itemcatg;
-ALTER TABLE IF EXISTS ONLY public.inventory DROP CONSTRAINT IF EXISTS fk_inventory_warehouse;
-ALTER TABLE IF EXISTS ONLY public.inventory DROP CONSTRAINT IF EXISTS fk_inventory_unitofmeasure;
-ALTER TABLE IF EXISTS ONLY public.inventory DROP CONSTRAINT IF EXISTS fk_inventory_item;
-ALTER TABLE IF EXISTS ONLY public.donation_item DROP CONSTRAINT IF EXISTS fk_donation_item_unitofmeasure;
-ALTER TABLE IF EXISTS ONLY public.donation_item DROP CONSTRAINT IF EXISTS fk_donation_item_item;
-ALTER TABLE IF EXISTS ONLY public.donation_item DROP CONSTRAINT IF EXISTS fk_donation_item_donation;
-ALTER TABLE IF EXISTS ONLY public.donation DROP CONSTRAINT IF EXISTS fk_donation_event;
-ALTER TABLE IF EXISTS ONLY public.donation DROP CONSTRAINT IF EXISTS fk_donation_donor;
-ALTER TABLE IF EXISTS ONLY public.donation DROP CONSTRAINT IF EXISTS fk_donation_custodian;
-ALTER TABLE IF EXISTS ONLY public.dnintake DROP CONSTRAINT IF EXISTS fk_dnintake_warehouse;
-ALTER TABLE IF EXISTS ONLY public.dnintake_item DROP CONSTRAINT IF EXISTS fk_dnintake_item_unitofmeasure;
-ALTER TABLE IF EXISTS ONLY public.dnintake_item DROP CONSTRAINT IF EXISTS fk_dnintake_item_intake;
-ALTER TABLE IF EXISTS ONLY public.dnintake_item DROP CONSTRAINT IF EXISTS fk_dnintake_item_donation_item;
-ALTER TABLE IF EXISTS ONLY public.dbintake DROP CONSTRAINT IF EXISTS fk_dbintake_warehouse;
-ALTER TABLE IF EXISTS ONLY public.custodian DROP CONSTRAINT IF EXISTS fk_custodian_parish;
-ALTER TABLE IF EXISTS ONLY public.batchlocation DROP CONSTRAINT IF EXISTS fk_batchlocation_warehouse;
-ALTER TABLE IF EXISTS ONLY public.batchlocation DROP CONSTRAINT IF EXISTS fk_batchlocation_location;
-ALTER TABLE IF EXISTS ONLY public.batchlocation DROP CONSTRAINT IF EXISTS fk_batchlocation_itembatch;
-ALTER TABLE IF EXISTS ONLY public.batchlocation DROP CONSTRAINT IF EXISTS fk_batchlocation_inventory;
-ALTER TABLE IF EXISTS ONLY public.agency DROP CONSTRAINT IF EXISTS fk_agency_warehouse;
-ALTER TABLE IF EXISTS ONLY public.agency_account_request DROP CONSTRAINT IF EXISTS fk_aar_user;
-ALTER TABLE IF EXISTS ONLY public.agency_account_request DROP CONSTRAINT IF EXISTS fk_aar_updated_by;
-ALTER TABLE IF EXISTS ONLY public.agency_account_request DROP CONSTRAINT IF EXISTS fk_aar_created_by;
-ALTER TABLE IF EXISTS ONLY public.agency_account_request_audit DROP CONSTRAINT IF EXISTS fk_aar_audit_req;
-ALTER TABLE IF EXISTS ONLY public.agency_account_request DROP CONSTRAINT IF EXISTS fk_aar_agency;
-ALTER TABLE IF EXISTS ONLY public.agency_account_request_audit DROP CONSTRAINT IF EXISTS fk_aar_actor;
-ALTER TABLE IF EXISTS ONLY public.donor DROP CONSTRAINT IF EXISTS donor_country_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.dnintake DROP CONSTRAINT IF EXISTS dnintake_donation_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.distribution_package DROP CONSTRAINT IF EXISTS distribution_package_recipient_agency_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.distribution_package_item DROP CONSTRAINT IF EXISTS distribution_package_item_package_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.distribution_package_item DROP CONSTRAINT IF EXISTS distribution_package_item_item_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.distribution_package DROP CONSTRAINT IF EXISTS distribution_package_event_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.distribution_package DROP CONSTRAINT IF EXISTS distribution_package_assigned_warehouse_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.dbintake DROP CONSTRAINT IF EXISTS dbintake_reliefpkg_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.dbintake_item DROP CONSTRAINT IF EXISTS dbintake_item_uom_code_fkey;
-ALTER TABLE IF EXISTS ONLY public.dbintake_item DROP CONSTRAINT IF EXISTS dbintake_item_reliefpkg_id_inventory_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.dbintake_item DROP CONSTRAINT IF EXISTS dbintake_item_location3_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.dbintake_item DROP CONSTRAINT IF EXISTS dbintake_item_location2_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.dbintake_item DROP CONSTRAINT IF EXISTS dbintake_item_location1_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.agency DROP CONSTRAINT IF EXISTS agency_parish_code_fkey;
-ALTER TABLE IF EXISTS ONLY public.agency DROP CONSTRAINT IF EXISTS agency_ineligible_event_id_fkey;
-DROP TRIGGER IF EXISTS trg_user_set_updated_at ON public."user";
-DROP TRIGGER IF EXISTS trg_aar_set_updated_at ON public.agency_account_request;
-DROP INDEX IF EXISTS public.uk_user_username;
-DROP INDEX IF EXISTS public.uk_itembatch_inventory_batch_item;
-DROP INDEX IF EXISTS public.uk_itembatch_inventory_batch;
-DROP INDEX IF EXISTS public.uk_itembatch_1;
-DROP INDEX IF EXISTS public.uk_inventory_1;
-DROP INDEX IF EXISTS public.uk_aar_active_email;
-DROP INDEX IF EXISTS public.ix_user_role_user_id;
-DROP INDEX IF EXISTS public.ix_user_role_role_id;
-DROP INDEX IF EXISTS public.ix_role_permission_role_id;
-DROP INDEX IF EXISTS public.ix_role_permission_perm_id;
-DROP INDEX IF EXISTS public.idx_role_code;
-DROP INDEX IF EXISTS public.idx_notification_warehouse;
-DROP INDEX IF EXISTS public.idx_notification_user_status;
-DROP INDEX IF EXISTS public.idx_itemcatg_status_code;
-DROP INDEX IF EXISTS public.idx_fulfillment_lock_user;
-DROP INDEX IF EXISTS public.idx_fulfillment_lock_expires;
-DROP INDEX IF EXISTS public.idx_distribution_package_warehouse;
-DROP INDEX IF EXISTS public.idx_distribution_package_item_package;
-DROP INDEX IF EXISTS public.idx_distribution_package_item_item;
-DROP INDEX IF EXISTS public.idx_distribution_package_event;
-DROP INDEX IF EXISTS public.idx_distribution_package_agency;
-DROP INDEX IF EXISTS public.dk_xfreturn_3;
-DROP INDEX IF EXISTS public.dk_xfreturn_2;
-DROP INDEX IF EXISTS public.dk_xfreturn_1;
-DROP INDEX IF EXISTS public.dk_user_agency_id;
-DROP INDEX IF EXISTS public.dk_transfer_3;
-DROP INDEX IF EXISTS public.dk_transfer_2;
-DROP INDEX IF EXISTS public.dk_transfer_1;
-DROP INDEX IF EXISTS public.dk_rtintake_item_2;
-DROP INDEX IF EXISTS public.dk_rtintake_item_1;
-DROP INDEX IF EXISTS public.dk_reliefrqst_item_2;
-DROP INDEX IF EXISTS public.dk_reliefrqst_3;
-DROP INDEX IF EXISTS public.dk_reliefrqst_2;
-DROP INDEX IF EXISTS public.dk_reliefrqst_1;
-DROP INDEX IF EXISTS public.dk_reliefpkg_item_3;
-DROP INDEX IF EXISTS public.dk_reliefpkg_item_2;
-DROP INDEX IF EXISTS public.dk_reliefpkg_item_1;
-DROP INDEX IF EXISTS public.dk_reliefpkg_3;
-DROP INDEX IF EXISTS public.dk_reliefpkg_1;
-DROP INDEX IF EXISTS public.dk_location_1;
-DROP INDEX IF EXISTS public.dk_itembatch_4;
-DROP INDEX IF EXISTS public.dk_itembatch_3;
-DROP INDEX IF EXISTS public.dk_itembatch_2;
-DROP INDEX IF EXISTS public.dk_itembatch_1;
-DROP INDEX IF EXISTS public.dk_item_location_1;
-DROP INDEX IF EXISTS public.dk_item_3;
-DROP INDEX IF EXISTS public.dk_item_2;
-DROP INDEX IF EXISTS public.dk_item_1;
-DROP INDEX IF EXISTS public.dk_inventory_1;
-DROP INDEX IF EXISTS public.dk_dnintake_item_2;
-DROP INDEX IF EXISTS public.dk_dnintake_item_1;
-DROP INDEX IF EXISTS public.dk_dbintake_item_2;
-DROP INDEX IF EXISTS public.dk_dbintake_item_1;
-DROP INDEX IF EXISTS public.dk_batchlocation_1;
-DROP INDEX IF EXISTS public.dk_aar_status_created;
-DROP INDEX IF EXISTS public.dk_aar_audit_req_time;
-ALTER TABLE IF EXISTS ONLY public.xfreturn DROP CONSTRAINT IF EXISTS xfreturn_pkey;
-ALTER TABLE IF EXISTS ONLY public.warehouse DROP CONSTRAINT IF EXISTS warehouse_pkey;
-ALTER TABLE IF EXISTS ONLY public.user_warehouse DROP CONSTRAINT IF EXISTS user_warehouse_pkey;
-ALTER TABLE IF EXISTS ONLY public.user_role DROP CONSTRAINT IF EXISTS user_role_pkey;
-ALTER TABLE IF EXISTS ONLY public."user" DROP CONSTRAINT IF EXISTS user_pkey;
-ALTER TABLE IF EXISTS ONLY public."user" DROP CONSTRAINT IF EXISTS user_email_key;
-ALTER TABLE IF EXISTS ONLY public.permission DROP CONSTRAINT IF EXISTS uq_permission_resource_action;
-ALTER TABLE IF EXISTS ONLY public.itemcatg DROP CONSTRAINT IF EXISTS uk_itemcatg_1;
-ALTER TABLE IF EXISTS ONLY public.item DROP CONSTRAINT IF EXISTS uk_item_3;
-ALTER TABLE IF EXISTS ONLY public.item DROP CONSTRAINT IF EXISTS uk_item_2;
-ALTER TABLE IF EXISTS ONLY public.item DROP CONSTRAINT IF EXISTS uk_item_1;
-ALTER TABLE IF EXISTS ONLY public.donor DROP CONSTRAINT IF EXISTS uk_donor_1;
-ALTER TABLE IF EXISTS ONLY public.custodian DROP CONSTRAINT IF EXISTS uk_custodian_1;
-ALTER TABLE IF EXISTS ONLY public.agency DROP CONSTRAINT IF EXISTS uk_agency_1;
-ALTER TABLE IF EXISTS ONLY public.transfer_request DROP CONSTRAINT IF EXISTS transfer_request_pkey;
-ALTER TABLE IF EXISTS ONLY public.transaction DROP CONSTRAINT IF EXISTS transaction_pkey;
-ALTER TABLE IF EXISTS ONLY public.role DROP CONSTRAINT IF EXISTS role_pkey;
-ALTER TABLE IF EXISTS ONLY public.role DROP CONSTRAINT IF EXISTS role_code_key;
-ALTER TABLE IF EXISTS ONLY public.reliefpkg DROP CONSTRAINT IF EXISTS reliefpkg_pkey;
-ALTER TABLE IF EXISTS ONLY public.relief_request_fulfillment_lock DROP CONSTRAINT IF EXISTS relief_request_fulfillment_lock_pkey;
-ALTER TABLE IF EXISTS ONLY public.xfreturn_item DROP CONSTRAINT IF EXISTS pk_xfreturn_item;
-ALTER TABLE IF EXISTS ONLY public.unitofmeasure DROP CONSTRAINT IF EXISTS pk_unitofmeasure;
-ALTER TABLE IF EXISTS ONLY public.transfer DROP CONSTRAINT IF EXISTS pk_transfer;
-ALTER TABLE IF EXISTS ONLY public.rtintake_item DROP CONSTRAINT IF EXISTS pk_rtintake_item;
-ALTER TABLE IF EXISTS ONLY public.rtintake DROP CONSTRAINT IF EXISTS pk_rtintake;
-ALTER TABLE IF EXISTS ONLY public.role_permission DROP CONSTRAINT IF EXISTS pk_role_permission;
-ALTER TABLE IF EXISTS ONLY public.reliefrqstitem_status DROP CONSTRAINT IF EXISTS pk_reliefrqstitem_status;
-ALTER TABLE IF EXISTS ONLY public.reliefrqst_status DROP CONSTRAINT IF EXISTS pk_reliefrqst_status;
-ALTER TABLE IF EXISTS ONLY public.reliefrqst_item DROP CONSTRAINT IF EXISTS pk_reliefrqst_item;
-ALTER TABLE IF EXISTS ONLY public.reliefrqst DROP CONSTRAINT IF EXISTS pk_reliefrqst;
-ALTER TABLE IF EXISTS ONLY public.reliefpkg_item DROP CONSTRAINT IF EXISTS pk_reliefpkg_item;
-ALTER TABLE IF EXISTS ONLY public.itemcatg DROP CONSTRAINT IF EXISTS pk_itemcatg;
-ALTER TABLE IF EXISTS ONLY public.itembatch DROP CONSTRAINT IF EXISTS pk_itembatch;
-ALTER TABLE IF EXISTS ONLY public.item DROP CONSTRAINT IF EXISTS pk_item;
-ALTER TABLE IF EXISTS ONLY public.inventory DROP CONSTRAINT IF EXISTS pk_inventory;
-ALTER TABLE IF EXISTS ONLY public.event DROP CONSTRAINT IF EXISTS pk_event;
-ALTER TABLE IF EXISTS ONLY public.donation_item DROP CONSTRAINT IF EXISTS pk_donation_item;
-ALTER TABLE IF EXISTS ONLY public.donation DROP CONSTRAINT IF EXISTS pk_donation;
-ALTER TABLE IF EXISTS ONLY public.dnintake_item DROP CONSTRAINT IF EXISTS pk_dnintake_item;
-ALTER TABLE IF EXISTS ONLY public.custodian DROP CONSTRAINT IF EXISTS pk_custodian;
-ALTER TABLE IF EXISTS ONLY public.batchlocation DROP CONSTRAINT IF EXISTS pk_batchlocation;
-ALTER TABLE IF EXISTS ONLY public.permission DROP CONSTRAINT IF EXISTS permission_pkey;
-ALTER TABLE IF EXISTS ONLY public.parish DROP CONSTRAINT IF EXISTS parish_pkey;
-ALTER TABLE IF EXISTS ONLY public.notification DROP CONSTRAINT IF EXISTS notification_pkey;
-ALTER TABLE IF EXISTS ONLY public.location DROP CONSTRAINT IF EXISTS location_pkey;
-ALTER TABLE IF EXISTS ONLY public.item_location DROP CONSTRAINT IF EXISTS item_location_pkey;
-ALTER TABLE IF EXISTS ONLY public.donor DROP CONSTRAINT IF EXISTS donor_pkey;
-ALTER TABLE IF EXISTS ONLY public.dnintake DROP CONSTRAINT IF EXISTS dnintake_pkey;
-ALTER TABLE IF EXISTS ONLY public.distribution_package DROP CONSTRAINT IF EXISTS distribution_package_pkey;
-ALTER TABLE IF EXISTS ONLY public.distribution_package DROP CONSTRAINT IF EXISTS distribution_package_package_number_key;
-ALTER TABLE IF EXISTS ONLY public.distribution_package_item DROP CONSTRAINT IF EXISTS distribution_package_item_pkey;
-ALTER TABLE IF EXISTS ONLY public.dbintake DROP CONSTRAINT IF EXISTS dbintake_pkey;
-ALTER TABLE IF EXISTS ONLY public.dbintake_item DROP CONSTRAINT IF EXISTS dbintake_item_pkey;
-ALTER TABLE IF EXISTS ONLY public.country DROP CONSTRAINT IF EXISTS country_pkey;
-ALTER TABLE IF EXISTS ONLY public.agency DROP CONSTRAINT IF EXISTS agency_pkey;
-ALTER TABLE IF EXISTS ONLY public.agency_account_request DROP CONSTRAINT IF EXISTS agency_account_request_pkey;
-ALTER TABLE IF EXISTS ONLY public.agency_account_request_audit DROP CONSTRAINT IF EXISTS agency_account_request_audit_pkey;
-ALTER TABLE IF EXISTS public.xfreturn ALTER COLUMN xfreturn_id DROP DEFAULT;
-ALTER TABLE IF EXISTS public."user" ALTER COLUMN user_id DROP DEFAULT;
-ALTER TABLE IF EXISTS public.transfer_request ALTER COLUMN id DROP DEFAULT;
-ALTER TABLE IF EXISTS public.transaction ALTER COLUMN id DROP DEFAULT;
-ALTER TABLE IF EXISTS public.role ALTER COLUMN id DROP DEFAULT;
-ALTER TABLE IF EXISTS public.notification ALTER COLUMN id DROP DEFAULT;
-ALTER TABLE IF EXISTS public.distribution_package_item ALTER COLUMN id DROP DEFAULT;
-ALTER TABLE IF EXISTS public.distribution_package ALTER COLUMN id DROP DEFAULT;
-DROP SEQUENCE IF EXISTS public.xfreturn_xfreturn_id_seq;
-DROP TABLE IF EXISTS public.xfreturn_item;
-DROP TABLE IF EXISTS public.xfreturn;
-DROP TABLE IF EXISTS public.warehouse;
-DROP VIEW IF EXISTS public.v_status4reliefrqst_processed;
-DROP VIEW IF EXISTS public.v_status4reliefrqst_create;
-DROP VIEW IF EXISTS public.v_status4reliefrqst_action;
-DROP TABLE IF EXISTS public.user_warehouse;
-DROP TABLE IF EXISTS public.user_role;
-DROP SEQUENCE IF EXISTS public.user_id_seq;
-DROP TABLE IF EXISTS public."user";
-DROP TABLE IF EXISTS public.unitofmeasure;
-DROP SEQUENCE IF EXISTS public.transfer_request_id_seq;
-DROP TABLE IF EXISTS public.transfer_request;
-DROP TABLE IF EXISTS public.transfer;
-DROP SEQUENCE IF EXISTS public.transaction_id_seq;
-DROP TABLE IF EXISTS public.transaction;
-DROP TABLE IF EXISTS public.rtintake_item;
-DROP TABLE IF EXISTS public.rtintake;
-DROP TABLE IF EXISTS public.role_permission;
-DROP SEQUENCE IF EXISTS public.role_id_seq;
-DROP TABLE IF EXISTS public.role;
-DROP TABLE IF EXISTS public.reliefrqstitem_status;
-DROP TABLE IF EXISTS public.reliefrqst_status;
-DROP TABLE IF EXISTS public.reliefrqst_item;
-DROP TABLE IF EXISTS public.reliefrqst;
-DROP TABLE IF EXISTS public.reliefpkg_item;
-DROP TABLE IF EXISTS public.reliefpkg;
-DROP TABLE IF EXISTS public.relief_request_fulfillment_lock;
-DROP TABLE IF EXISTS public.permission;
-DROP TABLE IF EXISTS public.parish;
-DROP SEQUENCE IF EXISTS public.notification_id_seq;
-DROP TABLE IF EXISTS public.notification;
-DROP TABLE IF EXISTS public.location;
-DROP TABLE IF EXISTS public.itemcatg;
-DROP TABLE IF EXISTS public.itembatch;
-DROP TABLE IF EXISTS public.item_location;
-DROP TABLE IF EXISTS public.item;
-DROP TABLE IF EXISTS public.inventory;
-DROP TABLE IF EXISTS public.event;
-DROP TABLE IF EXISTS public.donor;
-DROP TABLE IF EXISTS public.donation_item;
-DROP TABLE IF EXISTS public.donation;
-DROP TABLE IF EXISTS public.dnintake_item;
-DROP TABLE IF EXISTS public.dnintake;
-DROP SEQUENCE IF EXISTS public.distribution_package_item_id_seq;
-DROP TABLE IF EXISTS public.distribution_package_item;
-DROP SEQUENCE IF EXISTS public.distribution_package_id_seq;
-DROP TABLE IF EXISTS public.distribution_package;
-DROP TABLE IF EXISTS public.dbintake_item;
-DROP TABLE IF EXISTS public.dbintake;
-DROP TABLE IF EXISTS public.custodian;
-DROP TABLE IF EXISTS public.country;
-DROP TABLE IF EXISTS public.batchlocation;
-DROP TABLE IF EXISTS public.agency_account_request_audit;
-DROP TABLE IF EXISTS public.agency_account_request;
-DROP TABLE IF EXISTS public.agency;
-DROP FUNCTION IF EXISTS public.set_updated_at();
-DROP EXTENSION IF EXISTS pgcrypto;
-DROP EXTENSION IF EXISTS citext;
 --
 -- Name: citext; Type: EXTENSION; Schema: -; Owner: -
 --
@@ -679,8 +393,8 @@ CREATE TABLE public.dnintake_item (
     donation_id integer NOT NULL,
     inventory_id integer NOT NULL,
     item_id integer NOT NULL,
-    batch_no character varying(20) NOT NULL,
-    batch_date date NOT NULL,
+    batch_no character varying(20),
+    batch_date date,
     expiry_date date,
     uom_code character varying(25) NOT NULL,
     avg_unit_value numeric(10,2) NOT NULL,
@@ -694,8 +408,9 @@ CREATE TABLE public.dnintake_item (
     update_by_id character varying(20) NOT NULL,
     update_dtime timestamp(0) without time zone NOT NULL,
     version_nbr integer NOT NULL,
-    CONSTRAINT c_dnintake_item_1a CHECK (((batch_no)::text = upper((batch_no)::text))),
-    CONSTRAINT c_dnintake_item_1b CHECK ((batch_date <= CURRENT_DATE)),
+    intake_item_id integer NOT NULL,
+    CONSTRAINT c_dnintake_item_1a CHECK (((batch_no IS NULL) OR ((batch_no)::text = upper((batch_no)::text)))),
+    CONSTRAINT c_dnintake_item_1b CHECK (((batch_date IS NULL) OR (batch_date <= CURRENT_DATE))),
     CONSTRAINT c_dnintake_item_1c CHECK (((expiry_date >= CURRENT_DATE) OR (expiry_date IS NULL))),
     CONSTRAINT c_dnintake_item_1d CHECK ((avg_unit_value > 0.00)),
     CONSTRAINT c_dnintake_item_2 CHECK ((usable_qty >= 0.00)),
@@ -703,6 +418,26 @@ CREATE TABLE public.dnintake_item (
     CONSTRAINT c_dnintake_item_4 CHECK ((expired_qty >= 0.00)),
     CONSTRAINT c_dnintake_item_5 CHECK ((status_code = ANY (ARRAY['P'::bpchar, 'V'::bpchar])))
 );
+
+
+--
+-- Name: dnintake_item_intake_item_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.dnintake_item_intake_item_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: dnintake_item_intake_item_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.dnintake_item_intake_item_id_seq OWNED BY public.dnintake_item.intake_item_id;
 
 
 --
@@ -947,8 +682,8 @@ CREATE TABLE public.itembatch (
     batch_id integer NOT NULL,
     inventory_id integer NOT NULL,
     item_id integer NOT NULL,
-    batch_no character varying(20) NOT NULL,
-    batch_date date NOT NULL,
+    batch_no character varying(20),
+    batch_date date,
     expiry_date date,
     usable_qty numeric(15,4) NOT NULL,
     reserved_qty numeric(15,4) DEFAULT 0 NOT NULL,
@@ -1233,10 +968,10 @@ CREATE TABLE public.reliefpkg (
     create_dtime timestamp(0) without time zone NOT NULL,
     update_by_id character varying(20) NOT NULL,
     update_dtime timestamp(0) without time zone,
-    verify_by_id character varying(20) NOT NULL,
+    verify_by_id character varying(20),
     verify_dtime timestamp(0) without time zone,
     version_nbr integer NOT NULL,
-    received_by_id character varying(20) NOT NULL,
+    received_by_id character varying(20),
     received_dtime timestamp(0) without time zone,
     agency_id integer NOT NULL,
     tracking_no character(7) NOT NULL,
@@ -1551,6 +1286,27 @@ CREATE TABLE public.transfer (
     version_nbr integer NOT NULL,
     CONSTRAINT c_transfer_1 CHECK ((transfer_date <= CURRENT_DATE)),
     CONSTRAINT c_transfer_2 CHECK ((status_code = ANY (ARRAY['D'::bpchar, 'C'::bpchar, 'V'::bpchar, 'P'::bpchar])))
+);
+
+
+--
+-- Name: transfer_item; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.transfer_item (
+    transfer_id integer NOT NULL,
+    item_id integer NOT NULL,
+    batch_id integer NOT NULL,
+    inventory_id integer NOT NULL,
+    item_qty numeric(10,2) NOT NULL,
+    uom_code character varying(10) NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone,
+    version_nbr integer DEFAULT 1 NOT NULL,
+    reason_text character varying(255),
+    CONSTRAINT c_transfer_item_1 CHECK ((item_qty > (0)::numeric))
 );
 
 
@@ -1873,6 +1629,13 @@ ALTER TABLE ONLY public.distribution_package_item ALTER COLUMN id SET DEFAULT ne
 
 
 --
+-- Name: dnintake_item intake_item_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dnintake_item ALTER COLUMN intake_item_id SET DEFAULT nextval('public.dnintake_item_intake_item_id_seq'::regclass);
+
+
+--
 -- Name: notification id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1920,6 +1683,11 @@ ALTER TABLE ONLY public.xfreturn ALTER COLUMN xfreturn_id SET DEFAULT nextval('p
 
 COPY public.agency (agency_id, agency_name, address1_text, address2_text, parish_code, contact_name, phone_no, email_text, create_by_id, create_dtime, update_by_id, update_dtime, version_nbr, agency_type, ineligible_event_id, status_code, warehouse_id) FROM stdin;
 1	PORTMORE COMMUNITY CENTER	45 Community Lane, Portmore	\N	12	MARY JOHNSON	876-555-5678	\N	admin	2025-11-12 03:33:09	ADMIN@ODPEM.GOV.JM	2025-11-12 17:34:31	2	SHELTER	\N	A	\N
+3	POOR RELIEF #1	235b Old Hope Road	Kingston 6	02	WINSTON BOWEN	+1 (876) 927-1125	winston.bowen@icta.gov.jm	NARI@ODPEM.GOV.JM	2025-11-20 19:02:30	NARI@ODPEM.GOV.JM	2025-11-20 19:03:15	2	SHELTER	\N	A	\N
+4	POOR RELIEF #2	235b Old Hope Road	Kingston 6	04	WINSTON BOWEN	+1 (876) 927-1125	winston.bowen@icta.gov.jm	NARI@ODPEM.GOV.JM	2025-11-20 19:07:02	NARI@ODPEM.GOV.JM	2025-11-20 19:07:02	1	SHELTER	\N	A	\N
+5	FOOD FOR THE POOR	235b Old Hope Road	Kingston 6	06	WINSTON BOWEN	+1 (876) 927-1125	winston.bowen@icta.gov.jm	NARI@ODPEM.GOV.JM	2025-11-20 19:07:44	NARI@ODPEM.GOV.JM	2025-11-20 19:07:44	1	SHELTER	\N	A	\N
+6	POOR RELIEF #3	235b Old Hope Road	Kingston 6	07	WINSTON BOWEN	+1 (876) 927-1125	winston.bowen@icta.gov.jm	NARI@ODPEM.GOV.JM	2025-11-20 19:11:28	NARI@ODPEM.GOV.JM	2025-11-20 19:11:28	1	SHELTER	\N	A	\N
+7	PORTLAND SHELTER #1	123 Tired Streets	\N	04	JOHN BROWN	+1 (876) 123-4567	\N	JORDANNE@GOV.JM	2025-11-21 20:20:14	JORDANNE@GOV.JM	2025-11-21 20:22:56	4	SHELTER	2	A	\N
 \.
 
 
@@ -1928,6 +1696,7 @@ COPY public.agency (agency_id, agency_name, address1_text, address2_text, parish
 --
 
 COPY public.agency_account_request (request_id, agency_name, contact_name, contact_phone, contact_email, reason_text, agency_id, user_id, status_code, status_reason, created_by_id, created_at, updated_by_id, updated_at, version_nbr) FROM stdin;
+1	NARGHIS KHAN	NARI NAZIM CONSTANTINE	8764728379	nconstantine@egovja.com	ASSIST WITH HURRICANE RELIEF DISTRIBUTION.	\N	\N	S	\N	1	2025-11-20 16:04:12	1	2025-11-20 16:04:12	1
 \.
 
 
@@ -1936,6 +1705,7 @@ COPY public.agency_account_request (request_id, agency_name, contact_name, conta
 --
 
 COPY public.agency_account_request_audit (audit_id, request_id, event_type, event_notes, actor_user_id, event_dtime, version_nbr) FROM stdin;
+1	1	submitted	Request submitted	1	2025-11-20 16:04:12	1
 \.
 
 
@@ -2010,6 +1780,24 @@ COPY public.dnintake (donation_id, inventory_id, intake_date, comments_text, sta
 9	8	2025-11-19	\N	V	LOGISTICS.OFFICER@GO	2025-11-19 20:35:00	LOGISTICS.OFFICER@GO	2025-11-19 20:35:00	LOGISTICS.OFFICER@GO	2025-11-19 20:35:00	1
 10	8	2025-11-19	\N	V	LOGISTICS.MANAGER@GO	2025-11-19 20:36:58	LOGISTICS.MANAGER@GO	2025-11-19 20:36:58	LOGISTICS.MANAGER@GO	2025-11-19 20:36:58	1
 11	1	2025-11-19	\N	V	LOGISTICS.MANAGER@GO	2025-11-19 20:40:50	LOGISTICS.MANAGER@GO	2025-11-19 20:40:50	LOGISTICS.MANAGER@GO	2025-11-19 20:40:50	1
+13	8	2025-11-20	\N	V	MONIQUE@GOV.JM	2025-11-20 17:00:58	MONIQUE@GOV.JM	2025-11-20 17:00:58	MONIQUE@GOV.JM	2025-11-20 17:00:58	1
+14	8	2025-11-20	\N	V	CLAUDINE@GOV.JM	2025-11-20 17:05:25	CLAUDINE@GOV.JM	2025-11-20 17:05:25	CLAUDINE@GOV.JM	2025-11-20 17:05:25	1
+15	1	2025-11-20	\N	V	LINCOLN@GOV.JM	2025-11-20 17:37:35	LINCOLN@GOV.JM	2025-11-20 17:37:35	LINCOLN@GOV.JM	2025-11-20 17:37:35	1
+2	1	2025-11-20	DONATING ITEM	V	PATRICIA.RAYMOND@ICT	2025-11-20 18:07:22	PATRICIA.RAYMOND@ICT	2025-11-20 18:07:22	PATRICIA.RAYMOND@ICT	2025-11-20 18:07:22	1
+12	1	2025-11-20	\N	V	PATRICIA.RAYMOND@ICT	2025-11-20 18:17:12	PATRICIA.RAYMOND@ICT	2025-11-20 18:17:12	PATRICIA.RAYMOND@ICT	2025-11-20 18:17:12	1
+6	8	2025-11-20	\N	V	PATRICIA.RAYMOND@ICT	2025-11-20 18:25:21	PATRICIA.RAYMOND@ICT	2025-11-20 18:25:21	PATRICIA.RAYMOND@ICT	2025-11-20 18:25:21	1
+17	1	2025-11-20	\N	V	MONIQUE@GOV.JM	2025-11-20 19:18:51	MONIQUE@GOV.JM	2025-11-20 19:18:51	MONIQUE@GOV.JM	2025-11-20 19:18:51	1
+20	1	2025-11-20	\N	V	MONIQUE@GOV.JM	2025-11-20 23:05:46	MONIQUE@GOV.JM	2025-11-20 23:05:46	MONIQUE@GOV.JM	2025-11-20 23:05:46	1
+22	11	2025-11-21	\N	V	KAY@GOV.JM	2025-11-21 02:05:08	KAY@GOV.JM	2025-11-21 02:05:08	KAY@GOV.JM	2025-11-21 02:05:08	1
+23	11	2025-11-21	\N	V	KAY@GOV.JM	2025-11-21 02:10:04	KAY@GOV.JM	2025-11-21 02:10:04	KAY@GOV.JM	2025-11-21 02:10:04	1
+24	11	2025-11-21	\N	V	KAY@GOV.JM	2025-11-21 02:13:34	KAY@GOV.JM	2025-11-21 02:13:34	KAY@GOV.JM	2025-11-21 02:13:34	1
+25	11	2025-11-21	\N	V	KAY@GOV.JM	2025-11-21 02:15:03	KAY@GOV.JM	2025-11-21 02:15:03	KAY@GOV.JM	2025-11-21 02:15:03	1
+26	10	2025-11-21	\N	V	KAY@GOV.JM	2025-11-21 02:22:33	KAY@GOV.JM	2025-11-21 02:22:33	KAY@GOV.JM	2025-11-21 02:22:33	1
+27	10	2025-11-21	\N	V	KAY@GOV.JM	2025-11-21 02:24:11	KAY@GOV.JM	2025-11-21 02:24:11	KAY@GOV.JM	2025-11-21 02:24:11	1
+28	10	2025-11-21	\N	V	KAY@GOV.JM	2025-11-21 02:26:33	KAY@GOV.JM	2025-11-21 02:26:33	KAY@GOV.JM	2025-11-21 02:26:33	1
+29	1	2025-11-21	\N	V	LINCOLN@GOV.JM	2025-11-21 02:34:29	LINCOLN@GOV.JM	2025-11-21 02:34:29	LINCOLN@GOV.JM	2025-11-21 02:34:29	1
+32	8	2025-11-21	\N	V	CLAUDINE@GOV.JM	2025-11-21 18:03:44	CLAUDINE@GOV.JM	2025-11-21 18:03:44	CLAUDINE@GOV.JM	2025-11-21 18:03:44	1
+31	11	2025-11-21	\N	V	CLAUDINE@GOV.JM	2025-11-21 18:51:44	CLAUDINE@GOV.JM	2025-11-21 18:51:44	CLAUDINE@GOV.JM	2025-11-21 18:51:44	1
 \.
 
 
@@ -2017,17 +1805,50 @@ COPY public.dnintake (donation_id, inventory_id, intake_date, comments_text, sta
 -- Data for Name: dnintake_item; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.dnintake_item (donation_id, inventory_id, item_id, batch_no, batch_date, expiry_date, uom_code, avg_unit_value, usable_qty, defective_qty, expired_qty, status_code, comments_text, create_by_id, create_dtime, update_by_id, update_dtime, version_nbr) FROM stdin;
-3	1	8	B001	2025-11-17	2026-02-28	UNIT	100.00	1000.00	0.00	0.00	V	\N	LOGISTICS.MANAGER@GO	2025-11-18 17:54:37	LOGISTICS.MANAGER@GO	2025-11-18 17:54:37	1
-3	1	7	B002	2025-11-17	2025-12-31	UNIT	5000.00	500.00	0.00	0.00	V	\N	LOGISTICS.MANAGER@GO	2025-11-18 17:54:37	LOGISTICS.MANAGER@GO	2025-11-18 17:54:37	1
-4	8	7	B002	2025-11-18	2026-01-01	UNIT	5000.00	493.00	5.00	2.00	V	\N	LOGISTICS.MANAGER@GO	2025-11-18 18:06:15	LOGISTICS.MANAGER@GO	2025-11-18 18:06:15	1
-5	8	7	MED-KIT-01	2025-11-18	2025-12-26	UNIT	10000.00	190.00	0.00	10.00	V	\N	LOGISTICS.OFFICER@GO	2025-11-18 23:41:35	LOGISTICS.OFFICER@GO	2025-11-18 23:41:35	1
-5	8	8	NOBATCH-8	2025-11-18	2025-12-31	UNIT	5000.00	295.00	5.00	0.00	V	\N	LOGISTICS.OFFICER@GO	2025-11-18 23:41:35	LOGISTICS.OFFICER@GO	2025-11-18 23:41:35	1
-7	1	8	NOBATCH-8	2025-11-19	2026-01-10	UNIT	1000.00	400.00	0.00	0.00	V	\N	LOGISTICS.MANAGER@GO	2025-11-19 16:59:13	LOGISTICS.MANAGER@GO	2025-11-19 16:59:13	1
-8	8	11	BATCH-WATA-01	2025-11-19	2025-12-31	BOTTLE	100.00	1000.00	0.00	0.00	V	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:30:58	LOGISTICS.MANAGER@GO	2025-11-19 20:30:58	1
-9	8	11	BATCH-WATA-02	2025-11-19	2025-11-20	BOTTLE	100.00	500.00	0.00	0.00	V	\N	LOGISTICS.OFFICER@GO	2025-11-19 20:35:00	LOGISTICS.OFFICER@GO	2025-11-19 20:35:00	1
-10	8	11	BATCH-WATA-03	2025-11-19	2025-11-19	BOTTLE	100.00	50.00	0.00	0.00	V	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:36:58	LOGISTICS.MANAGER@GO	2025-11-19 20:36:58	1
-11	1	11	BATCH-WATA-05	2025-11-17	2025-11-20	BOTTLE	100.00	80.00	0.00	0.00	V	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:40:50	LOGISTICS.MANAGER@GO	2025-11-19 20:40:50	1
+COPY public.dnintake_item (donation_id, inventory_id, item_id, batch_no, batch_date, expiry_date, uom_code, avg_unit_value, usable_qty, defective_qty, expired_qty, status_code, comments_text, create_by_id, create_dtime, update_by_id, update_dtime, version_nbr, intake_item_id) FROM stdin;
+3	1	8	B001	2025-11-17	2026-02-28	UNIT	100.00	1000.00	0.00	0.00	V	\N	LOGISTICS.MANAGER@GO	2025-11-18 17:54:37	LOGISTICS.MANAGER@GO	2025-11-18 17:54:37	1	1
+3	1	7	B002	2025-11-17	2025-12-31	UNIT	5000.00	500.00	0.00	0.00	V	\N	LOGISTICS.MANAGER@GO	2025-11-18 17:54:37	LOGISTICS.MANAGER@GO	2025-11-18 17:54:37	1	2
+4	8	7	B002	2025-11-18	2026-01-01	UNIT	5000.00	493.00	5.00	2.00	V	\N	LOGISTICS.MANAGER@GO	2025-11-18 18:06:15	LOGISTICS.MANAGER@GO	2025-11-18 18:06:15	1	3
+5	8	7	MED-KIT-01	2025-11-18	2025-12-26	UNIT	10000.00	190.00	0.00	10.00	V	\N	LOGISTICS.OFFICER@GO	2025-11-18 23:41:35	LOGISTICS.OFFICER@GO	2025-11-18 23:41:35	1	4
+5	8	8	NOBATCH-8	2025-11-18	2025-12-31	UNIT	5000.00	295.00	5.00	0.00	V	\N	LOGISTICS.OFFICER@GO	2025-11-18 23:41:35	LOGISTICS.OFFICER@GO	2025-11-18 23:41:35	1	5
+7	1	8	NOBATCH-8	2025-11-19	2026-01-10	UNIT	1000.00	400.00	0.00	0.00	V	\N	LOGISTICS.MANAGER@GO	2025-11-19 16:59:13	LOGISTICS.MANAGER@GO	2025-11-19 16:59:13	1	6
+8	8	11	BATCH-WATA-01	2025-11-19	2025-12-31	BOTTLE	100.00	1000.00	0.00	0.00	V	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:30:58	LOGISTICS.MANAGER@GO	2025-11-19 20:30:58	1	7
+9	8	11	BATCH-WATA-02	2025-11-19	2025-11-20	BOTTLE	100.00	500.00	0.00	0.00	V	\N	LOGISTICS.OFFICER@GO	2025-11-19 20:35:00	LOGISTICS.OFFICER@GO	2025-11-19 20:35:00	1	8
+10	8	11	BATCH-WATA-03	2025-11-19	2025-11-19	BOTTLE	100.00	50.00	0.00	0.00	V	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:36:58	LOGISTICS.MANAGER@GO	2025-11-19 20:36:58	1	9
+11	1	11	BATCH-WATA-05	2025-11-17	2025-11-20	BOTTLE	100.00	80.00	0.00	0.00	V	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:40:50	LOGISTICS.MANAGER@GO	2025-11-19 20:40:50	1	10
+13	8	9	NOBATCH-9	2025-11-20	\N	UNIT	11500.00	14.00	1.00	0.00	V	\N	MONIQUE@GOV.JM	2025-11-20 17:00:58	MONIQUE@GOV.JM	2025-11-20 17:00:58	1	11
+14	8	8	NOBATCH-8	2025-11-20	2026-10-31	UNIT	30000.00	297.00	0.00	3.00	V	\N	CLAUDINE@GOV.JM	2025-11-20 17:05:25	CLAUDINE@GOV.JM	2025-11-20 17:05:25	1	12
+15	1	10	SDGHSGF58555	2025-11-20	2025-11-27	SHEET	54600.00	25.00	0.00	0.00	V	\N	LINCOLN@GOV.JM	2025-11-20 17:37:35	LINCOLN@GOV.JM	2025-11-20 17:37:35	1	13
+15	1	8	JKDFKD	2025-11-13	2025-11-28	BOX	50000.00	50.00	0.00	0.00	V	\N	LINCOLN@GOV.JM	2025-11-20 17:37:35	LINCOLN@GOV.JM	2025-11-20 17:37:35	1	14
+15	1	12	SFJHKH56546	2025-11-14	2025-11-21	BOTTLE	50000.00	50.00	0.00	0.00	V	\N	LINCOLN@GOV.JM	2025-11-20 17:37:35	LINCOLN@GOV.JM	2025-11-20 17:37:35	1	15
+15	1	9	JGTDYHSG585	2025-11-13	2025-11-28	BOX	42552.00	85.00	0.00	0.00	V	\N	LINCOLN@GOV.JM	2025-11-20 17:37:35	LINCOLN@GOV.JM	2025-11-20 17:37:35	1	16
+12	1	6	YU2856	2025-11-13	2025-11-27	KG	100.00	25.00	0.00	0.00	V	\N	PATRICIA.RAYMOND@ICT	2025-11-20 18:17:12	PATRICIA.RAYMOND@ICT	2025-11-20 18:17:12	1	17
+12	1	11	FG2580	2025-11-10	2025-11-27	BOTTLE	100.00	25.00	0.00	0.00	V	\N	PATRICIA.RAYMOND@ICT	2025-11-20 18:17:12	PATRICIA.RAYMOND@ICT	2025-11-20 18:17:12	1	18
+6	8	6	PB1025	2025-11-12	2025-11-30	SACK	1000.00	100.00	0.00	0.00	V	\N	PATRICIA.RAYMOND@ICT	2025-11-20 18:25:21	PATRICIA.RAYMOND@ICT	2025-11-20 18:25:21	1	19
+17	1	11	123456	2025-11-20	2026-01-31	BOTTLE	12000.00	100.00	10.00	10.00	V	\N	MONIQUE@GOV.JM	2025-11-20 19:18:51	MONIQUE@GOV.JM	2025-11-20 19:18:51	1	20
+20	1	14	12378	2025-11-20	\N	UNIT	175000.00	15000.00	0.00	0.00	V	\N	MONIQUE@GOV.JM	2025-11-20 23:05:46	MONIQUE@GOV.JM	2025-11-20 23:05:46	1	21
+22	11	16	BC1-002	2025-07-08	\N	UNIT	300.00	29.00	1.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:05:08	KAY@GOV.JM	2025-11-21 02:05:08	1	22
+22	11	17	BC1-001	2025-07-08	\N	UNIT	200.00	5.00	0.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:05:08	KAY@GOV.JM	2025-11-21 02:05:08	1	23
+22	11	18	BF1-001	2025-07-08	2026-02-10	UNIT	350.00	75.00	5.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:05:08	KAY@GOV.JM	2025-11-21 02:05:08	1	24
+22	11	19	BF1-002	2025-11-19	2025-11-30	UNIT	200.00	50.00	0.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:05:08	KAY@GOV.JM	2025-11-21 02:05:08	1	25
+23	11	16	BC2-002	2025-08-30	\N	UNIT	430.00	20.00	0.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:10:04	KAY@GOV.JM	2025-11-21 02:10:04	1	26
+23	11	17	BC2-001	2025-06-05	\N	UNIT	250.00	30.00	0.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:10:04	KAY@GOV.JM	2025-11-21 02:10:04	1	27
+23	11	18	BF2-001	2025-10-15	2025-11-30	UNIT	280.00	10.00	0.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:10:04	KAY@GOV.JM	2025-11-21 02:10:04	1	28
+23	11	19	BF2-002	2025-11-18	2025-12-05	UNIT	360.00	30.00	0.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:10:04	KAY@GOV.JM	2025-11-21 02:10:04	1	29
+24	11	16	BC3-002	2025-09-01	\N	UNIT	270.00	70.00	0.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:13:34	KAY@GOV.JM	2025-11-21 02:13:34	1	30
+24	11	17	BC3-001	2025-07-10	\N	UNIT	300.00	10.00	0.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:13:34	KAY@GOV.JM	2025-11-21 02:13:34	1	31
+24	11	18	BF3-001	2025-10-05	2025-12-14	UNIT	180.00	40.00	0.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:13:34	KAY@GOV.JM	2025-11-21 02:13:34	1	32
+24	11	19	BF3-002	2025-11-19	2026-01-06	UNIT	450.00	20.00	0.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:13:34	KAY@GOV.JM	2025-11-21 02:13:34	1	33
+25	11	18	BC4-001	2025-11-03	2025-12-14	UNIT	220.00	5.00	0.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:15:03	KAY@GOV.JM	2025-11-21 02:15:03	1	34
+26	10	16	BC5-001	2025-07-10	\N	UNIT	100.00	16.00	0.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:22:33	KAY@GOV.JM	2025-11-21 02:22:33	1	35
+26	10	18	BF5-001	2025-07-10	2026-01-18	UNIT	500.00	55.00	5.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:22:33	KAY@GOV.JM	2025-11-21 02:22:33	1	36
+27	10	16	BC6-001	2025-06-05	\N	UNIT	190.00	10.00	0.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:24:11	KAY@GOV.JM	2025-11-21 02:24:11	1	37
+27	10	18	BF6-001	2025-08-05	2025-12-10	UNIT	60.00	30.00	0.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:24:11	KAY@GOV.JM	2025-11-21 02:24:11	1	38
+28	10	16	BC7-001	2025-10-03	\N	UNIT	300.00	25.00	0.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:26:33	KAY@GOV.JM	2025-11-21 02:26:33	1	39
+28	10	18	BF7-001	2025-06-05	2026-02-20	UNIT	270.00	100.00	0.00	0.00	V	\N	KAY@GOV.JM	2025-11-21 02:26:33	KAY@GOV.JM	2025-11-21 02:26:33	1	40
+29	1	7	9KJD	2025-11-12	2025-11-29	BOX	4.00	15.00	0.00	0.00	V	\N	LINCOLN@GOV.JM	2025-11-21 02:34:29	LINCOLN@GOV.JM	2025-11-21 02:34:29	1	41
+32	8	6	BAT-WRP-X011	2025-11-21	\N	SACK	25000.00	9.00	0.00	0.00	V	\N	CLAUDINE@GOV.JM	2025-11-21 18:03:44	CLAUDINE@GOV.JM	2025-11-21 18:03:44	1	42
+31	11	9	\N	\N	\N	UNIT	30000.00	10.00	0.00	0.00	V	\N	CLAUDINE@GOV.JM	2025-11-21 18:51:44	CLAUDINE@GOV.JM	2025-11-21 18:51:44	1	43
 \.
 
 
@@ -2036,16 +1857,38 @@ COPY public.dnintake_item (donation_id, inventory_id, item_id, batch_no, batch_d
 --
 
 COPY public.donation (donation_id, donor_id, donation_desc, event_id, custodian_id, received_date, status_code, comments_text, create_by_id, create_dtime, verify_by_id, verify_dtime, version_nbr, update_by_id, update_dtime) FROM stdin;
+32	6	RELIEF FOR ST ELIZABETH	2	1	2025-11-21	P	RELIEF ST ELIZABETH	CLAUDINE@GOV.JM	2025-11-21 17:56:15	CLAUDINE@GOV.JM	2025-11-21 17:56:15	2	CLAUDINE@GOV.JM	2025-11-21 18:03:44.362568
+31	5	HURRICANE MELISSA RELIEF	2	1	2025-11-21	P	\N	CLAUDINE@GOV.JM	2025-11-21 17:14:22	CLAUDINE@GOV.JM	2025-11-21 17:14:22	2	CLAUDINE@GOV.JM	2025-11-21 18:51:44.449015
+17	4	WHAT AM I LOOKING FOR?\r\nBUG - EDITED AFTER PROCESSING	3	1	2025-11-20	P	\N	MONIQUE@GOV.JM	2025-11-20 19:15:22	MONIQUE@GOV.JM	2025-11-20 19:15:22	4	MONIQUE@GOV.JM	2025-11-20 19:25:29.273482
+18	2	BOARDS, SHEET, MATTRESS ETC	2	1	2025-11-20	V	N/A	PATRICIA.RAYMOND@ICT	2025-11-20 20:37:19	PATRICIA.RAYMOND@ICT	2025-11-20 20:37:19	1	PATRICIA.RAYMOND@ICT	2025-11-20 20:37:18.826297
 3	2	HYGIENE AND TOILETRY AND FIRST AID KITS	2	1	2025-11-14	P	\N	LOGISTICS.OFFICER@GO	2025-11-18 16:02:39	LOGISTICS.OFFICER@GO	2025-11-18 16:02:39	5	LOGISTICS.MANAGER@GO	2025-11-18 17:54:37.318332
 4	2	FIRST AID KITS	2	1	2025-11-17	P	\N	LOGISTICS.OFFICER@GO	2025-11-18 16:17:49	LOGISTICS.OFFICER@GO	2025-11-18 16:17:49	2	LOGISTICS.MANAGER@GO	2025-11-18 18:06:14.612524
 5	2	FIRST AID KITS AND HYGIENE PRODUCTS	3	1	2025-11-14	P	INTENDED FOR CHILDREN'S HOME IN MAXFIELD	LOGISTICS.OFFICER@GO	2025-11-18 23:20:22	LOGISTICS.OFFICER@GO	2025-11-18 23:20:22	2	LOGISTICS.OFFICER@GO	2025-11-18 23:41:34.990649
-2	2	FIRST AID KITS	2	1	2025-11-14	V	RECEIVED FROM RED CROSS	LOGISTICS.OFFICER@GO	2025-11-18 03:21:03	LOGISTICS.MANAGER@GO	2025-11-19 12:51:52	5	LOGISTICS.MANAGER@GO	2025-11-19 12:51:51.719327
-6	2	WHITE RICE	2	1	2025-11-19	V	WHITE RICE	LOGISTICS.MANAGER@GO	2025-11-19 12:53:55	LOGISTICS.MANAGER@GO	2025-11-19 12:53:55	1	LOGISTICS.MANAGER@GO	2025-11-19 12:53:54.518004
+20	6	BUILDING MATERIALS	2	1	2025-11-20	P	\N	MONIQUE@GOV.JM	2025-11-20 23:01:40	MONIQUE@GOV.JM	2025-11-20 23:01:40	2	MONIQUE@GOV.JM	2025-11-20 23:05:46.044766
 7	2	HYGIENE STUFF	2	1	2025-11-18	P	\N	LOGISTICS.MANAGER@GO	2025-11-19 16:58:20	LOGISTICS.MANAGER@GO	2025-11-19 16:58:20	2	LOGISTICS.MANAGER@GO	2025-11-19 16:59:13.54098
+21	5	FOOD PACKAGES	2	1	2025-11-20	V	LASCO, MACKERAL, CORNBEEF	LOGISTICS.OFFICER@GO	2025-11-20 23:24:56	LOGISTICS.OFFICER@GO	2025-11-20 23:24:56	1	LOGISTICS.OFFICER@GO	2025-11-20 23:24:55.801665
 8	2	BOTTLE WATER	3	1	2025-11-18	P	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:25:41	LOGISTICS.MANAGER@GO	2025-11-19 20:25:41	2	LOGISTICS.MANAGER@GO	2025-11-19 20:30:58.030276
 9	2	WATER	3	1	2025-11-19	P	\N	LOGISTICS.OFFICER@GO	2025-11-19 20:32:49	LOGISTICS.OFFICER@GO	2025-11-19 20:32:49	2	LOGISTICS.OFFICER@GO	2025-11-19 20:35:00.083929
 10	2	MORE WATER	2	1	2025-11-19	P	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:36:21	LOGISTICS.MANAGER@GO	2025-11-19 20:36:21	2	LOGISTICS.MANAGER@GO	2025-11-19 20:36:58.280388
 11	2	WATER FOR KINGSTON	2	1	2025-11-19	P	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:39:47	LOGISTICS.MANAGER@GO	2025-11-19 20:39:47	2	LOGISTICS.MANAGER@GO	2025-11-19 20:40:49.605008
+13	4	15 WHITE TENTS, SIZE 20*40 EACH	2	1	2025-11-20	P	\N	MONIQUE@GOV.JM	2025-11-20 16:27:57	MONIQUE@GOV.JM	2025-11-20 16:32:13	3	MONIQUE@GOV.JM	2025-11-20 17:00:58.355591
+14	3	TESTING THE DONATION FOR NEW DONOR	2	1	2025-11-20	P	TESTING	CLAUDINE@GOV.JM	2025-11-20 16:37:31	CLAUDINE@GOV.JM	2025-11-20 16:37:31	2	CLAUDINE@GOV.JM	2025-11-20 17:05:25.238242
+15	5	LADIES DEM A WAIT PON YOU	2	1	2025-11-20	P	LADIES DEM A WAIT PON YOU	LINCOLN@GOV.JM	2025-11-20 16:40:36	LINCOLN@GOV.JM	2025-11-20 16:40:36	2	LINCOLN@GOV.JM	2025-11-20 17:37:34.920362
+2	2	FIRST AID KITS	2	1	2025-11-14	P	RECEIVED FROM RED CROSS	LOGISTICS.OFFICER@GO	2025-11-18 03:21:03	LOGISTICS.MANAGER@GO	2025-11-19 12:51:52	6	PATRICIA.RAYMOND@ICT	2025-11-20 18:07:21.865753
+12	2	THIS FONATION CONTAINS \r\n- WATER\r\n- RICE	2	1	2025-11-20	P	THIS ITEM IS INTENDED FOR THE WINDWARD HURRICANE SHELTER	CLAUDINE@GOV.JM	2025-11-20 16:26:35	CLAUDINE@GOV.JM	2025-11-20 16:26:35	2	PATRICIA.RAYMOND@ICT	2025-11-20 18:17:11.915699
+6	2	WHITE RICE	2	1	2025-11-19	P	WHITE RICE	LOGISTICS.MANAGER@GO	2025-11-19 12:53:55	LOGISTICS.MANAGER@GO	2025-11-19 12:53:55	2	PATRICIA.RAYMOND@ICT	2025-11-20 18:25:21.163387
+16	6	BOTTLES WATER	2	1	2025-11-20	V	\N	LOGISTICS.MANAGER@GO	2025-11-20 19:01:40	LOGISTICS.MANAGER@GO	2025-11-20 19:01:40	1	LOGISTICS.MANAGER@GO	2025-11-20 19:01:40.252892
+22	4	GOODS ASSORTMENT #1	2	1	2025-11-21	P	\N	KAY@GOV.JM	2025-11-21 01:45:00	KAY@GOV.JM	2025-11-21 01:45:00	2	KAY@GOV.JM	2025-11-21 02:05:08.315307
+23	6	GOODS ASSORTMENT #2	2	1	2025-11-21	P	\N	KAY@GOV.JM	2025-11-21 01:48:12	KAY@GOV.JM	2025-11-21 01:48:12	2	KAY@GOV.JM	2025-11-21 02:10:04.41409
+24	3	GOODS ASSORTMENT #3	2	1	2025-11-21	P	\N	KAY@GOV.JM	2025-11-21 01:51:02	KAY@GOV.JM	2025-11-21 01:51:02	2	KAY@GOV.JM	2025-11-21 02:13:34.466835
+25	2	GOODS ASSORTMENT #4	2	1	2025-11-21	P	\N	KAY@GOV.JM	2025-11-21 01:52:31	KAY@GOV.JM	2025-11-21 01:52:31	2	KAY@GOV.JM	2025-11-21 02:15:02.681902
+26	4	GOODS ASSORTMENT #5	2	1	2025-11-21	P	\N	KAY@GOV.JM	2025-11-21 02:17:34	KAY@GOV.JM	2025-11-21 02:17:34	2	KAY@GOV.JM	2025-11-21 02:22:33.399841
+27	3	GOODS ASSORTMENT #6	2	1	2025-11-21	P	\N	KAY@GOV.JM	2025-11-21 02:18:39	KAY@GOV.JM	2025-11-21 02:18:39	2	KAY@GOV.JM	2025-11-21 02:24:11.173538
+28	6	GOODS ASSORTMENT #7	2	1	2025-11-21	P	\N	KAY@GOV.JM	2025-11-21 02:19:43	KAY@GOV.JM	2025-11-21 02:19:43	2	KAY@GOV.JM	2025-11-21 02:26:32.76077
+29	5	FOOD	2	1	2025-11-20	P	\N	LINCOLN@GOV.JM	2025-11-21 02:32:09	LINCOLN@GOV.JM	2025-11-21 02:32:09	2	LINCOLN@GOV.JM	2025-11-21 02:34:29.146005
+30	3	TAR	2	1	2025-11-21	V	\N	LOGISTICS.MANAGER@GO	2025-11-21 14:56:17	LOGISTICS.MANAGER@GO	2025-11-21 14:56:17	1	LOGISTICS.MANAGER@GO	2025-11-21 14:56:16.875458
+33	5	SUPPORT AND RELIEF HURRICANE MELISSA	2	1	2025-11-21	V	\N	CLAUDINE@GOV.JM	2025-11-21 18:54:22	CLAUDINE@GOV.JM	2025-11-21 18:54:22	1	CLAUDINE@GOV.JM	2025-11-21 18:54:22.044922
+34	5	SUPPORT AND RELIEF	2	1	2025-11-21	V	\N	CLAUDINE@GOV.JM	2025-11-21 18:55:59	CLAUDINE@GOV.JM	2025-11-21 18:55:59	1	CLAUDINE@GOV.JM	2025-11-21 18:55:58.708416
 \.
 
 
@@ -2065,6 +1908,45 @@ COPY public.donation_item (donation_id, item_id, item_qty, uom_code, location_na
 9	11	500.00	BOTTLE	DONATION RECEIVED	V	\N	LOGISTICS.OFFICER@GO	2025-11-19 20:32:49	LOGISTICS.OFFICER@GO	2025-11-19 20:32:49	1
 10	11	50.00	BOTTLE	DONATION RECEIVED	V	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:36:21	LOGISTICS.MANAGER@GO	2025-11-19 20:36:21	1
 11	11	80.00	BOTTLE	DONATION RECEIVED	V	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:39:47	LOGISTICS.MANAGER@GO	2025-11-19 20:39:47	1
+12	6	25.00	KG	DONATION RECEIVED	V	THIS ITEM EXPIRES ON JANUARY 30, 2027	CLAUDINE@GOV.JM	2025-11-20 16:26:35	CLAUDINE@GOV.JM	2025-11-20 16:26:35	1
+12	11	25.00	BOTTLE	DONATION RECEIVED	V	THIS ITEM EXPIRES ON JANUARY 30, 2026	CLAUDINE@GOV.JM	2025-11-20 16:26:35	CLAUDINE@GOV.JM	2025-11-20 16:26:35	1
+13	9	15.00	UNIT	DONATION RECEIVED	V	\N	MONIQUE@GOV.JM	2025-11-20 16:27:57	MONIQUE@GOV.JM	2025-11-20 16:27:57	1
+14	8	300.00	UNIT	DONATION RECEIVED	V	THIS ITEM EXPIRES ON JANUARY 30, 2027	CLAUDINE@GOV.JM	2025-11-20 16:37:31	CLAUDINE@GOV.JM	2025-11-20 16:37:31	1
+15	10	25.00	SHEET	DONATION RECEIVED	V	\N	LINCOLN@GOV.JM	2025-11-20 16:40:36	LINCOLN@GOV.JM	2025-11-20 16:40:36	1
+15	8	50.00	BOX	DONATION RECEIVED	V	\N	LINCOLN@GOV.JM	2025-11-20 16:40:36	LINCOLN@GOV.JM	2025-11-20 16:40:36	1
+15	12	50.00	BOTTLE	DONATION RECEIVED	V	\N	LINCOLN@GOV.JM	2025-11-20 16:40:36	LINCOLN@GOV.JM	2025-11-20 16:40:36	1
+15	9	85.00	BOX	DONATION RECEIVED	V	\N	LINCOLN@GOV.JM	2025-11-20 16:40:36	LINCOLN@GOV.JM	2025-11-20 16:40:36	1
+16	11	200.00	BOTTLE	DONATION RECEIVED	V	\N	LOGISTICS.MANAGER@GO	2025-11-20 19:01:40	LOGISTICS.MANAGER@GO	2025-11-20 19:01:40	1
+17	11	120.00	BOTTLE	DONATION RECEIVED	V	\N	MONIQUE@GOV.JM	2025-11-20 19:15:22	MONIQUE@GOV.JM	2025-11-20 19:15:22	1
+18	9	100.00	BAG	DONATION RECEIVED	V	N/A	PATRICIA.RAYMOND@ICT	2025-11-20 20:37:19	PATRICIA.RAYMOND@ICT	2025-11-20 20:37:19	1
+18	13	200.00	BOTTLE	DONATION RECEIVED	V	\N	PATRICIA.RAYMOND@ICT	2025-11-20 20:37:19	PATRICIA.RAYMOND@ICT	2025-11-20 20:37:19	1
+20	14	15000.00	UNIT	DONATION RECEIVED	V	\N	MONIQUE@GOV.JM	2025-11-20 23:01:40	MONIQUE@GOV.JM	2025-11-20 23:01:40	1
+21	6	500.00	KG	DONATION RECEIVED	V	N/A	LOGISTICS.OFFICER@GO	2025-11-20 23:24:56	LOGISTICS.OFFICER@GO	2025-11-20 23:24:56	1
+22	16	30.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 01:45:00	KAY@GOV.JM	2025-11-21 01:45:00	1
+22	17	5.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 01:45:00	KAY@GOV.JM	2025-11-21 01:45:00	1
+22	18	80.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 01:45:00	KAY@GOV.JM	2025-11-21 01:45:00	1
+22	19	50.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 01:45:00	KAY@GOV.JM	2025-11-21 01:45:00	1
+23	16	20.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 01:48:12	KAY@GOV.JM	2025-11-21 01:48:12	1
+23	17	30.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 01:48:12	KAY@GOV.JM	2025-11-21 01:48:12	1
+23	18	10.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 01:48:12	KAY@GOV.JM	2025-11-21 01:48:12	1
+23	19	30.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 01:48:12	KAY@GOV.JM	2025-11-21 01:48:12	1
+24	16	70.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 01:51:02	KAY@GOV.JM	2025-11-21 01:51:02	1
+24	17	10.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 01:51:02	KAY@GOV.JM	2025-11-21 01:51:02	1
+24	18	40.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 01:51:02	KAY@GOV.JM	2025-11-21 01:51:02	1
+24	19	20.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 01:51:02	KAY@GOV.JM	2025-11-21 01:51:02	1
+25	18	5.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 01:52:31	KAY@GOV.JM	2025-11-21 01:52:31	1
+26	16	16.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 02:17:34	KAY@GOV.JM	2025-11-21 02:17:34	1
+26	18	60.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 02:17:34	KAY@GOV.JM	2025-11-21 02:17:34	1
+27	16	10.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 02:18:39	KAY@GOV.JM	2025-11-21 02:18:39	1
+27	18	30.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 02:18:39	KAY@GOV.JM	2025-11-21 02:18:39	1
+28	16	25.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 02:19:43	KAY@GOV.JM	2025-11-21 02:19:43	1
+28	18	100.00	UNIT	DONATION RECEIVED	V	\N	KAY@GOV.JM	2025-11-21 02:19:43	KAY@GOV.JM	2025-11-21 02:19:43	1
+29	7	15.00	BOX	DONATION RECEIVED	V	KITS	LINCOLN@GOV.JM	2025-11-21 02:32:09	LINCOLN@GOV.JM	2025-11-21 02:32:09	1
+30	9	100.00	SHEET	DONATION RECEIVED	V	\N	LOGISTICS.MANAGER@GO	2025-11-21 14:56:17	LOGISTICS.MANAGER@GO	2025-11-21 14:56:17	1
+31	9	10.00	UNIT	DONATION RECEIVED	V	\N	CLAUDINE@GOV.JM	2025-11-21 17:14:22	CLAUDINE@GOV.JM	2025-11-21 17:14:22	1
+32	6	9.00	SACK	DONATION RECEIVED	V	\N	CLAUDINE@GOV.JM	2025-11-21 17:56:15	CLAUDINE@GOV.JM	2025-11-21 17:56:15	1
+33	20	80.00	UNIT	DONATION RECEIVED	V	\N	CLAUDINE@GOV.JM	2025-11-21 18:54:22	CLAUDINE@GOV.JM	2025-11-21 18:54:22	1
+34	16	80.00	UNIT	DONATION RECEIVED	V	\N	CLAUDINE@GOV.JM	2025-11-21 18:55:59	CLAUDINE@GOV.JM	2025-11-21 18:55:59	1
 \.
 
 
@@ -2074,6 +1956,10 @@ COPY public.donation_item (donation_id, item_id, item_qty, uom_code, location_na
 
 COPY public.donor (donor_id, donor_name, org_type_desc, address1_text, address2_text, country_id, phone_no, email_text, create_by_id, create_dtime, update_by_id, update_dtime, version_nbr, donor_code) FROM stdin;
 2	RED CROSS JAMAICA	NGO	123 Main Street, Kingston	\N	388	876-555-1000	info@redcross.org.jm	ADMIN@ODPEM.GOV.JM	2025-11-12 04:40:08	ADMIN@ODPEM.GOV.JM	2025-11-12 04:40:08	1	ORG-00002
+3	GOVERNMENT OF T&T	Government	Lot A74 Caymanas Country Club Estate, St. Catherine	Spanish Town P.O.	388	+1 (876) 472-8379	nari.constantine@icta.gov.jm	NARI@ODPEM.GOV.JM	2025-11-20 16:28:52	NARI@ODPEM.GOV.JM	2025-11-20 16:28:52	1	ORG-0001
+4	USAID	American	Lot A74 Caymanas Country Club Estate, St. Catherine	Spanish Town P.O.	388	+1 (876) 472-8379	nari.constantine@icta.gov.jm	NARI@ODPEM.GOV.JM	2025-11-20 16:31:09	NARI@ODPEM.GOV.JM	2025-11-20 16:31:09	1	ORG-0002
+5	BRITISH AID	Britain	Lot A74 Caymanas Country Club Estate, St. Catherine	Spanish Town P.O.	388	+1 (876) 472-8379	nari.constantine@icta.gov.jm	NARI@ODPEM.GOV.JM	2025-11-20 16:35:57	NARI@ODPEM.GOV.JM	2025-11-20 16:35:57	1	ORG-0003
+6	KIWANIS CLUB	NGO	12 Main Street	Runaway Bay, St. Ann	388	+1 (876) 896-2456	zavion.mattis@icta.gov.jm	LOGISTICS.MANAGER@GO	2025-11-20 17:58:36	LOGISTICS.MANAGER@GO	2025-11-20 17:58:36	1	ORG-0005
 \.
 
 
@@ -2085,6 +1971,7 @@ COPY public.event (event_id, event_type, start_date, event_name, event_desc, imp
 1	STORM	2025-10-28	Hurricane Melissa	Hurricane Melissa CAT 5	All of western Jamaica was completely destroyed.	C	2025-11-16	This event is closed.	TEST.DIRECTOR@ODPEM.	2025-11-16 20:10:33	TEST.DIRECTOR@ODPEM.	2025-11-16 20:34:45	3
 2	STORM	2025-11-17	Hurricane Melissa 2025	Hurricane Mellissa is a category 5 hurricane that hit landfall on October 28, 2025.	Devastating damages to the central and western of the country (St. Elizabeth, Westmoreland, St. James, Mandeville and Trelawny)	A	\N	\N	TEST.DIRECTOR@ODPEM.	2025-11-17 15:01:49	TEST.DIRECTOR@ODPEM.	2025-11-17 15:01:49	1
 3	HURRICANE	2024-07-24	hurricane beryl	CAT 3 Hurricane across central Jamaica	Significant damages infrastructure.	A	\N	\N	EXECUTIVE@ODPEM.GOV.	2025-11-18 22:51:12	EXECUTIVE@ODPEM.GOV.	2025-11-18 22:51:12	1
+4	EARTHQUAKE	2025-09-22	Earthquake Sept 22,2025	Earthquake epicenter Portland	All gov buildings crumbled	C	2025-11-21	Disaster Recovery	JORDANNE@GOV.JM	2025-11-21 20:11:17	JORDANNE@GOV.JM	2025-11-21 20:12:13	2
 \.
 
 
@@ -2093,18 +1980,27 @@ COPY public.event (event_id, event_type, start_date, event_name, event_desc, imp
 --
 
 COPY public.inventory (inventory_id, item_id, usable_qty, reserved_qty, defective_qty, expired_qty, uom_code, last_verified_by, last_verified_date, status_code, comments_text, create_by_id, create_dtime, update_by_id, update_dtime, version_nbr, reorder_qty) FROM stdin;
+8	9	74.00	0.00	4.00	0.00	SHEET	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:53	MONIQUE@GOV.JM	2025-11-20 17:00:58	2	0.00
+8	8	712.00	0.00	5.00	3.00	UNIT	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:53	CLAUDINE@GOV.JM	2025-11-20 17:05:25	3	0.00
+1	9	235.00	0.00	8.00	0.00	SHEET	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:49	LINCOLN@GOV.JM	2025-11-20 17:37:35	2	0.00
+1	10	625.00	20.00	12.00	0.00	UNIT	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:49	LINCOLN@GOV.JM	2025-11-20 17:37:35	3	0.00
+1	6	525.00	0.00	5.00	0.00	SACK	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:49	PATRICIA.RAYMOND@ICT	2025-11-20 18:17:12	2	0.00
 8	7	758.00	70.00	6.00	17.00	UNIT	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:53	LOGISTICS.OFFICER@GO	2025-11-18 23:41:35	10	0.00
-8	8	415.00	0.00	5.00	0.00	UNIT	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:53	LOGISTICS.OFFICER@GO	2025-11-18 23:41:35	2	0.00
-1	7	700.00	90.00	3.00	10.00	UNIT	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:49	LOGISTICS.MANAGER@GO	2025-11-18 17:54:37	10	0.00
-8	11	1500.00	0.00	0.00	0.00	BOTTLE	\N	\N	A	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:30:58	LOGISTICS.MANAGER@GO	2025-11-19 20:36:58	6	0.00
-1	11	30.00	30.00	0.00	0.00	BOTTLE	\N	\N	A	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:40:50	LOGISTICS.MANAGER@GO	2025-11-19 20:40:50	4	0.00
-1	8	1750.00	60.00	0.00	0.00	UNIT	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:49	LOGISTICS.MANAGER@GO	2025-11-19 16:59:14	9	0.00
-1	6	500.00	0.00	5.00	0.00	SACK	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:49	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:49	1	0.00
-1	9	150.00	0.00	8.00	0.00	SHEET	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:49	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:49	1	0.00
-1	10	600.00	0.00	12.00	0.00	UNIT	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:49	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:49	1	0.00
-8	6	180.00	0.00	2.00	0.00	SACK	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:53	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:53	1	0.00
-8	9	60.00	0.00	3.00	0.00	SHEET	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:53	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:53	1	0.00
+11	17	45.00	20.00	0.00	0.00	UNIT	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:05:08	KAY@GOV.JM	2025-11-21 02:13:34	5	0.00
+1	11	155.00	30.00	10.00	10.00	BOTTLE	\N	\N	A	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:40:50	MONIQUE@GOV.JM	2025-11-20 19:18:52	6	0.00
+1	12	50.00	50.00	0.00	0.00	BOTTLE	\N	\N	A	\N	LINCOLN@GOV.JM	2025-11-20 17:37:35	LINCOLN@GOV.JM	2025-11-20 17:37:35	2	0.00
+8	11	1500.00	250.00	0.00	0.00	BOTTLE	\N	\N	A	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:30:58	LOGISTICS.MANAGER@GO	2025-11-19 20:36:58	9	0.00
+1	14	15000.00	600.00	0.00	0.00	UNIT	\N	\N	A	\N	MONIQUE@GOV.JM	2025-11-20 23:05:46	MONIQUE@GOV.JM	2025-11-20 23:05:46	2	0.00
+10	16	25.00	0.00	0.00	0.00	UNIT	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:22:33	KAY@GOV.JM	2025-11-21 02:26:33	5	0.00
+11	16	90.00	0.00	1.00	0.00	UNIT	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:05:08	KAY@GOV.JM	2025-11-21 02:13:34	5	0.00
+11	9	10.00	0.00	0.00	0.00	UNIT	\N	\N	A	\N	CLAUDINE@GOV.JM	2025-11-21 18:51:44	CLAUDINE@GOV.JM	2025-11-21 18:51:44	1	0.00
 8	10	250.00	0.00	5.00	0.00	UNIT	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:53	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:53	1	0.00
+11	19	100.00	0.00	0.00	0.00	UNIT	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:05:08	KAY@GOV.JM	2025-11-21 02:13:34	3	0.00
+11	18	130.00	0.00	5.00	0.00	UNIT	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:05:08	KAY@GOV.JM	2025-11-21 02:15:03	4	0.00
+1	7	715.00	90.00	3.00	10.00	UNIT	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:49	LINCOLN@GOV.JM	2025-11-21 02:34:29	11	0.00
+8	6	289.00	0.00	2.00	0.00	SACK	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:53	CLAUDINE@GOV.JM	2025-11-21 18:03:44	3	0.00
+1	8	1603.00	0.00	0.00	0.00	UNIT	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 15:13:49	LINCOLN@GOV.JM	2025-11-20 17:37:35	18	0.00
+10	18	185.00	50.00	5.00	0.00	UNIT	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:22:33	KAY@GOV.JM	2025-11-21 02:26:33	4	0.00
 \.
 
 
@@ -2113,12 +2009,21 @@ COPY public.inventory (inventory_id, item_id, usable_qty, reserved_qty, defectiv
 --
 
 COPY public.item (item_id, item_code, item_name, sku_code, category_id, item_desc, reorder_qty, default_uom_code, units_size_vary_flag, usage_desc, storage_desc, is_batched_flag, can_expire_flag, issuance_order, comments_text, status_code, create_by_id, create_dtime, update_by_id, update_dtime, version_nbr) FROM stdin;
-8	ITM-HYG-001	HYGIENE KIT FAMILY	SKU-HYG-FAM-001	4	Family hygiene kit containing soap, toothpaste, sanitary items, and toiletries	75.00	UNIT	f	\N	\N	f	f	FIFO	\N	A	ADMIN@ODPEM.GOV.JM	2025-11-17 14:39:09	ADMIN@ODPEM.GOV.JM	2025-11-17 14:39:09	1
-9	ITM-SHT-001	TARPAULIN HEAVY DUTY	SKU-SHT-TARP-HD-12X16	5	Heavy duty waterproof tarpaulin 12ft x 16ft for emergency shelter	30.00	SHEET	t	\N	\N	f	f	FIFO	\N	A	ADMIN@ODPEM.GOV.JM	2025-11-17 14:39:09	ADMIN@ODPEM.GOV.JM	2025-11-17 14:39:09	1
-10	ITM-CLO-001	BLANKET EMERGENCY	SKU-CLO-BLNK-EMG	6	Emergency thermal blanket for disaster relief distribution	100.00	UNIT	f	\N	\N	f	f	FIFO	\N	A	ADMIN@ODPEM.GOV.JM	2025-11-17 14:39:09	ADMIN@ODPEM.GOV.JM	2025-11-17 14:39:09	1
-7	ITM-MED-001	FIRST AID KIT STANDARD	SKU-MED-FAK-STD	3	Standard first aid kit with bandages, antiseptic, and basic medical supplies	50.00	UNIT	f	\N	\N	t	t	FEFO	\N	A	ADMIN@ODPEM.GOV.JM	2025-11-17 14:39:09	TEST.DIRECTOR@ODPEM.	2025-11-17 14:41:18	2
-6	ITM-RICE-001	WHITE RICE PARBOILED	SKU-RICE-WP-50KG	1	Parboiled white rice in 50kg bags for emergency food distribution	100.00	SACK	f	\N	\N	t	f	FEFO	\N	A	ADMIN@ODPEM.GOV.JM	2025-11-17 14:39:09	ADMIN@ODPEM.GOV.JM	2025-11-17 14:39:09	1
-11	ITM-WAT-01	BOTTLE WATER 500ML	SKU-WAT-01	1	Bottle water	100.00	LITRE	f	\N	\N	t	t	FEFO	\N	A	EXECUTIVE@ODPEM.GOV.	2025-11-18 23:04:40	EXECUTIVE@ODPEM.GOV.	2025-11-18 23:04:40	1
+20	ITM-FOOD-100	CORNBEEF	SKU-FOOD-100	1	CornBeef	10.00	UNIT	t	\N	\N	t	t	FEFO	\N	A	JORDANNE@GOV.JM	2025-11-21 18:47:48	JORDANNE@GOV.JM	2025-11-21 18:47:48	1
+17	ITM-CLO-101	MEN PANTS MED	SKU-CLO-101	6	Men's medium pants	1000.00	UNIT	f	\N	\N	t	f	FIFO	\N	A	KAY@GOV.JM	2025-11-21 00:53:17	KAY@GOV.JM	2025-11-21 00:53:17	1
+16	ITM-CLO-100	MEN SHIRT MED	SKU-CLO-100	6	Men's medium shirt	1000.00	UNIT	f	\N	\N	t	f	FIFO	\N	A	KAY@GOV.JM	2025-11-21 00:50:29	KAY@GOV.JM	2025-11-21 00:54:12	2
+18	ITM-FOOD-110	SARDINES SMALL	SKU-FOOD-110	1	Canadian Sardines in oil	600.00	UNIT	f	\N	\N	t	t	FIFO	\N	A	KAY@GOV.JM	2025-11-21 00:56:31	KAY@GOV.JM	2025-11-21 00:56:31	1
+19	ITM-FOOD-111	MAC & CHEESE BOX	SKU-FOOD-111	1	Mac & Cheese Ready Meal	450.00	UNIT	f	\N	\N	f	t	FIFO	\N	A	KAY@GOV.JM	2025-11-21 00:59:05	KAY@GOV.JM	2025-11-21 00:59:05	1
+15	ITM-CLO-003	BANGLEDESH RICE	SKU-CLO-RICE-EMG	1	Rice from Bangledesh	100.00	KG	f	per bag	dry and cool	t	f	FIFO	Rice is served in bags	I	NARI@ODPEM.GOV.JM	2025-11-20 19:32:59	JORDANNE@GOV.JM	2025-11-21 18:09:34	2
+10	ITM-CLO-001	BLANKETS (EMERGENCY)	SKU-CLO-BLNK-EMG	6	Emergency thermal blanket for disaster relief distribution	100.00	UNIT	f	\N	\N	f	f	FIFO	\N	I	ADMIN@ODPEM.GOV.JM	2025-11-17 14:39:09	JORDANNE@GOV.JM	2025-11-21 18:10:49	3
+14	ITM-CLO-002	BLOCKS	SKU-CLO-BLCK-EMG	5	Building Blocks	100.00	UNIT	f	Building Supplies	Warehouse	t	f	FIFO	\N	I	NARI@ODPEM.GOV.JM	2025-11-20 17:58:44	JORDANNE@GOV.JM	2025-11-21 18:11:34	2
+11	ITM-WAT-01	BOTTLE WATER 500ML	SKU-WAT-01	1	Bottle water	100.00	LITRE	f	\N	\N	t	t	FEFO	\N	I	EXECUTIVE@ODPEM.GOV.	2025-11-18 23:04:40	JORDANNE@GOV.JM	2025-11-21 18:11:48	2
+13	SANI-007	DISINFECTANT	SKU-CLO-DISINF-EMG	3	Lysol Disinfectant Spray	100.00	GALLON	f	Sterilisation	Cool dry place	t	f	FIFO	Done 2025-11-21	I	NARI@ODPEM.GOV.JM	2025-11-20 17:53:48	JORDANNE@GOV.JM	2025-11-21 18:12:26	2
+7	ITM-MED-001	FIRST AID KIT STANDARD	SKU-MED-FAK-STD	3	Standard first aid kit with bandages, antiseptic, and basic medical supplies	50.00	UNIT	f	\N	\N	t	t	FEFO	\N	I	ADMIN@ODPEM.GOV.JM	2025-11-17 14:39:09	JORDANNE@GOV.JM	2025-11-21 18:12:40	3
+8	ITM-HYG-001	HYGIENE KIT FAMILY	SKU-HYG-FAM-001	4	Family hygiene kit containing soap, toothpaste, sanitary items, and toiletries	75.00	UNIT	f	\N	\N	f	f	FIFO	\N	I	ADMIN@ODPEM.GOV.JM	2025-11-17 14:39:09	JORDANNE@GOV.JM	2025-11-21 18:12:52	2
+6	ITM-RICE-001	WHITE RICE PARBOILED	SKU-RICE-WP-50KG	1	Parboiled white rice in 50kg bags for emergency food distribution	100.00	SACK	f	\N	\N	t	f	FEFO	\N	I	ADMIN@ODPEM.GOV.JM	2025-11-17 14:39:09	JORDANNE@GOV.JM	2025-11-21 18:13:13	2
+12	SANI-001	WATER	SKU-CLO-WATA-EMG	1	Bottled Water 8oz	100.00	BOTTLE	f	\N	\N	t	f	FIFO	\N	I	NARI@ODPEM.GOV.JM	2025-11-20 16:35:13	JORDANNE@GOV.JM	2025-11-21 18:13:47	2
+9	ITM-SHT-001	TARPAULIN HEAVY DUTY	SKU-SHT-TARP-HD-12X16	5	Heavy duty waterproof tarpaulin 12ft x 16ft for emergency shelter	30.00	SHEET	t	\N	\N	f	f	FIFO	\N	I	ADMIN@ODPEM.GOV.JM	2025-11-17 14:39:09	JORDANNE@GOV.JM	2025-11-21 18:13:59	2
 \.
 
 
@@ -2145,16 +2050,48 @@ COPY public.itembatch (batch_id, inventory_id, item_id, batch_no, batch_date, ex
 8	1	7	FAK-2024-003	2024-10-20	2026-10-20	50.0000	0.0000	0.0000	0.0000	UNIT	Standard 50-piece	25.00	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 17:54:49	ADMIN@ODPEM.GOV.JM	2025-11-17 17:54:49	1
 9	8	7	FAK-2024-MB-001	2024-09-01	2026-09-01	40.0000	0.0000	0.0000	0.0000	UNIT	Standard 50-piece	25.00	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 17:54:49	ADMIN@ODPEM.GOV.JM	2025-11-17 17:54:49	1
 10	8	7	FAK-2024-MB-002	2024-11-01	2026-11-01	35.0000	0.0000	0.0000	0.0000	UNIT	Standard 50-piece	25.00	\N	\N	A	\N	ADMIN@ODPEM.GOV.JM	2025-11-17 17:54:49	ADMIN@ODPEM.GOV.JM	2025-11-17 17:54:49	1
-12	1	7	B002	2025-11-17	2025-12-31	500.0000	0.0000	0.0000	0.0000	UNIT	\N	5000.00	\N	\N	A	\N	LOGISTICS.MANAGER@GO	2025-11-18 17:54:37	LOGISTICS.MANAGER@GO	2025-11-18 17:54:37	1
 13	8	7	B003	2025-11-18	2026-01-01	493.0000	0.0000	5.0000	2.0000	UNIT	\N	5000.00	\N	\N	A	\N	LOGISTICS.MANAGER@GO	2025-11-18 18:06:15	LOGISTICS.MANAGER@GO	2025-11-18 18:06:15	1
-14	8	7	MED-KIT-01	2025-11-18	2025-12-26	190.0000	0.0000	0.0000	10.0000	UNIT	\N	10000.00	\N	\N	A	\N	LOGISTICS.OFFICER@GO	2025-11-18 23:41:35	LOGISTICS.OFFICER@GO	2025-11-18 23:41:35	1
 15	8	8	NOBATCH-8	2025-11-18	2025-12-31	295.0000	0.0000	5.0000	0.0000	UNIT	\N	5000.00	\N	\N	A	\N	LOGISTICS.OFFICER@GO	2025-11-18 23:41:35	LOGISTICS.OFFICER@GO	2025-11-18 23:41:35	1
-16	1	8	NOBATCH-8	2025-11-19	2026-01-10	400.0000	0.0000	0.0000	0.0000	UNIT	\N	1000.00	\N	\N	A	\N	LOGISTICS.MANAGER@GO	2025-11-19 16:59:13	LOGISTICS.MANAGER@GO	2025-11-19 16:59:13	1
-19	8	11	BATCH-WATA-01	2025-11-19	2025-12-31	1000.0000	0.0000	0.0000	0.0000	BOTTLE	\N	100.00	\N	\N	A	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:30:58	LOGISTICS.MANAGER@GO	2025-11-19 20:30:58	1
 21	8	11	BATCH-WATA-03	2025-11-19	2025-11-19	50.0000	0.0000	0.0000	0.0000	BOTTLE	\N	100.00	\N	\N	A	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:36:58	LOGISTICS.MANAGER@GO	2025-11-19 20:36:58	1
-20	8	11	BATCH-WATA-02	2025-11-19	2025-11-20	450.0000	0.0000	0.0000	0.0000	BOTTLE	\N	100.00	\N	\N	A	\N	LOGISTICS.OFFICER@GO	2025-11-19 20:35:00	LOGISTICS.OFFICER@GO	2025-11-19 20:35:00	2
-22	1	11	BATCH-WATA-05	2025-11-17	2025-11-20	30.0000	0.0000	0.0000	0.0000	BOTTLE	\N	100.00	\N	\N	A	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:40:50	LOGISTICS.MANAGER@GO	2025-11-19 20:40:50	2
-11	1	8	B001	2025-11-17	2026-02-28	990.0000	0.0000	0.0000	0.0000	UNIT	\N	100.00	\N	\N	A	\N	LOGISTICS.MANAGER@GO	2025-11-18 17:54:37	LOGISTICS.MANAGER@GO	2025-11-18 17:54:37	2
+22	1	11	BATCH-WATA-05	2025-11-17	2025-11-20	0.0000	0.0000	0.0000	0.0000	BOTTLE	\N	100.00	\N	\N	A	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:40:50	LOGISTICS.MANAGER@GO	2025-11-19 20:40:50	3
+33	1	6	YU2856	2025-11-13	2025-11-27	25.0000	0.0000	0.0000	0.0000	KG	\N	100.00	\N	\N	A	\N	PATRICIA.RAYMOND@ICT	2025-11-20 18:17:12	PATRICIA.RAYMOND@ICT	2025-11-20 18:17:12	1
+34	1	11	FG2580	2025-11-10	2025-11-27	25.0000	0.0000	0.0000	0.0000	BOTTLE	\N	100.00	\N	\N	A	\N	PATRICIA.RAYMOND@ICT	2025-11-20 18:17:12	PATRICIA.RAYMOND@ICT	2025-11-20 18:17:12	1
+35	8	6	PB1025	2025-11-12	2025-11-30	100.0000	0.0000	0.0000	0.0000	SACK	\N	1000.00	\N	\N	A	\N	PATRICIA.RAYMOND@ICT	2025-11-20 18:25:21	PATRICIA.RAYMOND@ICT	2025-11-20 18:25:21	1
+36	1	11	123456	2025-11-20	2026-01-31	100.0000	0.0000	10.0000	10.0000	BOTTLE	\N	12000.00	\N	\N	A	\N	MONIQUE@GOV.JM	2025-11-20 19:18:51	MONIQUE@GOV.JM	2025-11-20 19:18:51	1
+16	1	8	NOBATCH-8	2025-11-19	2026-01-10	380.0000	0.0000	0.0000	0.0000	UNIT	\N	1000.00	\N	\N	A	\N	LOGISTICS.MANAGER@GO	2025-11-19 16:59:13	LOGISTICS.MANAGER@GO	2025-11-19 16:59:13	2
+37	1	14	12378	2025-11-20	\N	13378.0000	0.0000	0.0000	0.0000	UNIT	\N	175000.00	\N	\N	A	\N	MONIQUE@GOV.JM	2025-11-20 23:05:46	MONIQUE@GOV.JM	2025-11-20 23:05:46	3
+39	11	17	BC1-001	2025-07-08	\N	5.0000	0.0000	0.0000	0.0000	UNIT	\N	200.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:05:08	KAY@GOV.JM	2025-11-21 02:05:08	1
+31	1	12	SFJHKH56546	2025-11-14	2025-11-21	50.0000	0.0000	0.0000	0.0000	BOTTLE	\N	50000.00	\N	\N	A	\N	LINCOLN@GOV.JM	2025-11-20 17:37:35	LINCOLN@GOV.JM	2025-11-20 17:37:35	1
+32	1	9	JGTDYHSG585	2025-11-13	2025-11-28	85.0000	0.0000	0.0000	0.0000	BOX	\N	42552.00	\N	\N	A	\N	LINCOLN@GOV.JM	2025-11-20 17:37:35	LINCOLN@GOV.JM	2025-11-20 17:37:35	1
+57	1	7	9KJD	2025-11-12	2025-11-29	15.0000	0.0000	0.0000	0.0000	BOX	\N	4.00	\N	\N	A	\N	LINCOLN@GOV.JM	2025-11-21 02:34:29	LINCOLN@GOV.JM	2025-11-21 02:34:29	1
+20	8	11	BATCH-WATA-02	2025-11-19	2025-11-20	330.0000	0.0000	0.0000	0.0000	BOTTLE	\N	100.00	\N	\N	A	\N	LOGISTICS.OFFICER@GO	2025-11-19 20:35:00	LOGISTICS.OFFICER@GO	2025-11-19 20:35:00	4
+11	1	8	B001	2025-11-17	2026-02-28	930.0000	0.0000	0.0000	0.0000	UNIT	\N	100.00	\N	\N	A	\N	LOGISTICS.MANAGER@GO	2025-11-18 17:54:37	LOGISTICS.MANAGER@GO	2025-11-18 17:54:37	4
+28	8	9	NOBATCH-9	2025-11-20	\N	0.0000	0.0000	1.0000	0.0000	UNIT	\N	11500.00	\N	\N	A	\N	MONIQUE@GOV.JM	2025-11-20 17:00:58	MONIQUE@GOV.JM	2025-11-20 17:00:58	2
+40	11	18	BF1-001	2025-07-08	2026-02-10	75.0000	0.0000	5.0000	0.0000	UNIT	\N	350.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:05:08	KAY@GOV.JM	2025-11-21 02:05:08	1
+41	11	19	BF1-002	2025-11-19	2025-11-30	50.0000	0.0000	0.0000	0.0000	UNIT	\N	200.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:05:08	KAY@GOV.JM	2025-11-21 02:05:08	1
+52	10	18	BF5-001	2025-07-10	2026-01-18	55.0000	20.0000	5.0000	0.0000	UNIT	\N	500.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:22:33	KAY@GOV.JM	2025-11-21 02:22:33	2
+12	1	7	B002	2025-11-17	2025-12-31	470.0000	0.0000	0.0000	0.0000	UNIT	\N	5000.00	\N	\N	A	\N	LOGISTICS.MANAGER@GO	2025-11-18 17:54:37	LOGISTICS.MANAGER@GO	2025-11-18 17:54:37	2
+14	8	7	MED-KIT-01	2025-11-18	2025-12-26	175.0000	0.0000	0.0000	10.0000	UNIT	\N	10000.00	\N	\N	A	\N	LOGISTICS.OFFICER@GO	2025-11-18 23:41:35	LOGISTICS.OFFICER@GO	2025-11-18 23:41:35	2
+19	8	11	BATCH-WATA-01	2025-11-19	2025-12-31	950.0000	0.0000	0.0000	0.0000	BOTTLE	\N	100.00	\N	\N	A	\N	LOGISTICS.MANAGER@GO	2025-11-19 20:30:58	LOGISTICS.MANAGER@GO	2025-11-19 20:30:58	2
+44	11	18	BF2-001	2025-10-15	2025-11-30	10.0000	0.0000	0.0000	0.0000	UNIT	\N	280.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:10:04	KAY@GOV.JM	2025-11-21 02:10:04	1
+45	11	19	BF2-002	2025-11-18	2025-12-05	30.0000	0.0000	0.0000	0.0000	UNIT	\N	360.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:10:04	KAY@GOV.JM	2025-11-21 02:10:04	1
+46	11	16	BC3-002	2025-09-01	\N	70.0000	0.0000	0.0000	0.0000	UNIT	\N	270.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:13:34	KAY@GOV.JM	2025-11-21 02:13:34	1
+48	11	18	BF3-001	2025-10-05	2025-12-14	40.0000	0.0000	0.0000	0.0000	UNIT	\N	180.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:13:34	KAY@GOV.JM	2025-11-21 02:13:34	1
+49	11	19	BF3-002	2025-11-19	2026-01-06	20.0000	0.0000	0.0000	0.0000	UNIT	\N	450.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:13:34	KAY@GOV.JM	2025-11-21 02:13:34	1
+50	11	18	BC4-001	2025-11-03	2025-12-14	5.0000	0.0000	0.0000	0.0000	UNIT	\N	220.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:15:03	KAY@GOV.JM	2025-11-21 02:15:03	1
+55	10	16	BC7-001	2025-10-03	\N	25.0000	0.0000	0.0000	0.0000	UNIT	\N	300.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:26:33	KAY@GOV.JM	2025-11-21 02:26:33	1
+56	10	18	BF7-001	2025-06-05	2026-02-20	100.0000	0.0000	0.0000	0.0000	UNIT	\N	270.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:26:33	KAY@GOV.JM	2025-11-21 02:26:33	1
+29	1	10	SDGHSGF58555	2025-11-20	2025-11-27	0.0000	0.0000	0.0000	0.0000	SHEET	\N	54600.00	\N	\N	A	\N	LINCOLN@GOV.JM	2025-11-20 17:37:35	LINCOLN@GOV.JM	2025-11-20 17:37:35	3
+51	10	16	BC5-001	2025-07-10	\N	0.0000	0.0000	0.0000	0.0000	UNIT	\N	100.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:22:33	KAY@GOV.JM	2025-11-21 02:22:33	4
+30	1	8	JKDFKD	2025-11-13	2025-11-28	293.0000	0.0000	0.0000	0.0000	BOX	\N	50000.00	\N	\N	A	\N	LINCOLN@GOV.JM	2025-11-20 17:37:35	LINCOLN@GOV.JM	2025-11-20 17:37:35	7
+43	11	17	BC2-001	2025-06-05	\N	30.0000	10.0000	0.0000	0.0000	UNIT	\N	250.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:10:04	KAY@GOV.JM	2025-11-21 02:10:04	2
+47	11	17	BC3-001	2025-07-10	\N	10.0000	10.0000	0.0000	0.0000	UNIT	\N	300.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:13:34	KAY@GOV.JM	2025-11-21 02:13:34	2
+38	11	16	BC1-002	2025-07-08	\N	20.0000	0.0000	1.0000	0.0000	UNIT	\N	300.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:05:08	KAY@GOV.JM	2025-11-21 02:05:08	3
+58	8	6	BAT-WRP-X011	2025-11-21	\N	9.0000	0.0000	0.0000	0.0000	SACK	\N	25000.00	\N	\N	A	\N	CLAUDINE@GOV.JM	2025-11-21 18:03:44	CLAUDINE@GOV.JM	2025-11-21 18:03:44	1
+53	10	16	BC6-001	2025-06-05	\N	0.0000	0.0000	0.0000	0.0000	UNIT	\N	190.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:24:11	KAY@GOV.JM	2025-11-21 02:24:11	2
+54	10	18	BF6-001	2025-08-05	2025-12-10	30.0000	30.0000	0.0000	0.0000	UNIT	\N	60.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:24:11	KAY@GOV.JM	2025-11-21 02:24:11	2
+42	11	16	BC2-002	2025-08-30	\N	0.0000	0.0000	0.0000	0.0000	UNIT	\N	430.00	\N	\N	A	\N	KAY@GOV.JM	2025-11-21 02:10:04	KAY@GOV.JM	2025-11-21 02:10:04	2
+59	11	9	\N	\N	\N	10.0000	0.0000	0.0000	0.0000	UNIT	\N	30000.00	\N	\N	A	\N	CLAUDINE@GOV.JM	2025-11-21 18:51:44	CLAUDINE@GOV.JM	2025-11-21 18:51:44	1
 \.
 
 
@@ -2184,9 +2121,11 @@ COPY public.location (location_id, inventory_id, location_desc, status_code, com
 --
 
 COPY public.notification (id, user_id, warehouse_id, reliefrqst_id, title, message, type, status, link_url, payload, is_archived, created_at) FROM stdin;
+298	21	\N	49	Relief Request Approved	RR-000049 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	read	/packaging/49/prepare	\N	f	2025-11-20 19:54:29.097307
 38	8	\N	16	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000016 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/16	\N	f	2025-11-17 15:50:10.319793
 39	9	\N	16	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000016 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/16	\N	f	2025-11-17 15:50:10.319827
-53	6	\N	26	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000026 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	read	/eligibility/review/26	\N	f	2025-11-18 23:52:03.603941
+345	12	\N	54	New Relief Request Submitted	Agency POOR RELIEF #1 submitted RR-000054 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/54	\N	f	2025-11-20 21:42:25.576642
+346	8	\N	54	New Relief Request Submitted	Agency POOR RELIEF #1 submitted RR-000054 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/54	\N	f	2025-11-20 21:42:25.576692
 41	2	\N	16	Relief Request Approved	Your relief request RR-000016 for Hurricane Melissa 2025 has been approved by Brian Custodian. Click to view details.	reliefrqst_approved	unread	/packaging/16/prepare	\N	f	2025-11-17 15:55:11.200154
 45	8	\N	17	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000017 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/17	\N	f	2025-11-17 18:31:37.088198
 46	9	\N	17	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000017 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/17	\N	f	2025-11-17 18:31:37.088244
@@ -2198,12 +2137,315 @@ COPY public.notification (id, user_id, warehouse_id, reliefrqst_id, title, messa
 61	12	\N	28	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000028 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/28	\N	f	2025-11-19 20:23:24.480201
 62	8	\N	28	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000028 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/28	\N	f	2025-11-19 20:23:24.480238
 63	9	\N	28	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000028 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/28	\N	f	2025-11-19 20:23:24.480268
-60	6	\N	28	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000028 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	read	/eligibility/review/28	\N	f	2025-11-19 20:23:24.480078
 65	2	\N	28	Relief Request Approved	RR-000028 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/28/prepare	\N	f	2025-11-19 20:23:45.983743
 67	7	\N	28	Package Dispatched	Relief package for RR-000028 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/28	\N	f	2025-11-19 21:30:05.595115
 69	7	\N	28	Package Dispatched	Relief package for RR-000028 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/28	\N	f	2025-11-19 21:35:49.552438
 71	7	\N	17	Package Dispatched	Relief package for RR-000017 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/17	\N	f	2025-11-19 22:09:53.732639
-72	4	\N	17	Package Dispatched	Relief package for RR-000017 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	read	/relief-requests/17	\N	f	2025-11-19 22:09:53.732777
+74	12	\N	29	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000029 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/29	\N	f	2025-11-20 02:26:28.327813
+75	8	\N	29	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000029 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/29	\N	f	2025-11-20 02:26:28.327868
+76	9	\N	29	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000029 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/29	\N	f	2025-11-20 02:26:28.327936
+79	7	\N	29	Package Dispatched	Relief package for RR-000029 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/29	\N	f	2025-11-20 02:36:51.234687
+82	12	\N	33	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000033 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/33	\N	f	2025-11-20 12:49:14.785556
+83	8	\N	33	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000033 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/33	\N	f	2025-11-20 12:49:14.785603
+84	9	\N	33	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000033 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/33	\N	f	2025-11-20 12:49:14.785641
+85	23	\N	33	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000033 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/33	\N	f	2025-11-20 12:49:14.785675
+309	12	\N	51	New Relief Request Submitted	Agency POOR RELIEF #1 submitted RR-000051 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/51	\N	f	2025-11-20 20:17:23.739687
+88	24	\N	33	Relief Request Approved	RR-000033 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/33/prepare	\N	f	2025-11-20 12:50:00.39245
+310	8	\N	51	New Relief Request Submitted	Agency POOR RELIEF #1 submitted RR-000051 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/51	\N	f	2025-11-20 20:17:23.739803
+311	9	\N	51	New Relief Request Submitted	Agency POOR RELIEF #1 submitted RR-000051 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/51	\N	f	2025-11-20 20:17:23.739865
+347	9	\N	54	New Relief Request Submitted	Agency POOR RELIEF #1 submitted RR-000054 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/54	\N	f	2025-11-20 21:42:25.576727
+87	20	\N	33	Relief Request Approved	RR-000033 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	read	/packaging/33/prepare	\N	f	2025-11-20 12:50:00.34914
+376	20	\N	56	Relief Request Approved	RR-000056 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/56/prepare	\N	f	2025-11-21 12:19:05.785839
+94	12	\N	32	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000032 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/32	\N	f	2025-11-20 12:57:53.784253
+95	8	\N	32	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000032 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/32	\N	f	2025-11-20 12:57:53.784308
+96	9	\N	32	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000032 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/32	\N	f	2025-11-20 12:57:53.784366
+97	23	\N	32	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000032 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/32	\N	f	2025-11-20 12:57:53.784412
+91	22	\N	33	Relief Request Approved	RR-000033 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	read	/packaging/33/prepare	\N	f	2025-11-20 12:50:00.531558
+377	24	\N	56	Relief Request Approved	RR-000056 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/56/prepare	\N	f	2025-11-21 12:19:05.827
+99	12	\N	35	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000035 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/35	\N	f	2025-11-20 13:05:25.872173
+100	8	\N	35	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000035 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/35	\N	f	2025-11-20 13:05:25.872234
+101	9	\N	35	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000035 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/35	\N	f	2025-11-20 13:05:25.872281
+102	23	\N	35	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000035 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/35	\N	f	2025-11-20 13:05:25.872325
+103	7	\N	33	Package Dispatched	Relief package for RR-000033 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/33	\N	f	2025-11-20 13:07:09.559119
+378	3	\N	56	Relief Request Approved	RR-000056 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/56/prepare	\N	f	2025-11-21 12:19:05.86811
+379	21	\N	56	Relief Request Approved	RR-000056 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/56/prepare	\N	f	2025-11-21 12:19:05.909796
+107	24	\N	33	Package Dispatched	Relief package for RR-000033 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/33	\N	f	2025-11-20 13:07:09.55935
+104	25	\N	33	Package Dispatched	Relief package for RR-000033 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	read	/relief-requests/33	\N	f	2025-11-20 13:07:09.559251
+92	25	\N	33	Relief Request Approved	RR-000033 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	read	/packaging/33/prepare	\N	f	2025-11-20 12:50:00.574798
+106	20	\N	33	Package Dispatched	Relief package for RR-000033 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	read	/relief-requests/33	\N	f	2025-11-20 13:07:09.559321
+110	24	\N	35	Relief Request Approved	RR-000035 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/35/prepare	\N	f	2025-11-20 13:10:00.43426
+113	22	\N	35	Relief Request Approved	RR-000035 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/35/prepare	\N	f	2025-11-20 13:10:00.56228
+114	25	\N	35	Relief Request Approved	RR-000035 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/35/prepare	\N	f	2025-11-20 13:10:00.605274
+109	20	\N	35	Relief Request Approved	RR-000035 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	read	/packaging/35/prepare	\N	f	2025-11-20 13:10:00.389774
+313	20	\N	51	Relief Request Approved	RR-000051 from POOR RELIEF #1 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/51/prepare	\N	f	2025-11-20 20:19:03.678855
+117	24	\N	32	Relief Request Approved	RR-000032 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/32/prepare	\N	f	2025-11-20 13:11:36.812299
+314	24	\N	51	Relief Request Approved	RR-000051 from POOR RELIEF #1 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/51/prepare	\N	f	2025-11-20 20:19:03.721051
+120	22	\N	32	Relief Request Approved	RR-000032 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/32/prepare	\N	f	2025-11-20 13:11:36.941707
+121	25	\N	32	Relief Request Approved	RR-000032 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/32/prepare	\N	f	2025-11-20 13:11:36.985155
+123	12	\N	36	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000036 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/36	\N	f	2025-11-20 13:13:13.636837
+124	8	\N	36	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000036 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/36	\N	f	2025-11-20 13:13:13.636882
+125	9	\N	36	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000036 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/36	\N	f	2025-11-20 13:13:13.636919
+126	23	\N	36	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000036 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/36	\N	f	2025-11-20 13:13:13.636996
+316	21	\N	51	Relief Request Approved	RR-000051 from POOR RELIEF #1 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/51/prepare	\N	f	2025-11-20 20:19:03.805437
+317	22	\N	51	Relief Request Approved	RR-000051 from POOR RELIEF #1 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/51/prepare	\N	f	2025-11-20 20:19:03.848559
+318	25	\N	51	Relief Request Approved	RR-000051 from POOR RELIEF #1 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/51/prepare	\N	f	2025-11-20 20:19:03.890384
+129	24	\N	36	Relief Request Approved	RR-000036 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/36/prepare	\N	f	2025-11-20 13:16:17.5514
+132	22	\N	36	Relief Request Approved	RR-000036 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/36/prepare	\N	f	2025-11-20 13:16:17.683896
+133	25	\N	36	Relief Request Approved	RR-000036 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/36/prepare	\N	f	2025-11-20 13:16:17.726696
+116	20	\N	32	Relief Request Approved	RR-000032 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	read	/packaging/32/prepare	\N	f	2025-11-20 13:11:36.768667
+128	20	\N	36	Relief Request Approved	RR-000036 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	read	/packaging/36/prepare	\N	f	2025-11-20 13:16:17.506823
+350	24	\N	54	Relief Request Approved	RR-000054 from POOR RELIEF #1 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/54/prepare	\N	f	2025-11-20 21:42:46.554215
+135	12	\N	38	New Relief Request Submitted	Agency POOR RELIEF #2 submitted RR-000038 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/38	\N	f	2025-11-20 14:42:50.03701
+136	8	\N	38	New Relief Request Submitted	Agency POOR RELIEF #2 submitted RR-000038 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/38	\N	f	2025-11-20 14:42:50.037111
+137	9	\N	38	New Relief Request Submitted	Agency POOR RELIEF #2 submitted RR-000038 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/38	\N	f	2025-11-20 14:42:50.037165
+349	20	\N	54	Relief Request Approved	RR-000054 from POOR RELIEF #1 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	read	/packaging/54/prepare	\N	f	2025-11-20 21:42:46.51034
+423	20	\N	49	Package Dispatched	Relief package for RR-000049 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/49	\N	f	2025-11-21 14:49:19.891479
+424	24	\N	49	Package Dispatched	Relief package for RR-000049 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/49	\N	f	2025-11-21 14:49:19.891521
+465	4	\N	64	Package Dispatched	Relief package for RR-000064 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/64	\N	f	2025-11-21 17:20:12.091001
+466	20	\N	64	Package Dispatched	Relief package for RR-000064 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/64	\N	f	2025-11-21 17:20:12.091145
+467	24	\N	64	Package Dispatched	Relief package for RR-000064 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/64	\N	f	2025-11-21 17:20:12.091186
+138	23	\N	38	New Relief Request Submitted	Agency POOR RELIEF #2 submitted RR-000038 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/38	\N	f	2025-11-20 14:42:50.0372
+140	12	\N	39	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000039 for event: hurricane beryl. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/39	\N	f	2025-11-20 14:46:53.268807
+141	8	\N	39	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000039 for event: hurricane beryl. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/39	\N	f	2025-11-20 14:46:53.268874
+142	9	\N	39	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000039 for event: hurricane beryl. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/39	\N	f	2025-11-20 14:46:53.268927
+143	23	\N	39	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000039 for event: hurricane beryl. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/39	\N	f	2025-11-20 14:46:53.269045
+144	7	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 15:34:59.979229
+145	25	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 15:34:59.979389
+320	20	\N	51	Package Dispatched	Relief package for RR-000051 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/51	\N	f	2025-11-20 20:30:33.973084
+147	20	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 15:34:59.979509
+148	24	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 15:34:59.979549
+149	7	\N	32	Package Dispatched	Relief package for RR-000032 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/32	\N	f	2025-11-20 15:38:28.62549
+150	25	\N	32	Package Dispatched	Relief package for RR-000032 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/32	\N	f	2025-11-20 15:38:28.62567
+321	24	\N	51	Package Dispatched	Relief package for RR-000051 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/51	\N	f	2025-11-20 20:30:33.973133
+152	20	\N	32	Package Dispatched	Relief package for RR-000032 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/32	\N	f	2025-11-20 15:38:28.625792
+153	24	\N	32	Package Dispatched	Relief package for RR-000032 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/32	\N	f	2025-11-20 15:38:28.62584
+155	12	\N	40	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000040 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/40	\N	f	2025-11-20 15:45:25.480287
+156	8	\N	40	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000040 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/40	\N	f	2025-11-20 15:45:25.480351
+157	9	\N	40	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000040 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/40	\N	f	2025-11-20 15:45:25.480501
+158	23	\N	40	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000040 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/40	\N	f	2025-11-20 15:45:25.480579
+352	21	\N	54	Relief Request Approved	RR-000054 from POOR RELIEF #1 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/54/prepare	\N	f	2025-11-20 21:42:46.641052
+160	20	\N	40	Relief Request Approved	RR-000040 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/40/prepare	\N	f	2025-11-20 15:46:24.440027
+161	24	\N	40	Relief Request Approved	RR-000040 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/40/prepare	\N	f	2025-11-20 15:46:24.4852
+353	22	\N	54	Relief Request Approved	RR-000054 from POOR RELIEF #1 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/54/prepare	\N	f	2025-11-20 21:42:46.684482
+164	22	\N	40	Relief Request Approved	RR-000040 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/40/prepare	\N	f	2025-11-20 15:46:24.610696
+165	25	\N	40	Relief Request Approved	RR-000040 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/40/prepare	\N	f	2025-11-20 15:46:24.652531
+167	12	\N	41	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000041 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/41	\N	f	2025-11-20 15:51:26.070244
+168	8	\N	41	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000041 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/41	\N	f	2025-11-20 15:51:26.070325
+169	9	\N	41	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000041 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/41	\N	f	2025-11-20 15:51:26.070394
+170	23	\N	41	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000041 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/41	\N	f	2025-11-20 15:51:26.070444
+173	24	\N	41	Relief Request Approved	RR-000041 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/41/prepare	\N	f	2025-11-20 15:56:09.539823
+324	24	\N	50	Package Dispatched	Relief package for RR-000050 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/50	\N	f	2025-11-20 20:42:24.066619
+176	22	\N	41	Relief Request Approved	RR-000041 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/41/prepare	\N	f	2025-11-20 15:56:09.664553
+177	25	\N	41	Relief Request Approved	RR-000041 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/41/prepare	\N	f	2025-11-20 15:56:09.706619
+172	20	\N	41	Relief Request Approved	RR-000041 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	read	/packaging/41/prepare	\N	f	2025-11-20 15:56:09.499045
+323	20	\N	50	Package Dispatched	Relief package for RR-000050 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	read	/relief-requests/50	\N	f	2025-11-20 20:42:24.066538
+179	12	\N	37	New Relief Request Submitted	Agency POOR RELIEF #1 submitted RR-000037 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/37	\N	f	2025-11-20 16:23:58.365328
+180	8	\N	37	New Relief Request Submitted	Agency POOR RELIEF #1 submitted RR-000037 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/37	\N	f	2025-11-20 16:23:58.365376
+181	9	\N	37	New Relief Request Submitted	Agency POOR RELIEF #1 submitted RR-000037 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/37	\N	f	2025-11-20 16:23:58.365414
+182	23	\N	37	New Relief Request Submitted	Agency POOR RELIEF #1 submitted RR-000037 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/37	\N	f	2025-11-20 16:23:58.365446
+354	25	\N	54	Relief Request Approved	RR-000054 from POOR RELIEF #1 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/54/prepare	\N	f	2025-11-20 21:42:46.727439
+184	20	\N	37	Relief Request Approved	RR-000037 from POOR RELIEF #1 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/37/prepare	\N	f	2025-11-20 16:33:21.934209
+185	24	\N	37	Relief Request Approved	RR-000037 from POOR RELIEF #1 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/37/prepare	\N	f	2025-11-20 16:33:21.977584
+355	23	\N	54	Relief Request Approved	RR-000054 from POOR RELIEF #1 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/54/prepare	\N	f	2025-11-20 21:42:46.770111
+188	22	\N	37	Relief Request Approved	RR-000037 from POOR RELIEF #1 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/37/prepare	\N	f	2025-11-20 16:33:22.107447
+189	25	\N	37	Relief Request Approved	RR-000037 from POOR RELIEF #1 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/37/prepare	\N	f	2025-11-20 16:33:22.15053
+380	22	\N	56	Relief Request Approved	RR-000056 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/56/prepare	\N	f	2025-11-21 12:19:05.951605
+191	12	\N	42	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000042 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/42	\N	f	2025-11-20 16:47:46.055219
+192	8	\N	42	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000042 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/42	\N	f	2025-11-20 16:47:46.055281
+193	9	\N	42	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000042 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/42	\N	f	2025-11-20 16:47:46.055332
+194	23	\N	42	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000042 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/42	\N	f	2025-11-20 16:47:46.055379
+381	25	\N	56	Relief Request Approved	RR-000056 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/56/prepare	\N	f	2025-11-21 12:19:05.992658
+196	20	\N	42	Relief Request Approved	RR-000042 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/42/prepare	\N	f	2025-11-20 16:54:52.10235
+197	24	\N	42	Relief Request Approved	RR-000042 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/42/prepare	\N	f	2025-11-20 16:54:52.143268
+382	23	\N	56	Relief Request Approved	RR-000056 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/56/prepare	\N	f	2025-11-21 12:19:06.034067
+401	24	\N	60	Relief Request Approved	RR-000060 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/60/prepare	\N	f	2025-11-21 13:27:21.69517
+402	3	\N	60	Relief Request Approved	RR-000060 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/60/prepare	\N	f	2025-11-21 13:27:21.740149
+200	22	\N	42	Relief Request Approved	RR-000042 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/42/prepare	\N	f	2025-11-20 16:54:52.266311
+201	25	\N	42	Relief Request Approved	RR-000042 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	read	/packaging/42/prepare	\N	f	2025-11-20 16:54:52.3075
+202	7	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 17:10:45.371921
+203	25	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 17:10:45.372136
+326	12	\N	52	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000052 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/52	\N	f	2025-11-20 21:12:15.744205
+205	20	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 17:10:45.372252
+206	24	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 17:10:45.372303
+207	7	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 17:25:37.733207
+208	25	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 17:25:37.733416
+327	8	\N	52	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000052 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/52	\N	f	2025-11-20 21:12:15.744266
+210	20	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 17:25:37.733565
+211	24	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 17:25:37.733614
+212	7	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 17:26:21.89438
+213	25	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 17:26:21.89454
+328	9	\N	52	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000052 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/52	\N	f	2025-11-20 21:12:15.744314
+215	20	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 17:26:21.89466
+216	24	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 17:26:21.89471
+217	7	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 17:27:04.595741
+218	25	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 17:27:04.595885
+220	20	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 17:27:04.596005
+221	24	\N	36	Package Dispatched	Relief package for RR-000036 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/36	\N	f	2025-11-20 17:27:04.596051
+338	20	\N	52	Package Dispatched	Relief package for RR-000052 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/52	\N	f	2025-11-20 21:26:52.56673
+223	12	\N	44	New Relief Request Submitted	Agency POOR RELIEF #3 submitted RR-000044 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/44	\N	f	2025-11-20 17:38:40.588025
+224	8	\N	44	New Relief Request Submitted	Agency POOR RELIEF #3 submitted RR-000044 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/44	\N	f	2025-11-20 17:38:40.588081
+225	9	\N	44	New Relief Request Submitted	Agency POOR RELIEF #3 submitted RR-000044 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/44	\N	f	2025-11-20 17:38:40.588117
+226	23	\N	44	New Relief Request Submitted	Agency POOR RELIEF #3 submitted RR-000044 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/44	\N	f	2025-11-20 17:38:40.58816
+339	24	\N	52	Package Dispatched	Relief package for RR-000052 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/52	\N	f	2025-11-20 21:26:52.566769
+228	20	\N	44	Relief Request Approved	RR-000044 from POOR RELIEF #3 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/44/prepare	\N	f	2025-11-20 17:42:35.667467
+229	24	\N	44	Relief Request Approved	RR-000044 from POOR RELIEF #3 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/44/prepare	\N	f	2025-11-20 17:42:35.707388
+357	20	\N	53	Relief Request Approved	RR-000053 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/53/prepare	\N	f	2025-11-21 07:41:35.923734
+358	24	\N	53	Relief Request Approved	RR-000053 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/53/prepare	\N	f	2025-11-21 07:41:35.965389
+232	22	\N	44	Relief Request Approved	RR-000044 from POOR RELIEF #3 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/44/prepare	\N	f	2025-11-20 17:42:35.835328
+233	25	\N	44	Relief Request Approved	RR-000044 from POOR RELIEF #3 (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/44/prepare	\N	f	2025-11-20 17:42:35.876433
+235	12	\N	46	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000046 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/46	\N	f	2025-11-20 17:52:33.514385
+236	8	\N	46	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000046 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/46	\N	f	2025-11-20 17:52:33.514443
+237	9	\N	46	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000046 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/46	\N	f	2025-11-20 17:52:33.51449
+238	23	\N	46	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000046 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/46	\N	f	2025-11-20 17:52:33.514536
+240	20	\N	46	Relief Request Approved	RR-000046 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/46/prepare	\N	f	2025-11-20 17:55:31.600324
+241	24	\N	46	Relief Request Approved	RR-000046 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/46/prepare	\N	f	2025-11-20 17:55:31.645256
+244	22	\N	46	Relief Request Approved	RR-000046 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/46/prepare	\N	f	2025-11-20 17:55:31.774396
+247	20	\N	44	Package Dispatched	Relief package for RR-000044 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/44	\N	f	2025-11-20 17:57:25.292218
+248	24	\N	44	Package Dispatched	Relief package for RR-000044 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/44	\N	f	2025-11-20 17:57:25.292265
+250	20	\N	44	Package Dispatched	Relief package for RR-000044 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/44	\N	f	2025-11-20 17:58:47.521628
+251	24	\N	44	Package Dispatched	Relief package for RR-000044 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/44	\N	f	2025-11-20 17:58:47.521699
+253	20	\N	46	Package Dispatched	Relief package for RR-000046 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/46	\N	f	2025-11-20 18:02:04.374738
+254	24	\N	46	Package Dispatched	Relief package for RR-000046 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/46	\N	f	2025-11-20 18:02:04.374797
+256	20	\N	44	Package Dispatched	Relief package for RR-000044 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/44	\N	f	2025-11-20 18:08:52.815679
+257	24	\N	44	Package Dispatched	Relief package for RR-000044 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/44	\N	f	2025-11-20 18:08:52.815747
+245	25	\N	46	Relief Request Approved	RR-000046 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	read	/packaging/46/prepare	\N	f	2025-11-20 17:55:31.817374
+258	7	\N	35	Package Dispatched	Relief package for RR-000035 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/35	\N	f	2025-11-20 18:57:22.321569
+260	20	\N	35	Package Dispatched	Relief package for RR-000035 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/35	\N	f	2025-11-20 18:57:22.321758
+261	24	\N	35	Package Dispatched	Relief package for RR-000035 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/35	\N	f	2025-11-20 18:57:22.321793
+263	20	\N	37	Package Dispatched	Relief package for RR-000037 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/37	\N	f	2025-11-20 19:29:08.863907
+264	24	\N	37	Package Dispatched	Relief package for RR-000037 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/37	\N	f	2025-11-20 19:29:08.86398
+265	7	\N	33	Package Dispatched	Relief package for RR-000033 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/33	\N	f	2025-11-20 19:39:29.641735
+267	20	\N	33	Package Dispatched	Relief package for RR-000033 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/33	\N	f	2025-11-20 19:39:29.641967
+268	24	\N	33	Package Dispatched	Relief package for RR-000033 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/33	\N	f	2025-11-20 19:39:29.642009
+270	20	\N	42	Package Dispatched	Relief package for RR-000042 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/42	\N	f	2025-11-20 19:46:50.558686
+271	24	\N	42	Package Dispatched	Relief package for RR-000042 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/42	\N	f	2025-11-20 19:46:50.558776
+273	20	\N	41	Package Dispatched	Relief package for RR-000041 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/41	\N	f	2025-11-20 19:46:55.590077
+274	24	\N	41	Package Dispatched	Relief package for RR-000041 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/41	\N	f	2025-11-20 19:46:55.59014
+330	20	\N	52	Relief Request Approved	RR-000052 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/52/prepare	\N	f	2025-11-20 21:15:41.346226
+331	24	\N	52	Relief Request Approved	RR-000052 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/52/prepare	\N	f	2025-11-20 21:15:41.386982
+333	21	\N	52	Relief Request Approved	RR-000052 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/52/prepare	\N	f	2025-11-20 21:15:41.469177
+334	22	\N	52	Relief Request Approved	RR-000052 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/52/prepare	\N	f	2025-11-20 21:15:41.511296
+335	25	\N	52	Relief Request Approved	RR-000052 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/52/prepare	\N	f	2025-11-20 21:15:41.552535
+336	23	\N	52	Relief Request Approved	RR-000052 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/52/prepare	\N	f	2025-11-20 21:15:41.593289
+360	21	\N	53	Relief Request Approved	RR-000053 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/53/prepare	\N	f	2025-11-21 07:41:36.049291
+361	22	\N	53	Relief Request Approved	RR-000053 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/53/prepare	\N	f	2025-11-21 07:41:36.090358
+362	25	\N	53	Relief Request Approved	RR-000053 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/53/prepare	\N	f	2025-11-21 07:41:36.13081
+363	23	\N	53	Relief Request Approved	RR-000053 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/53/prepare	\N	f	2025-11-21 07:41:36.171535
+384	12	\N	59	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000059 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/59	\N	f	2025-11-21 13:06:44.055606
+385	8	\N	59	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000059 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/59	\N	f	2025-11-21 13:06:44.055647
+386	9	\N	59	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000059 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/59	\N	f	2025-11-21 13:06:44.055677
+389	24	\N	59	Relief Request Approved	RR-000059 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/59/prepare	\N	f	2025-11-21 13:07:10.615802
+390	3	\N	59	Relief Request Approved	RR-000059 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/59/prepare	\N	f	2025-11-21 13:07:10.658675
+391	21	\N	59	Relief Request Approved	RR-000059 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/59/prepare	\N	f	2025-11-21 13:07:10.701844
+392	22	\N	59	Relief Request Approved	RR-000059 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/59/prepare	\N	f	2025-11-21 13:07:10.745918
+393	25	\N	59	Relief Request Approved	RR-000059 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/59/prepare	\N	f	2025-11-21 13:07:10.788978
+394	23	\N	59	Relief Request Approved	RR-000059 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/59/prepare	\N	f	2025-11-21 13:07:10.836837
+388	20	\N	59	Relief Request Approved	RR-000059 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	read	/packaging/59/prepare	\N	f	2025-11-21 13:07:10.572474
+403	21	\N	60	Relief Request Approved	RR-000060 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/60/prepare	\N	f	2025-11-21 13:27:21.783868
+404	22	\N	60	Relief Request Approved	RR-000060 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/60/prepare	\N	f	2025-11-21 13:27:21.827362
+405	25	\N	60	Relief Request Approved	RR-000060 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/60/prepare	\N	f	2025-11-21 13:27:21.870481
+406	23	\N	60	Relief Request Approved	RR-000060 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/60/prepare	\N	f	2025-11-21 13:27:21.914223
+400	20	\N	60	Relief Request Approved	RR-000060 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	read	/packaging/60/prepare	\N	f	2025-11-21 13:27:21.651133
+408	20	\N	60	Package Dispatched	Relief package for RR-000060 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/60	\N	f	2025-11-21 13:32:12.530978
+409	24	\N	60	Package Dispatched	Relief package for RR-000060 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/60	\N	f	2025-11-21 13:32:12.531021
+276	20	\N	40	Package Dispatched	Relief package for RR-000040 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/40	\N	f	2025-11-20 19:47:01.681651
+277	24	\N	40	Package Dispatched	Relief package for RR-000040 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/40	\N	f	2025-11-20 19:47:01.681701
+278	7	\N	26	Package Dispatched	Relief package for RR-000026 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/26	\N	f	2025-11-20 19:47:08.296268
+280	20	\N	26	Package Dispatched	Relief package for RR-000026 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/26	\N	f	2025-11-20 19:47:08.296548
+281	24	\N	26	Package Dispatched	Relief package for RR-000026 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/26	\N	f	2025-11-20 19:47:08.296599
+282	7	\N	16	Package Dispatched	Relief package for RR-000016 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/16	\N	f	2025-11-20 19:47:18.745375
+284	20	\N	16	Package Dispatched	Relief package for RR-000016 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/16	\N	f	2025-11-20 19:47:18.745585
+285	24	\N	16	Package Dispatched	Relief package for RR-000016 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/16	\N	f	2025-11-20 19:47:18.745634
+287	12	\N	49	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000049 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/49	\N	f	2025-11-20 19:51:00.374105
+288	8	\N	49	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000049 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/49	\N	f	2025-11-20 19:51:00.374171
+289	9	\N	49	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000049 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/49	\N	f	2025-11-20 19:51:00.374229
+291	12	\N	50	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000050 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/50	\N	f	2025-11-20 19:53:23.743865
+292	8	\N	50	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000050 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/50	\N	f	2025-11-20 19:53:23.743993
+293	9	\N	50	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000050 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/50	\N	f	2025-11-20 19:53:23.744074
+295	20	\N	49	Relief Request Approved	RR-000049 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/49/prepare	\N	f	2025-11-20 19:54:28.940858
+296	24	\N	49	Relief Request Approved	RR-000049 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/49/prepare	\N	f	2025-11-20 19:54:28.989139
+299	22	\N	49	Relief Request Approved	RR-000049 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/49/prepare	\N	f	2025-11-20 19:54:29.14111
+300	25	\N	49	Relief Request Approved	RR-000049 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/49/prepare	\N	f	2025-11-20 19:54:29.181524
+302	20	\N	50	Relief Request Approved	RR-000050 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/50/prepare	\N	f	2025-11-20 19:54:36.304201
+303	24	\N	50	Relief Request Approved	RR-000050 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/50/prepare	\N	f	2025-11-20 19:54:36.350589
+306	22	\N	50	Relief Request Approved	RR-000050 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/50/prepare	\N	f	2025-11-20 19:54:36.473867
+305	21	\N	50	Relief Request Approved	RR-000050 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	read	/packaging/50/prepare	\N	f	2025-11-20 19:54:36.433077
+365	20	\N	53	Package Dispatched	Relief package for RR-000053 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/53	\N	f	2025-11-21 07:51:13.849746
+366	24	\N	53	Package Dispatched	Relief package for RR-000053 has been dispatched by Anthony Bailey. Click to track delivery.	package_dispatched	unread	/relief-requests/53	\N	f	2025-11-21 07:51:13.849787
+481	4	\N	67	Package Dispatched	Relief package for RR-000067 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/67	\N	f	2025-11-21 18:07:57.675233
+482	20	\N	67	Package Dispatched	Relief package for RR-000067 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/67	\N	f	2025-11-21 18:07:57.675369
+483	24	\N	67	Package Dispatched	Relief package for RR-000067 has been dispatched by Lincoln Brown. Click to track delivery.	package_dispatched	unread	/relief-requests/67	\N	f	2025-11-21 18:07:57.675407
+307	25	\N	50	Relief Request Approved	RR-000050 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/50/prepare	\N	f	2025-11-20 19:54:36.51453
+341	12	\N	53	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000053 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/53	\N	f	2025-11-20 21:40:24.412939
+342	8	\N	53	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000053 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/53	\N	f	2025-11-20 21:40:24.413077
+343	9	\N	53	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000053 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/53	\N	f	2025-11-20 21:40:24.413131
+368	12	\N	55	New Relief Request Submitted	Agency POOR RELIEF #3 submitted RR-000055 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/55	\N	f	2025-11-21 11:36:22.553622
+369	8	\N	55	New Relief Request Submitted	Agency POOR RELIEF #3 submitted RR-000055 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/55	\N	f	2025-11-21 11:36:22.553725
+370	9	\N	55	New Relief Request Submitted	Agency POOR RELIEF #3 submitted RR-000055 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/55	\N	f	2025-11-21 11:36:22.553778
+372	12	\N	56	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000056 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/56	\N	f	2025-11-21 12:15:39.991598
+373	8	\N	56	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000056 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/56	\N	f	2025-11-21 12:15:39.99164
+374	9	\N	56	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000056 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/56	\N	f	2025-11-21 12:15:39.991673
+396	12	\N	60	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000060 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/60	\N	f	2025-11-21 13:27:08.00647
+397	8	\N	60	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000060 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/60	\N	f	2025-11-21 13:27:08.006573
+398	9	\N	60	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000060 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/60	\N	f	2025-11-21 13:27:08.006661
+411	12	\N	61	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000061 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/61	\N	f	2025-11-21 13:37:17.184722
+412	8	\N	61	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000061 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/61	\N	f	2025-11-21 13:37:17.184795
+413	9	\N	61	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000061 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/61	\N	f	2025-11-21 13:37:17.184851
+415	20	\N	61	Relief Request Approved	RR-000061 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/61/prepare	\N	f	2025-11-21 13:45:22.254922
+418	21	\N	61	Relief Request Approved	RR-000061 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/61/prepare	\N	f	2025-11-21 13:45:22.386942
+419	22	\N	61	Relief Request Approved	RR-000061 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/61/prepare	\N	f	2025-11-21 13:45:22.430597
+420	25	\N	61	Relief Request Approved	RR-000061 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/61/prepare	\N	f	2025-11-21 13:45:22.475472
+421	23	\N	61	Relief Request Approved	RR-000061 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/61/prepare	\N	f	2025-11-21 13:45:22.519071
+416	24	\N	61	Relief Request Approved	RR-000061 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	read	/packaging/61/prepare	\N	f	2025-11-21 13:45:22.298493
+417	3	\N	61	Relief Request Approved	RR-000061 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	read	/packaging/61/prepare	\N	f	2025-11-21 13:45:22.342041
+426	12	\N	62	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000062 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/62	\N	f	2025-11-21 14:57:12.929023
+427	8	\N	62	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000062 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/62	\N	f	2025-11-21 14:57:12.929062
+428	9	\N	62	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000062 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/62	\N	f	2025-11-21 14:57:12.929095
+431	24	\N	62	Relief Request Approved	RR-000062 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/62/prepare	\N	f	2025-11-21 14:57:29.910455
+432	3	\N	62	Relief Request Approved	RR-000062 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/62/prepare	\N	f	2025-11-21 14:57:29.950873
+433	21	\N	62	Relief Request Approved	RR-000062 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/62/prepare	\N	f	2025-11-21 14:57:29.991126
+434	22	\N	62	Relief Request Approved	RR-000062 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/62/prepare	\N	f	2025-11-21 14:57:30.031904
+435	25	\N	62	Relief Request Approved	RR-000062 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/62/prepare	\N	f	2025-11-21 14:57:30.072052
+436	23	\N	62	Relief Request Approved	RR-000062 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/62/prepare	\N	f	2025-11-21 14:57:30.112664
+430	20	\N	62	Relief Request Approved	RR-000062 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	read	/packaging/62/prepare	\N	f	2025-11-21 14:57:29.869732
+438	12	\N	64	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000064 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/64	\N	f	2025-11-21 15:33:39.382307
+439	8	\N	64	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000064 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/64	\N	f	2025-11-21 15:33:39.382369
+440	9	\N	64	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000064 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/64	\N	f	2025-11-21 15:33:39.382415
+441	4	\N	64	Relief Request Approved	RR-000064 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/64/prepare	\N	f	2025-11-21 15:36:19.463905
+442	20	\N	64	Relief Request Approved	RR-000064 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/64/prepare	\N	f	2025-11-21 15:36:19.504134
+443	24	\N	64	Relief Request Approved	RR-000064 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/64/prepare	\N	f	2025-11-21 15:36:19.544788
+444	3	\N	64	Relief Request Approved	RR-000064 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/64/prepare	\N	f	2025-11-21 15:36:19.584562
+445	21	\N	64	Relief Request Approved	RR-000064 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/64/prepare	\N	f	2025-11-21 15:36:19.623952
+446	22	\N	64	Relief Request Approved	RR-000064 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/64/prepare	\N	f	2025-11-21 15:36:19.663485
+447	25	\N	64	Relief Request Approved	RR-000064 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/64/prepare	\N	f	2025-11-21 15:36:19.703928
+448	23	\N	64	Relief Request Approved	RR-000064 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/64/prepare	\N	f	2025-11-21 15:36:19.743803
+450	12	\N	65	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000065 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/65	\N	f	2025-11-21 16:23:15.413028
+451	8	\N	65	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000065 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/65	\N	f	2025-11-21 16:23:15.413094
+452	9	\N	65	New Relief Request Submitted	Agency PORTMORE COMMUNITY CENTER submitted RR-000065 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/65	\N	f	2025-11-21 16:23:15.41315
+453	4	\N	65	Relief Request Approved	RR-000065 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/65/prepare	\N	f	2025-11-21 16:23:24.527647
+454	20	\N	65	Relief Request Approved	RR-000065 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/65/prepare	\N	f	2025-11-21 16:23:24.5703
+455	24	\N	65	Relief Request Approved	RR-000065 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/65/prepare	\N	f	2025-11-21 16:23:24.612436
+456	3	\N	65	Relief Request Approved	RR-000065 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/65/prepare	\N	f	2025-11-21 16:23:24.655017
+457	21	\N	65	Relief Request Approved	RR-000065 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/65/prepare	\N	f	2025-11-21 16:23:24.697055
+458	22	\N	65	Relief Request Approved	RR-000065 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/65/prepare	\N	f	2025-11-21 16:23:24.738585
+459	25	\N	65	Relief Request Approved	RR-000065 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/65/prepare	\N	f	2025-11-21 16:23:24.781312
+460	23	\N	65	Relief Request Approved	RR-000065 from PORTMORE COMMUNITY CENTER (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/65/prepare	\N	f	2025-11-21 16:23:24.82384
+462	12	\N	66	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000066 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/66	\N	f	2025-11-21 16:57:15.17984
+463	8	\N	66	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000066 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/66	\N	f	2025-11-21 16:57:15.179895
+464	9	\N	66	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000066 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/66	\N	f	2025-11-21 16:57:15.179943
+469	12	\N	67	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000067 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/67	\N	f	2025-11-21 17:24:30.5133
+470	8	\N	67	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000067 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/67	\N	f	2025-11-21 17:24:30.513362
+471	9	\N	67	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000067 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	unread	/eligibility/review/67	\N	f	2025-11-21 17:24:30.513433
+472	4	\N	67	Relief Request Approved	RR-000067 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/67/prepare	\N	f	2025-11-21 17:25:27.607359
+473	20	\N	67	Relief Request Approved	RR-000067 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/67/prepare	\N	f	2025-11-21 17:25:27.652116
+474	24	\N	67	Relief Request Approved	RR-000067 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/67/prepare	\N	f	2025-11-21 17:25:27.694612
+475	3	\N	67	Relief Request Approved	RR-000067 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/67/prepare	\N	f	2025-11-21 17:25:27.736917
+476	21	\N	67	Relief Request Approved	RR-000067 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/67/prepare	\N	f	2025-11-21 17:25:27.778963
+477	22	\N	67	Relief Request Approved	RR-000067 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/67/prepare	\N	f	2025-11-21 17:25:27.820886
+478	25	\N	67	Relief Request Approved	RR-000067 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/67/prepare	\N	f	2025-11-21 17:25:27.862852
+479	23	\N	67	Relief Request Approved	RR-000067 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/67/prepare	\N	f	2025-11-21 17:25:27.904461
+480	27	\N	67	Relief Request Approved	RR-000067 from FOOD FOR THE POOR (Event: Hurricane Melissa 2025) approved by Sarah Johnson. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/67/prepare	\N	f	2025-11-21 17:25:27.946001
+468	6	\N	67	New Relief Request Submitted	Agency FOOD FOR THE POOR submitted RR-000067 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	read	/eligibility/review/67	\N	f	2025-11-21 17:24:30.513109
 \.
 
 
@@ -2274,8 +2516,10 @@ COPY public.permission (perm_id, resource, action, create_by_id, create_dtime, u
 --
 
 COPY public.relief_request_fulfillment_lock (reliefrqst_id, fulfiller_user_id, fulfiller_email, acquired_at, expires_at) FROM stdin;
+41	20	lincoln@gov.jm	2025-11-20 16:04:13.832854	2025-11-21 16:04:13.832831
 16	4	logistics.manager@gov.jm	2025-11-19 15:23:18.903959	2025-11-20 15:23:18.903949
-26	3	logistics.officer@gov.jm	2025-11-19 15:33:39.845915	2025-11-20 15:33:39.8459
+26	4	logistics.manager@gov.jm	2025-11-20 15:39:14.277367	2025-11-21 15:39:14.277351
+35	21	monique@gov.jm	2025-11-20 13:10:42.818424	2025-11-21 13:10:42.818397
 \.
 
 
@@ -2284,10 +2528,30 @@ COPY public.relief_request_fulfillment_lock (reliefrqst_id, fulfiller_user_id, f
 --
 
 COPY public.reliefpkg (reliefpkg_id, to_inventory_id, reliefrqst_id, start_date, dispatch_dtime, transport_mode, comments_text, status_code, create_by_id, create_dtime, update_by_id, update_dtime, verify_by_id, verify_dtime, version_nbr, received_by_id, received_dtime, agency_id, tracking_no, eligible_event_id) FROM stdin;
-5	1	16	2025-11-17	\N	\N	\N	P	LOGISTICS.OFFICER@GO	2025-11-17 18:30:27	LOGISTICS.OFFICER@GO	2025-11-18 15:12:40	LOGISTICS.OFFICER@GO	\N	4	LOGISTICS.OFFICER@GO	\N	1	0000005	2
-12	1	26	2025-11-19	\N	\N	\N	P	LOGISTICS.OFFICER@GO	2025-11-19 21:23:00	LOGISTICS.OFFICER@GO	2025-11-19 21:23:00	LOGISTICS.OFFICER@GO	\N	1	LOGISTICS.OFFICER@GO	\N	1	6552010	\N
-11	1	28	2025-11-19	2025-11-19 21:35:49	\N	\N	D	LOGISTICS.OFFICER@GO	2025-11-19 20:50:06	LOGISTICS.MANAGER@GO	2025-11-19 21:35:49	LOGISTICS.MANAGER@GO	2025-11-19 21:35:49	4	LOGISTICS.OFFICER@GO	\N	1	1D5D4E3	\N
+44	1	62	2025-11-21	\N	\N	\N	P	CLAUDINE@GOV.JM	2025-11-21 20:08:50	CLAUDINE@GOV.JM	2025-11-21 20:08:50	\N	\N	1	\N	\N	5	418F216	\N
+33	1	42	2025-11-20	2025-11-21 00:46:50	\N	\N	D	CLAUDINE@GOV.JM	2025-11-20 23:14:22	LOGISTICS.MANAGER@GO	2025-11-21 00:46:50	LOGISTICS.MANAGER@GO	2025-11-21 00:46:50	3	\N	\N	5	18A6D8E	\N
+18	1	41	2025-11-20	2025-11-21 00:46:55	\N	\N	D	CLAUDINE@GOV.JM	2025-11-20 21:02:29	LOGISTICS.MANAGER@GO	2025-11-21 00:46:55	LOGISTICS.MANAGER@GO	2025-11-21 00:46:55	2	CLAUDINE@GOV.JM	\N	5	B8DB0E9	\N
+17	1	40	2025-11-20	2025-11-21 00:47:02	\N	\N	D	LINCOLN@GOV.JM	2025-11-20 20:56:19	LOGISTICS.MANAGER@GO	2025-11-21 00:47:02	LOGISTICS.MANAGER@GO	2025-11-21 00:47:02	2	LINCOLN@GOV.JM	\N	5	82679A0	\N
+5	1	16	2025-11-17	2025-11-21 00:47:19	\N	\N	D	LOGISTICS.OFFICER@GO	2025-11-17 18:30:27	LOGISTICS.MANAGER@GO	2025-11-21 00:47:19	LOGISTICS.MANAGER@GO	2025-11-21 00:47:19	6	LOGISTICS.OFFICER@GO	\N	1	0000005	2
+35	1	33	2025-11-21	2025-11-21 00:39:29	\N	\N	D	MONIQUE@GOV.JM	2025-11-21 00:31:34	INVENTORY2@ODPEM.GOV	2025-11-21 00:47:36	LOGISTICS.MANAGER@GO	2025-11-21 00:39:29	5	INVENTORY2@ODPEM.GOV	2025-11-21 00:47:36	1	F8D0430	\N
+29	1	46	2025-11-20	2025-11-20 23:02:03	\N	\N	D	LINCOLN@GOV.JM	2025-11-20 23:02:03	INVENTORY2@ODPEM.GOV	2025-11-21 00:47:47	LINCOLN@GOV.JM	2025-11-20 23:02:03	3	INVENTORY2@ODPEM.GOV	2025-11-21 00:47:47	5	B06497C	\N
+12	1	26	2025-11-19	2025-11-21 00:47:08	\N	\N	D	LOGISTICS.OFFICER@GO	2025-11-19 21:23:00	INVENTORY@ODPEM.GOV.	2025-11-21 00:48:00	LOGISTICS.MANAGER@GO	2025-11-21 00:47:08	4	INVENTORY@ODPEM.GOV.	2025-11-21 00:48:00	1	6552010	\N
+19	1	35	2025-11-20	2025-11-20 23:57:22	\N	\N	D	CLAUDINE@GOV.JM	2025-11-20 21:32:30	INVENTORY@ODPEM.GOV.	2025-11-21 00:48:10	LINCOLN@GOV.JM	2025-11-20 23:57:22	3	INVENTORY@ODPEM.GOV.	2025-11-21 00:48:10	1	099EBAD	\N
+15	1	36	2025-11-20	2025-11-20 22:27:04	\N	\N	D	MONIQUE@GOV.JM	2025-11-20 20:10:02	INVENTORY@ODPEM.GOV.	2025-11-20 22:33:47	LOGISTICS.MANAGER@GO	2025-11-20 22:27:04	8	INVENTORY@ODPEM.GOV.	2025-11-20 22:33:47	1	4B71191	\N
+16	1	32	2025-11-20	2025-11-20 20:38:28	\N	\N	D	LINCOLN@GOV.JM	2025-11-20 20:38:28	INVENTORY@ODPEM.GOV.	2025-11-20 22:34:00	LINCOLN@GOV.JM	2025-11-20 20:38:28	3	INVENTORY@ODPEM.GOV.	2025-11-20 22:34:00	1	6E953AA	\N
+36	1	49	2025-11-21	2025-11-21 19:49:20	\N	\N	D	MONIQUE@GOV.JM	2025-11-21 01:06:34	INVENTORY@ODPEM.GOV.	2025-11-21 21:28:12	LOGISTICS.MANAGER@GO	2025-11-21 19:49:20	4	INVENTORY@ODPEM.GOV.	2025-11-21 21:28:12	5	E720D77	\N
+39	1	52	2025-11-21	2025-11-21 02:26:52	\N	\N	D	LINCOLN@GOV.JM	2025-11-21 02:26:52	INVENTORY@ODPEM.GOV.	2025-11-21 21:28:18	LINCOLN@GOV.JM	2025-11-21 02:26:52	3	INVENTORY@ODPEM.GOV.	2025-11-21 21:28:18	5	7C8103F	\N
 6	1	17	2025-11-17	2025-11-19 22:09:54	\N	\N	D	LOGISTICS.OFFICER@GO	2025-11-17 19:23:15	INVENTORY@ODPEM.GOV.	2025-11-20 01:25:45	LOGISTICS.MANAGER@GO	2025-11-19 22:09:54	4	INVENTORY@ODPEM.GOV.	2025-11-20 01:25:45	1	0000006	2
+45	1	64	2025-11-21	2025-11-21 17:20:12	\N	\N	D	CLAUDINE@GOV.JM	2025-11-21 20:43:23	LOGISTICS.MANAGER@GO	2025-11-21 17:20:12	LOGISTICS.MANAGER@GO	2025-11-21 17:20:12	3	\N	\N	5	AD61969	\N
+13	1	29	2025-11-20	2025-11-20 02:36:51	\N	\N	D	LOGISTICS.OFFICER@GO	2025-11-20 02:30:17	INVENTORY@ODPEM.GOV.	2025-11-20 02:38:16	LOGISTICS.MANAGER@GO	2025-11-20 02:36:51	4	INVENTORY@ODPEM.GOV.	2025-11-20 02:38:16	1	228B2C3	\N
+32	1	44	2025-11-20	2025-11-20 23:08:53	\N	\N	D	LOGISTICS.MANAGER@GO	2025-11-20 23:08:53	LOGISTICS.MANAGER@GO	2025-11-20 23:08:53	LOGISTICS.MANAGER@GO	2025-11-20 23:08:53	2	\N	\N	6	11F4116	\N
+46	1	67	2025-11-21	2025-11-21 18:07:57	\N	\N	D	CLAUDINE@GOV.JM	2025-11-21 17:30:41	LINCOLN@GOV.JM	2025-11-21 18:07:57	LINCOLN@GOV.JM	2025-11-21 18:07:57	3	\N	\N	5	25AC209	\N
+34	1	37	2025-11-20	2025-11-21 00:29:09	\N	\N	D	MONIQUE@GOV.JM	2025-11-20 23:42:39	LOGISTICS.MANAGER@GO	2025-11-21 00:29:09	LOGISTICS.MANAGER@GO	2025-11-21 00:29:09	3	\N	\N	3	D8E21D6	\N
+38	1	51	2025-11-21	2025-11-21 01:30:34	\N	\N	D	MONIQUE@GOV.JM	2025-11-21 01:21:12	INVENTORY@ODPEM.GOV.	2025-11-21 01:31:22	LOGISTICS.MANAGER@GO	2025-11-21 01:30:34	4	INVENTORY@ODPEM.GOV.	2025-11-21 01:31:22	3	AC0CE57	\N
+37	1	50	2025-11-21	2025-11-21 01:42:24	\N	\N	D	MONIQUE@GOV.JM	2025-11-21 01:19:24	LINCOLN@GOV.JM	2025-11-21 01:42:24	LINCOLN@GOV.JM	2025-11-21 01:42:24	3	\N	\N	5	ADC2AFF	\N
+40	1	53	2025-11-21	2025-11-21 12:51:14	\N	\N	D	LOGISTICS.OFFICER@GO	2025-11-21 12:50:40	LOGISTICS.MANAGER@GO	2025-11-21 12:51:14	LOGISTICS.MANAGER@GO	2025-11-21 12:51:14	3	\N	\N	5	39D0F2B	\N
+41	1	60	2025-11-21	2025-11-21 18:32:12	\N	\N	D	LINCOLN@GOV.JM	2025-11-21 18:32:12	INVENTORY@ODPEM.GOV.	2025-11-21 18:39:17	LINCOLN@GOV.JM	2025-11-21 18:32:12	3	INVENTORY@ODPEM.GOV.	2025-11-21 18:39:17	5	E4D42DD	\N
+42	1	61	2025-11-21	\N	\N	\N	P	CLAUDINE@GOV.JM	2025-11-21 18:52:53	CLAUDINE@GOV.JM	2025-11-21 18:52:53	\N	\N	1	\N	\N	5	378A0E2	\N
 \.
 
 
@@ -2296,8 +2560,26 @@ COPY public.reliefpkg (reliefpkg_id, to_inventory_id, reliefrqst_id, start_date,
 --
 
 COPY public.reliefpkg_item (reliefpkg_id, fr_inventory_id, batch_id, item_id, item_qty, uom_code, reason_text, create_by_id, create_dtime, update_by_id, update_dtime, version_nbr) FROM stdin;
-12	1	11	8	20.0000	UNIT	\N	LOGISTICS.OFFICER@GO	2025-11-19 21:24:14	LOGISTICS.OFFICER@GO	2025-11-19 21:24:14	1
 6	1	11	8	10.0000	UNIT	\N	LOGISTICS.MANAGER@GO	2025-11-19 22:09:53	LOGISTICS.MANAGER@GO	2025-11-19 22:09:53	1
+13	1	11	8	10.0000	UNIT	\N	LOGISTICS.MANAGER@GO	2025-11-20 02:36:51	LOGISTICS.MANAGER@GO	2025-11-20 02:36:51	1
+13	8	20	11	100.0000	BOTTLE	\N	LOGISTICS.MANAGER@GO	2025-11-20 02:36:51	LOGISTICS.MANAGER@GO	2025-11-20 02:36:51	1
+16	1	11	8	50.0000	UNIT	\N	LINCOLN@GOV.JM	2025-11-20 20:38:28	LINCOLN@GOV.JM	2025-11-20 20:38:28	1
+16	8	28	9	14.0000	UNIT	\N	LINCOLN@GOV.JM	2025-11-20 20:38:28	LINCOLN@GOV.JM	2025-11-20 20:38:28	1
+15	1	30	8	50.0000	BOX	\N	LOGISTICS.MANAGER@GO	2025-11-20 22:27:04	LOGISTICS.MANAGER@GO	2025-11-20 22:27:04	1
+29	1	12	7	30.0000	UNIT	\N	LINCOLN@GOV.JM	2025-11-20 23:02:03	LINCOLN@GOV.JM	2025-11-20 23:02:03	1
+29	8	14	7	15.0000	UNIT	\N	LINCOLN@GOV.JM	2025-11-20 23:02:03	LINCOLN@GOV.JM	2025-11-20 23:02:03	1
+19	1	37	14	1000.0000	UNIT	\N	LINCOLN@GOV.JM	2025-11-20 23:57:22	LINCOLN@GOV.JM	2025-11-20 23:57:22	1
+35	8	19	11	50.0000	BOTTLE	\N	MONIQUE@GOV.JM	2025-11-21 00:45:11	MONIQUE@GOV.JM	2025-11-21 00:45:11	1
+12	1	16	8	20.0000	UNIT	\N	LOGISTICS.MANAGER@GO	2025-11-21 00:47:08	LOGISTICS.MANAGER@GO	2025-11-21 00:47:08	1
+38	1	37	14	622.0000	UNIT	\N	LOGISTICS.MANAGER@GO	2025-11-21 01:30:34	LOGISTICS.MANAGER@GO	2025-11-21 01:30:34	1
+39	1	29	10	5.0000	SHEET	\N	LINCOLN@GOV.JM	2025-11-21 02:26:52	LINCOLN@GOV.JM	2025-11-21 02:26:52	1
+41	10	51	16	5.0000	UNIT	\N	LINCOLN@GOV.JM	2025-11-21 18:32:12	LINCOLN@GOV.JM	2025-11-21 18:32:12	1
+41	10	53	16	10.0000	UNIT	\N	LINCOLN@GOV.JM	2025-11-21 18:32:12	LINCOLN@GOV.JM	2025-11-21 18:32:12	1
+42	11	43	17	5.0000	UNIT	\N	CLAUDINE@GOV.JM	2025-11-21 18:52:53	CLAUDINE@GOV.JM	2025-11-21 18:52:53	1
+36	1	30	8	7.0000	BOX	\N	LOGISTICS.MANAGER@GO	2025-11-21 19:49:20	LOGISTICS.MANAGER@GO	2025-11-21 19:49:20	1
+46	10	51	16	11.0000	UNIT	\N	CLAUDINE@GOV.JM	2025-11-21 17:30:41	LINCOLN@GOV.JM	2025-11-21 18:07:57	2
+46	11	38	16	9.0000	UNIT	\N	CLAUDINE@GOV.JM	2025-11-21 17:30:41	LINCOLN@GOV.JM	2025-11-21 18:07:57	2
+46	11	42	16	20.0000	UNIT	\N	LINCOLN@GOV.JM	2025-11-21 18:07:57	LINCOLN@GOV.JM	2025-11-21 18:07:57	1
 \.
 
 
@@ -2306,7 +2588,22 @@ COPY public.reliefpkg_item (reliefpkg_id, fr_inventory_id, batch_id, item_id, it
 --
 
 COPY public.reliefrqst (reliefrqst_id, agency_id, request_date, urgency_ind, status_code, create_by_id, create_dtime, review_by_id, review_dtime, action_by_id, action_dtime, version_nbr, eligible_event_id, rqst_notes_text, review_notes_text, tracking_no, status_reason_desc, receive_by_id, receive_dtime) FROM stdin;
-16	1	2025-11-17	M	3	shelter_user@gmail.c	2025-11-17 15:35:35	TEST.DIRECTOR@ODPEM.	2025-11-17 15:55:11	\N	\N	3	2	Urgently needed at the shelter.	\N	49448B2	\N	\N	\N
+32	1	2025-11-20	H	5	CLAUDINE@GOV.JM	2025-11-20 17:46:23	EXECUTIVE@ODPEM.GOV.	2025-11-20 18:11:37	LINCOLN@GOV.JM	2025-11-20 20:38:29	4	2		\N	2DC9BC8	\N	\N	\N
+29	1	2025-11-20	L	5	LOGISTICS.OFFICER@GO	2025-11-20 02:25:38	EXECUTIVE@ODPEM.GOV.	2025-11-20 02:29:02	LOGISTICS.MANAGER@GO	2025-11-20 02:36:51	4	2		\N	B35EB82	\N	\N	\N
+30	1	2025-11-20	H	0	CLAUDINE@GOV.JM	2025-11-20 17:36:40	\N	\N	\N	\N	1	2		\N	54E06BF	\N	\N	\N
+64	5	2025-11-21	M	5	CLAUDINE@GOV.JM	2025-11-21 20:32:46	EXECUTIVE@ODPEM.GOV.	2025-11-21 20:36:19	LOGISTICS.MANAGER@GO	2025-11-21 17:20:12	5	2		\N	C9F6100	\N	\N	\N
+31	1	2025-11-20	H	0	CLAUDINE@GOV.JM	2025-11-20 17:37:29	\N	\N	\N	\N	1	2		\N	2EF8344	\N	\N	\N
+66	5	2025-11-21	M	8	CLAUDINE@GOV.JM	2025-11-21 21:56:49	EXECUTIVE@ODPEM.GOV.	2025-11-21 17:25:10	EXECUTIVE@ODPEM.GOV.	2025-11-21 17:25:10	3	2		\N	A21F2A3	Ineligible	\N	\N
+67	5	2025-11-21	M	5	CLAUDINE@GOV.JM	2025-11-21 17:23:50	EXECUTIVE@ODPEM.GOV.	2025-11-21 17:25:27	LINCOLN@GOV.JM	2025-11-21 18:07:58	5	2		\N	684C2FD	\N	\N	\N
+43	5	2025-11-20	M	0	LINCOLN@GOV.JM	2025-11-20 22:01:27	\N	\N	\N	\N	1	2	lol	\N	85911B0	\N	\N	\N
+47	5	2025-11-20	M	0	CLAUDINE@GOV.JM	2025-11-20 23:06:52	\N	\N	\N	\N	1	2		\N	212791C	\N	\N	\N
+44	6	2025-11-20	M	5	MONIQUE@GOV.JM	2025-11-20 22:32:49	EXECUTIVE@ODPEM.GOV.	2025-11-20 22:42:35	LOGISTICS.MANAGER@GO	2025-11-20 23:08:53	8	2	Testing for relief request screen	\N	5AB6374	\N	\N	\N
+36	1	2025-11-20	H	5	CLAUDINE@GOV.JM	2025-11-20 18:08:49	EXECUTIVE@ODPEM.GOV.	2025-11-20 18:16:17	LOGISTICS.MANAGER@GO	2025-11-20 22:27:04	8	2		\N	049D775	\N	\N	\N
+45	5	2025-11-20	M	0	CLAUDINE@GOV.JM	2025-11-20 22:35:43	\N	\N	\N	\N	1	2		\N	4C32DF4	\N	\N	\N
+48	5	2025-11-20	M	0	CLAUDINE@GOV.JM	2025-11-20 23:15:54	\N	\N	\N	\N	1	2		\N	B77D6B2	\N	\N	\N
+41	5	2025-11-20	M	5	CLAUDINE@GOV.JM	2025-11-20 20:50:07	EXECUTIVE@ODPEM.GOV.	2025-11-20 20:56:09	LOGISTICS.MANAGER@GO	2025-11-21 00:46:55	4	2		\N	9744853	\N	\N	\N
+46	5	2025-11-20	M	5	CLAUDINE@GOV.JM	2025-11-20 22:36:57	EXECUTIVE@ODPEM.GOV.	2025-11-20 22:55:31	LINCOLN@GOV.JM	2025-11-20 23:02:04	4	2		\N	88945C9	\N	\N	\N
+35	1	2025-11-20	L	5	MONIQUE@GOV.JM	2025-11-20 18:02:19	EXECUTIVE@ODPEM.GOV.	2025-11-20 18:10:00	LINCOLN@GOV.JM	2025-11-20 23:57:22	4	2	cement and block	\N	96FE7A7	\N	\N	\N
 18	1	2025-11-18	M	0	SHELTER_USER@GMAIL.C	2025-11-18 15:42:11	\N	\N	\N	\N	1	2		\N	7329DA6	\N	\N	\N
 19	1	2025-11-18	M	0	LOGISTICS.OFFICER@GO	2025-11-18 20:18:15	\N	\N	\N	\N	1	2		\N	496BE9D	\N	\N	\N
 20	1	2025-11-18	M	0	LOGISTICS.OFFICER@GO	2025-11-18 20:22:57	\N	\N	\N	\N	1	2		\N	9E0C02C	\N	\N	\N
@@ -2315,9 +2612,33 @@ COPY public.reliefrqst (reliefrqst_id, agency_id, request_date, urgency_ind, sta
 23	1	2025-11-18	M	0	LOGISTICS.OFFICER@GO	2025-11-18 20:32:54	\N	\N	\N	\N	1	2		\N	D4A7C58	\N	\N	\N
 24	1	2025-11-18	M	0	LOGISTICS.OFFICER@GO	2025-11-18 20:36:56	\N	\N	\N	\N	1	2		\N	6E86E9B	\N	\N	\N
 25	1	2025-11-18	M	0	LOGISTICS.OFFICER@GO	2025-11-18 20:39:17	\N	\N	\N	\N	1	2		\N	5AE60BA	\N	\N	\N
-26	1	2025-11-18	M	3	LOGISTICS.OFFICER@GO	2025-11-18 23:46:19	EXECUTIVE@ODPEM.GOV.	2025-11-18 23:55:08	\N	\N	3	2		\N	CBF15E8	\N	\N	\N
+40	5	2025-11-20	M	5	CLAUDINE@GOV.JM	2025-11-20 20:43:51	EXECUTIVE@ODPEM.GOV.	2025-11-20 20:46:24	LOGISTICS.MANAGER@GO	2025-11-21 00:47:02	4	2		\N	12CFF0A	\N	\N	\N
+37	3	2025-11-20	H	5	MONIQUE@GOV.JM	2025-11-20 19:37:49	EXECUTIVE@ODPEM.GOV.	2025-11-20 21:33:22	LOGISTICS.MANAGER@GO	2025-11-21 00:29:09	6	2	Deliver to Bamboo, St. Ann	\N	1E78D3E	\N	\N	\N
+26	1	2025-11-18	M	5	LOGISTICS.OFFICER@GO	2025-11-18 23:46:19	EXECUTIVE@ODPEM.GOV.	2025-11-18 23:55:08	LOGISTICS.MANAGER@GO	2025-11-21 00:47:08	4	2		\N	CBF15E8	\N	\N	\N
+16	1	2025-11-17	M	5	shelter_user@gmail.c	2025-11-17 15:35:35	TEST.DIRECTOR@ODPEM.	2025-11-17 15:55:11	LOGISTICS.MANAGER@GO	2025-11-21 00:47:19	5	2	Urgently needed at the shelter.	\N	49448B2	\N	\N	\N
 28	1	2025-11-19	L	5	LOGISTICS.OFFICER@GO	2025-11-19 20:23:08	EXECUTIVE@ODPEM.GOV.	2025-11-19 20:23:46	LOGISTICS.MANAGER@GO	2025-11-19 21:35:49	5	2		\N	E7C7CF7	\N	\N	\N
 17	1	2025-11-17	M	5	SHELTER_USER@GMAIL.C	2025-11-17 18:30:54	TEST.DIRECTOR@ODPEM.	2025-11-17 18:31:58	LOGISTICS.MANAGER@GO	2025-11-19 22:09:54	4	2		\N	7D68A45	\N	\N	\N
+33	1	2025-11-20	M	5	LINCOLN@GOV.JM	2025-11-20 17:46:42	EXECUTIVE@ODPEM.GOV.	2025-11-20 17:50:00	MONIQUE@GOV.JM	2025-11-21 00:45:11	8	2	Help Needed	\N	334C756	\N	\N	\N
+42	5	2025-11-20	M	5	CLAUDINE@GOV.JM	2025-11-20 21:43:17	EXECUTIVE@ODPEM.GOV.	2025-11-20 21:54:52	LOGISTICS.MANAGER@GO	2025-11-21 00:46:50	5	2		\N	64ED1EB	\N	\N	\N
+34	1	2025-11-20	L	0	MONIQUE@GOV.JM	2025-11-20 17:57:11	\N	\N	\N	\N	1	2	Building Blocks and cement to construct a homework centre	\N	09A32CE	\N	\N	\N
+51	3	2025-11-21	M	5	MONIQUE@GOV.JM	2025-11-21 01:16:08	EXECUTIVE@ODPEM.GOV.	2025-11-21 01:19:03	LOGISTICS.MANAGER@GO	2025-11-21 01:30:34	5	2		\N	3C59B5E	\N	\N	\N
+50	5	2025-11-21	H	5	CLAUDINE@GOV.JM	2025-11-21 00:52:40	EXECUTIVE@ODPEM.GOV.	2025-11-21 00:54:36	LINCOLN@GOV.JM	2025-11-21 01:42:24	5	2		\N	9BB72E7	\N	\N	\N
+38	4	2025-11-20	L	8	MONIQUE@GOV.JM	2025-11-20 19:39:44	EXECUTIVE@ODPEM.GOV.	2025-11-20 19:51:24	EXECUTIVE@ODPEM.GOV.	2025-11-20 19:51:24	3	2	fffff	\N	72A9B3D	Product quality does not meet Bureau of Standards quality standards.	\N	\N
+39	5	2025-11-20	M	8	MONIQUE@GOV.JM	2025-11-20 19:46:19	EXECUTIVE@ODPEM.GOV.	2025-11-20 19:52:39	EXECUTIVE@ODPEM.GOV.	2025-11-20 19:52:39	3	3	testing for releif request screen	\N	E2959DE	Product does not meet BSJ quality standards.	\N	\N
+52	5	2025-11-21	M	5	CLAUDINE@GOV.JM	2025-11-21 02:09:41	EXECUTIVE@ODPEM.GOV.	2025-11-21 02:15:41	LINCOLN@GOV.JM	2025-11-21 02:26:52	4	2		\N	8ABD059	\N	\N	\N
+54	3	2025-11-21	M	3	KAY@GOV.JM	2025-11-21 02:40:59	EXECUTIVE@ODPEM.GOV.	2025-11-21 02:42:46	\N	\N	3	2		\N	80E38D8	\N	\N	\N
+53	5	2025-11-21	M	5	CLAUDINE@GOV.JM	2025-11-21 02:36:16	EXECUTIVE@ODPEM.GOV.	2025-11-21 12:41:36	LOGISTICS.MANAGER@GO	2025-11-21 12:51:14	5	2		\N	DC57EAB	\N	\N	\N
+55	6	2025-11-21	H	1	CONSI4EVER@GMAIL.COM	2025-11-21 16:34:18	\N	\N	\N	\N	2	2		\N	23819B2	\N	\N	\N
+56	5	2025-11-21	M	3	LINCOLN@GOV.JM	2025-11-21 17:13:53	EXECUTIVE@ODPEM.GOV.	2025-11-21 17:19:06	\N	\N	3	2		\N	FAE7AD1	\N	\N	\N
+57	5	2025-11-21	M	0	CLAUDINE@GOV.JM	2025-11-21 17:22:21	\N	\N	\N	\N	1	2		\N	E10FB00	\N	\N	\N
+58	5	2025-11-21	M	0	CLAUDINE@GOV.JM	2025-11-21 17:39:33	\N	\N	\N	\N	1	2		\N	11EAC53	\N	\N	\N
+59	5	2025-11-21	M	3	LINCOLN@GOV.JM	2025-11-21 18:05:10	EXECUTIVE@ODPEM.GOV.	2025-11-21 18:07:10	\N	\N	3	2		\N	750BB24	\N	\N	\N
+60	5	2025-11-21	M	5	LINCOLN@GOV.JM	2025-11-21 18:26:31	EXECUTIVE@ODPEM.GOV.	2025-11-21 18:27:21	LINCOLN@GOV.JM	2025-11-21 18:32:12	4	2		\N	9739B61	\N	\N	\N
+61	5	2025-11-21	M	5	CLAUDINE@GOV.JM	2025-11-21 18:33:39	EXECUTIVE@ODPEM.GOV.	2025-11-21 18:45:22	CLAUDINE@GOV.JM	2025-11-21 18:52:53	4	2		\N	162C953	\N	\N	\N
+49	5	2025-11-21	M	5	CLAUDINE@GOV.JM	2025-11-21 00:50:05	EXECUTIVE@ODPEM.GOV.	2025-11-21 00:54:29	LOGISTICS.MANAGER@GO	2025-11-21 19:49:20	6	2		\N	EF960E5	\N	\N	\N
+62	5	2025-11-21	M	5	CLAUDINE@GOV.JM	2025-11-21 19:55:46	EXECUTIVE@ODPEM.GOV.	2025-11-21 19:57:30	CLAUDINE@GOV.JM	2025-11-21 20:08:50	4	2		\N	2948F47	\N	\N	\N
+63	5	2025-11-21	M	0	CLAUDINE@GOV.JM	2025-11-21 20:31:05	\N	\N	\N	\N	1	2		\N	013BD62	\N	\N	\N
+65	1	2025-11-21	L	3	LOGISTICS.MANAGER@GO	2025-11-21 21:22:54	EXECUTIVE@ODPEM.GOV.	2025-11-21 21:23:24	\N	\N	3	2		\N	30F16AA	\N	\N	\N
 \.
 
 
@@ -2326,15 +2647,57 @@ COPY public.reliefrqst (reliefrqst_id, agency_id, request_date, urgency_ind, sta
 --
 
 COPY public.reliefrqst_item (reliefrqst_id, item_id, request_qty, issue_qty, urgency_ind, rqst_reason_desc, required_by_date, status_code, status_reason_desc, action_by_id, action_dtime, version_nbr) FROM stdin;
-26	10	50.00	0.00	M		\N	R	\N	\N	\N	3
-26	8	20.00	20.00	H	Out of toilet paper!!	2025-11-19	F	\N	LOGISTICS.OFFICER@GO	2025-11-19 21:24:14	3
+26	8	20.00	20.00	H	Out of toilet paper!!	2025-11-19	F	\N	LOGISTICS.MANAGER@GO	2025-11-21 00:47:08	6
+16	7	20.00	0.00	M		\N	U	\N	LOGISTICS.MANAGER@GO	2025-11-21 00:47:19	15
+16	8	10.00	0.00	H	Out of toilet paper.	2025-11-18	U	\N	LOGISTICS.MANAGER@GO	2025-11-21 00:47:19	15
+36	8	50.00	50.00	H	Injuries recorded	2025-11-22	F	\N	LOGISTICS.MANAGER@GO	2025-11-20 22:27:04	8
+36	12	800.00	0.00	H	Thirsty	2025-11-22	U	\N	LOGISTICS.MANAGER@GO	2025-11-20 22:27:04	8
+46	7	45.00	0.00	M		\N	R	\N	\N	\N	2
+46	15	200.00	0.00	M		\N	U	\N	LINCOLN@GOV.JM	2025-11-20 23:02:03	2
+44	14	55.00	0.00	L		2025-11-28	U	\N	LOGISTICS.MANAGER@GO	2025-11-20 23:08:53	6
 28	11	100.00	100.00	L		\N	F	\N	LOGISTICS.MANAGER@GO	2025-11-19 21:35:49	5
 17	10	20.00	0.00	M		\N	U	\N	LOGISTICS.MANAGER@GO	2025-11-19 22:09:53	6
 17	8	10.00	10.00	L		\N	F	\N	LOGISTICS.MANAGER@GO	2025-11-19 22:09:53	6
+51	14	622.00	621.99	L	testing for locking	\N	L	We have enough in stock.	LOGISTICS.MANAGER@GO	2025-11-21 01:30:34	3
+35	14	1000.00	0.00	L	Used to construct a nursery at the Portmore Community Centre	2025-12-13	R	\N	\N	\N	3
+50	6	30.00	0.00	H	Hungry	2025-11-21	U	\N	LINCOLN@GOV.JM	2025-11-21 01:42:24	3
+37	15	20.00	0.00	H	For Mellisa victim	2025-11-20	U	\N	LOGISTICS.MANAGER@GO	2025-11-21 00:29:09	4
+29	8	20.00	10.00	M		\N	L	Low on stock.	LOGISTICS.MANAGER@GO	2025-11-20 02:36:51	4
+29	6	30.00	0.00	M		\N	U	\N	LOGISTICS.MANAGER@GO	2025-11-20 02:36:51	4
+29	11	100.00	100.00	L		\N	F	\N	LOGISTICS.MANAGER@GO	2025-11-20 02:36:51	4
+52	10	650.00	0.00	H	cold times	2025-11-23	U	\N	LINCOLN@GOV.JM	2025-11-21 02:26:52	2
+54	16	32.00	0.00	M		\N	R	\N	\N	\N	1
 18	10	200.00	0.00	M		\N	R	\N	\N	\N	1
 23	10	10.00	0.00	M		\N	R	\N	\N	\N	1
-16	8	10.00	0.00	H	Out of toilet paper.	2025-11-18	U	\N	LOGISTICS.MANAGER@GO	2025-11-19 13:22:13	13
-16	7	20.00	20.00	M		\N	F	\N	LOGISTICS.MANAGER@GO	2025-11-19 13:22:13	13
+38	15	1.00	0.00	H	To feed starving communities.	2025-11-25	R	\N	\N	\N	1
+38	12	120.00	0.00	M	To accompany the rice	2025-11-25	R	\N	\N	\N	1
+39	14	100.00	0.00	H	for	2025-11-24	R	\N	\N	\N	1
+54	17	25.00	0.00	M		\N	R	\N	\N	\N	1
+54	18	60.00	0.00	M		\N	R	\N	\N	\N	1
+54	19	45.00	0.00	M		\N	R	\N	\N	\N	1
+53	6	5.00	0.00	M		\N	W	\N	LOGISTICS.MANAGER@GO	2025-11-21 12:51:14	3
+55	15	10.00	0.00	H	Testing Testing 1-2-3	2025-11-22	R	\N	\N	\N	1
+56	10	65.00	0.00	M		2025-11-27	R	\N	\N	\N	1
+56	15	65.00	0.00	M		2025-11-28	R	\N	\N	\N	1
+59	19	5.00	0.00	M		2025-11-28	R	\N	\N	\N	1
+59	16	10.00	0.00	M		2025-11-27	R	\N	\N	\N	1
+33	10	50.00	0.00	M	People are cold	2025-11-20	W	\N	MONIQUE@GOV.JM	2025-11-21 00:45:11	7
+33	11	50.00	50.00	M	Water is life	2025-11-20	F	\N	MONIQUE@GOV.JM	2025-11-21 00:45:11	7
+42	10	500.00	0.00	H	very cold temperatures	2025-11-24	U	\N	LOGISTICS.MANAGER@GO	2025-11-21 00:46:50	3
+32	8	50.00	0.00	H	Injuries recorded in Mountain Ridge Shelter	2025-11-21	R	\N	\N	\N	2
+32	9	25.00	0.00	H	Roof Lost in hurricane	2025-11-23	U	\N	LINCOLN@GOV.JM	2025-11-20 20:38:28	2
+60	16	15.00	15.00	M		2025-11-28	F	\N	LINCOLN@GOV.JM	2025-11-21 18:32:12	2
+61	17	15.00	5.00	H	For men affected	2025-11-22	P	\N	CLAUDINE@GOV.JM	2025-11-21 18:52:53	2
+42	15	500.00	0.00	H	hungry for rice	2025-11-23	U	\N	LOGISTICS.MANAGER@GO	2025-11-21 00:46:50	3
+49	8	7.00	7.00	H	sick out	2025-11-21	F	\N	LOGISTICS.MANAGER@GO	2025-11-21 19:49:20	4
+41	7	80.00	0.00	H	sick	2025-11-21	U	\N	LOGISTICS.MANAGER@GO	2025-11-21 00:46:55	3
+40	9	70.00	0.00	H	Roof Leak	2025-11-28	U	\N	LOGISTICS.MANAGER@GO	2025-11-21 00:47:01	3
+26	10	50.00	0.00	M		\N	U	\N	LOGISTICS.MANAGER@GO	2025-11-21 00:47:08	6
+62	18	100.00	50.00	M		\N	P	\N	CLAUDINE@GOV.JM	2025-11-21 20:08:50	2
+65	18	20.00	0.00	M		\N	R	\N	\N	\N	1
+66	16	10.00	0.00	M		\N	R	\N	\N	\N	1
+64	17	80.00	0.00	M		\N	U	\N	LOGISTICS.MANAGER@GO	2025-11-21 17:20:12	3
+67	16	50.00	40.00	M		\N	L	yes	LINCOLN@GOV.JM	2025-11-21 18:07:57	3
 \.
 
 
@@ -2439,6 +2802,14 @@ COPY public.transfer (transfer_id, fr_inventory_id, to_inventory_id, eligible_ev
 
 
 --
+-- Data for Name: transfer_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.transfer_item (transfer_id, item_id, batch_id, inventory_id, item_qty, uom_code, create_by_id, create_dtime, update_by_id, update_dtime, version_nbr, reason_text) FROM stdin;
+\.
+
+
+--
 -- Data for Name: transfer_request; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -2460,7 +2831,8 @@ BOTTLE	Bottles	\N	SYSTEM	2025-11-12 03:31:52	SYSTEM	2025-11-12 03:31:52	1	A
 GALLON	Gallons	\N	SYSTEM	2025-11-12 03:31:52	SYSTEM	2025-11-12 03:31:52	1	A
 METRE	Metres	\N	SYSTEM	2025-11-12 03:31:52	SYSTEM	2025-11-12 03:31:52	1	A
 SHEET	Sheets	\N	SYSTEM	2025-11-12 03:31:52	SYSTEM	2025-11-12 03:31:52	1	A
-BAG	Bag	\N	TEST.DIRECTOR@ODPEM.	2025-11-17 02:11:02	TEST.DIRECTOR@ODPEM.	2025-11-17 02:11:02	1	I
+BAG	Bag	\N	TEST.DIRECTOR@ODPEM.	2025-11-17 02:11:02	NARI@ODPEM.GOV.JM	2025-11-20 19:28:54	11	A
+ML	Millimeter	\N	JORDANNE@GOV.JM	2025-11-21 19:51:00	JORDANNE@GOV.JM	2025-11-21 19:51:00	1	A
 \.
 
 
@@ -2470,8 +2842,8 @@ BAG	Bag	\N	TEST.DIRECTOR@ODPEM.	2025-11-17 02:11:02	TEST.DIRECTOR@ODPEM.	2025-11
 
 COPY public."user" (user_id, email, password_hash, first_name, last_name, full_name, is_active, organization, job_title, phone, timezone, language, notification_preferences, assigned_warehouse_id, last_login_at, create_dtime, update_dtime, username, password_algo, mfa_enabled, mfa_secret, failed_login_count, lock_until_at, password_changed_at, agency_id, status_code, version_nbr, user_name) FROM stdin;
 2	test.user@odpem.gov.jm	scrypt:32768:8:1$sqD9e0ANt6oD7Jlx$35bf7c14e18395535f4d6089462151b326036e163f7a27bd82ae9b4976a3b00311775c3bf5bef4a69200a5872ece2a67639de751f208dd7649d42213ce3a4c1a	Test	User	Test User	f	ODPEM	Test Officer	876-555-1234	America/Jamaica	en	\N	\N	\N	2025-11-12 04:37:13.113929	2025-11-19 22:13:13.414656	\N	argon2id	f	\N	0	\N	\N	\N	A	2	TEST.USER@ODPEM.GOV.
+3	logistics.officer@gov.jm	scrypt:32768:8:1$fONJDxe4oj1F54Eo$e4136a2fd6d9f2414cc4832b4f710929e99965f7269b188f9c4a2f6deb6a5df9be4d58057c6d0f9cf8831a4a3d0381fe89d25ad532ef8656be9defe727aa77f4	Demar	Brown	Demar Brown	t	\N	Logistics Officer	8764774108	America/Jamaica	en	\N	\N	\N	2025-11-12 14:50:31.22187	2025-11-20 15:03:26.341531	\N	argon2id	f	\N	0	\N	\N	\N	A	2	LOGISTICS.OFFICER@GO
 1	admin@odpem.gov.jm	scrypt:32768:8:1$0PuV6qs6LRiBTD7u$921f818d09bd67feaf84370eacdec9b80eb9c5722adc7ae8ef1a9c8310a6eebabe67001f1ac7d538880536b95d0f7f131e693247b8036a29fd3b4d94e60e20cd	SYSTEM	ADMINISTRATOR	SYSTEM ADMINISTRATOR	t	\N	\N	\N	America/Jamaica	en	\N	\N	\N	2025-11-12 03:33:08.574171	2025-11-16 20:11:24.925991	\N	argon2id	f	\N	0	\N	\N	\N	A	1	ADMIN@ODPEM.GOV.JM
-3	logistics.officer@gov.jm	scrypt:32768:8:1$fONJDxe4oj1F54Eo$e4136a2fd6d9f2414cc4832b4f710929e99965f7269b188f9c4a2f6deb6a5df9be4d58057c6d0f9cf8831a4a3d0381fe89d25ad532ef8656be9defe727aa77f4	Demar	Brown	Demar Brown	t	ODPEM	Logistics Officer	8764774108	America/Jamaica	en	\N	\N	\N	2025-11-12 14:50:31.22187	2025-11-16 20:11:24.925991	\N	argon2id	f	\N	0	\N	\N	\N	A	1	LOGISTICS.OFFICER@GO
 7	shelter_user@gmail.com	scrypt:32768:8:1$mIXQdTZPkthL4Fiu$5b1c2ae661efa73eee1868226ea9bb19b73553ebcbfbb9d7ce5de24fe0d7136703fd4f77e2dd5e0147f91a03babf445bbc8c21b695cd55ac62ee49023f5743f2	Elton	John	Elton John	t	PORTMORE COMMUNITY CENTER	\N	\N	America/Jamaica	en	\N	\N	\N	2025-11-12 22:35:06.738396	2025-11-16 20:11:24.925991	\N	argon2id	f	\N	0	\N	\N	1	A	1	SHELTER_USER@GMAIL.C
 8	deputy_dg@odpem.gov.jm	scrypt:32768:8:1$ewjkJ5jSB0wICDtI$893138815b08b2dc6aad8c4af27d041199084b08e9db66717594e7a5972f04cdf365fbeaf71eac95393512544a0e1ed69b067a18630a971adfa1088e1b964c1d	Luke	Hall	Luke Hall	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	Deputy Director General	\N	America/Jamaica	en	\N	\N	\N	2025-11-13 16:28:42.440061	2025-11-16 20:11:24.925991	\N	argon2id	f	\N	0	\N	\N	\N	A	1	DEPUTY_DG@ODPEM.GOV.
 9	director_general@odpem.gov.jm	scrypt:32768:8:1$AMiB02zzxJCiYNuH$ffa0ed725af1c20ba9e2c0a527d676578858392b717751f9ae538eac67dc2fbd3825929f99fcf198693ebe12cf1e646349c82e9193637bd022871ebb56d1291c	Michael	Graham	Michael Graham	t	\N	\N	\N	America/Jamaica	en	\N	\N	\N	2025-11-13 16:30:19.338658	2025-11-16 20:11:24.925991	\N	argon2id	f	\N	0	\N	\N	\N	A	1	DIRECTOR_GENERAL@ODP
@@ -2483,6 +2855,15 @@ COPY public."user" (user_id, email, password_hash, first_name, last_name, full_n
 5	inventory@odpem.gov.jm	scrypt:32768:8:1$9pwOdOF5dbaR6L1P$fe821d892b727199b45e1c49a2dbc03f818077244038469e0204bb3b110de0fccda92be943cd567efb08d12febce94c92fd435d65d0b537b6815745c27c254ea	Dale	Johnson	Dale Johnson	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	Inventory Clerk	\N	America/Jamaica	en	\N	\N	\N	2025-11-12 21:06:10.280386	2025-11-19 22:11:30.062149	\N	argon2id	f	\N	0	\N	\N	\N	A	2	INVENTORY@ODPEM.GOV.
 4	logistics.manager@gov.jm	scrypt:32768:8:1$ZTaPUnWLaFL0cG6c$2454040e9932d768d65cedbbb8472f793c9d0ba346ced95e20d2f919a1e19e538c285136ecc0ee77ded3d8154a22680ba85ed708ea139db22adcda3b4d2bacf4	Anthony	Bailey	Anthony Bailey	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	Logistics Manager	\N	America/Jamaica	en	\N	\N	\N	2025-11-12 14:51:28.952847	2025-11-19 22:12:28.802193	\N	argon2id	f	\N	0	\N	\N	\N	A	2	LOGISTICS.MANAGER@GO
 18	inventory2@odpem.gov.jm	scrypt:32768:8:1$No9463zuRy06ytLC$4c453b3edc9c08aaabfd493bde80edb926ed577bc949e52a6215439146d015ecfd04d4716526e6142bd74a1306023a279321768ec27875acc8cd7c23eff5ba3e	Michael	Folks	Michael Folks	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	Inventory Clerk	\N	America/Jamaica	en	\N	\N	\N	2025-11-19 22:14:04.671103	2025-11-19 22:14:04.671107	\N	argon2id	f	\N	0	\N	\N	\N	A	1	INVENTORY2@ODPEM.GOV
+19	nari@odpem.gov.jm	scrypt:32768:8:1$rWtQnG9dBpC8C75e$1da8720657d89a07c689bb137c77a5cdc4da3e3df71d579af7fca854f2420376481baa8e2fa2e769a3ce174023ae00b8c521294be039e86e1615fba4aec17b3e	Nari	Constantine	Nari Constantine	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	IT Manager	\N	America/Jamaica	en	\N	\N	\N	2025-11-20 15:48:53.395797	2025-11-20 15:48:53.395801	\N	argon2id	f	\N	0	\N	\N	\N	A	1	NARI@ODPEM.GOV.JM
+20	lincoln@gov.jm	scrypt:32768:8:1$8qgp41dTbc6eF8id$e6716a4cd720bd88b114f504a315c3b034161cb7fab6d2edf80c053bbebca0e0f4f0797b9c47c79b772402d8235f42ea6c452333293603f24edbbe7229ecb890	Lincoln	Brown	Lincoln Brown	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	Logistics Manager	\N	America/Jamaica	en	\N	\N	\N	2025-11-20 15:53:02.198664	2025-11-20 15:53:02.198669	\N	argon2id	f	\N	0	\N	\N	\N	A	1	LINCOLN@GOV.JM
+21	monique@gov.jm	scrypt:32768:8:1$m8HImqO7jqM44hbn$cbbaf25611b1f786599922c692165bd37432ef69fe8a4655795505618d4f2100dc7746f2041dd310b9c82e05c9bacbaa7830239dd1a35149a89e802e2d39daca	Monique	Harding	Monique Harding	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	Logistics Officer	\N	America/Jamaica	en	\N	\N	\N	2025-11-20 15:54:20.364763	2025-11-20 15:54:20.364768	\N	argon2id	f	\N	0	\N	\N	\N	A	1	MONIQUE@GOV.JM
+22	claudine@gov.jm	scrypt:32768:8:1$ZvUgdt4BWbzbwWJ6$c872eb20cdbe98c593b5e892a312c4912bec1f1ad04c6f2c6af9d80f72d8c9aec68ad4ed518e122d955bb8575a7a70d14352d48578ff585fcd5c51fb9c29f894	Claudine	Afflick	Claudine Afflick	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	Logistics Officer	\N	America/Jamaica	en	\N	\N	\N	2025-11-20 15:56:00.92631	2025-11-20 15:56:00.926315	\N	argon2id	f	\N	0	\N	\N	\N	A	1	CLAUDINE@GOV.JM
+24	consi4ever@gmail.com	scrypt:32768:8:1$nWF7IZp5LxYlcP7z$0067aca32d42372dda0ece5fc323c6948213b37df0053fae2e37f28e4b527ca2cd48f3d17aff8e0844f4bf98f39eeb8aa403cb336fb76aa5f1463daa5a35aff4	Simon	Peccool	Simon Peccool	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	Logistics Co-Ordinator	+18764691343	America/Jamaica	en	\N	\N	\N	2025-11-20 12:35:44.772822	2025-11-20 21:01:05.209653	\N	argon2id	f	\N	0	\N	\N	\N	A	2	CONSI4EVER@GMAIL.COM
+25	patricia.raymond@icta.gov.jm	scrypt:32768:8:1$MVSQ2IxBAvMyaeSI$93981f335d055418a76cd693e92dee5100a803ddd4d587b9af8d2cfab093e66d59f130ea92964fdd64f692fa8a6efd918e8ccaaee09aa26ab548fb12f7484de1	Patrica	Raymond	Patrica Raymond	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	Logistics Officer	8769271125	America/Jamaica	en	\N	\N	\N	2025-11-20 12:41:45.496229	2025-11-20 23:14:55.1604	\N	argon2id	f	\N	0	\N	\N	\N	A	2	PATRICIA.RAYMOND@ICT
+23	kay@gov.jm	scrypt:32768:8:1$ubVM5UnCv658Olnr$d1f1978ee805d0047dc342a2605297ff3a13ab980acbadaf630e72c7df2017abd3f87277f2c6ee1b74e697b2ee6d4f6cf2cc1ecbd51d5aba6cccc3354dc9b4c7	Kaymaureen	Shim	Kaymaureen Shim	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	Director General	\N	America/Jamaica	en	\N	\N	\N	2025-11-20 16:02:26.011704	2025-11-21 00:34:15.387412	\N	argon2id	f	\N	0	\N	\N	\N	A	2	KAY@GOV.JM
+26	jordanne@gov.jm	scrypt:32768:8:1$x2HlSq30il5h2yKL$763f920f0486a90acfc3808a89bd34fd51e696537c8b53ba77b224e7169fade129e9689e98e8130442566065d897efc3d2af86c0e3e76eca33452f87d461e159	Jordanne		Jordanne	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	IT Manager	8769271125	America/Jamaica	en	\N	\N	\N	2025-11-21 12:05:06.184958	2025-11-21 17:07:42.560583	\N	argon2id	f	\N	0	\N	\N	\N	A	2	JORDANNE@GOV.JM
+27	cafflick@gov.jm	scrypt:32768:8:1$p5cnj3gkYgGm6fUi$93d30c31fa58d8d8b64e33a0ac66a95a8b030efcd2f9fb4e0a1086f27af5e82e3475e4fe5b7bf4293c34d00a60dc18415097091dbed4cadd2297f84050ba4e42	Claudine	Afflick	Claudine Afflick	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	\N	\N	America/Jamaica	en	\N	\N	\N	2025-11-21 16:45:28.633688	2025-11-21 16:45:28.633724	\N	argon2id	f	\N	0	\N	\N	\N	A	1	CAFFLICK@GOV.JM
 \.
 
 
@@ -2492,7 +2873,6 @@ COPY public."user" (user_id, email, password_hash, first_name, last_name, full_n
 
 COPY public.user_role (user_id, role_id, assigned_at, assigned_by, create_by_id, create_dtime, update_by_id, update_dtime, version_nbr) FROM stdin;
 2	3	2025-11-12 04:37:13.147794	\N	system	2025-11-13 14:06:16	system	2025-11-13 14:06:16	1
-3	3	2025-11-12 14:50:31.272676	\N	system	2025-11-13 14:06:16	system	2025-11-13 14:06:16	1
 1	1	2025-11-12 03:33:08.574171	\N	system	2025-11-13 14:06:16	system	2025-11-13 14:06:16	1
 8	16	2025-11-13 16:28:42.495839	\N	system	2025-11-13 16:28:42	system	2025-11-13 16:28:42	1
 9	17	2025-11-13 16:30:19.362036	\N	system	2025-11-13 16:30:19	system	2025-11-13 16:30:19	1
@@ -2502,11 +2882,22 @@ COPY public.user_role (user_id, role_id, assigned_at, assigned_by, create_by_id,
 7	11	2025-11-14 18:14:02.832752	\N	system	2025-11-14 18:14:03	system	2025-11-14 18:14:03	1
 12	15	2025-11-16 19:15:39.788416	\N	system	2025-11-16 19:15:40	system	2025-11-16 19:15:40	1
 12	19	2025-11-16 19:15:39.788423	\N	system	2025-11-16 19:15:40	system	2025-11-16 19:15:40	1
-6	15	2025-11-18 22:43:46.495823	\N	system	2025-11-18 22:43:46	system	2025-11-18 22:43:46	1
-6	19	2025-11-18 22:43:46.49583	\N	system	2025-11-18 22:43:46	system	2025-11-18 22:43:46	1
-5	7	2025-11-19 22:11:30.293551	\N	system	2025-11-19 22:11:30	system	2025-11-19 22:11:30	1
-4	2	2025-11-19 22:12:28.932718	\N	system	2025-11-19 22:12:29	system	2025-11-19 22:12:29	1
 18	7	2025-11-19 22:14:04.69944	\N	system	2025-11-19 22:14:05	system	2025-11-19 22:14:05	1
+6	15	2025-11-20 15:01:56.264768	\N	system	2025-11-20 15:01:56	system	2025-11-20 15:01:56	1
+4	2	2025-11-20 15:03:01.011556	\N	system	2025-11-20 15:03:01	system	2025-11-20 15:03:01	1
+4	19	2025-11-20 15:03:01.011561	\N	system	2025-11-20 15:03:01	system	2025-11-20 15:03:01	1
+3	3	2025-11-20 15:03:26.464658	\N	system	2025-11-20 15:03:26	system	2025-11-20 15:03:26	1
+19	19	2025-11-20 15:48:53.466589	\N	system	2025-11-20 15:48:53	system	2025-11-20 15:48:53	1
+20	2	2025-11-20 15:53:02.219823	\N	system	2025-11-20 15:53:02	system	2025-11-20 15:53:02	1
+21	3	2025-11-20 15:54:20.386162	\N	system	2025-11-20 15:54:20	system	2025-11-20 15:54:20	1
+22	3	2025-11-20 15:56:00.946825	\N	system	2025-11-20 15:56:01	system	2025-11-20 15:56:01	1
+24	2	2025-11-20 16:01:05.572875	\N	system	2025-11-20 16:01:06	system	2025-11-20 16:01:06	1
+25	3	2025-11-20 18:14:55.37349	\N	system	2025-11-20 18:14:55	system	2025-11-20 18:14:55	1
+23	3	2025-11-20 20:20:26.42608	\N	system	2025-11-20 20:20:26	system	2025-11-20 20:20:26	1
+26	19	2025-11-21 12:07:42.860409	\N	system	2025-11-21 12:07:43	system	2025-11-21 12:07:43	1
+27	3	2025-11-21 16:45:28.719294	\N	system	2025-11-21 16:45:29	system	2025-11-21 16:45:29	1
+27	7	2025-11-21 16:45:28.719311	\N	system	2025-11-21 16:45:29	system	2025-11-21 16:45:29	1
+5	7	2025-11-21 17:21:35.26477	\N	system	2025-11-21 17:21:35	system	2025-11-21 17:21:35	1
 \.
 
 
@@ -2518,9 +2909,30 @@ COPY public.user_warehouse (user_id, warehouse_id, assigned_at, assigned_by) FRO
 2	1	2025-11-12 04:37:13.170464	\N
 8	1	2025-11-13 16:28:42.521335	\N
 9	1	2025-11-13 16:30:19.384624	\N
-6	1	2025-11-18 22:43:46.55413	\N
-5	1	2025-11-19 22:11:30.344513	\N
 18	8	2025-11-19 22:14:04.719171	\N
+6	8	2025-11-20 15:01:56.318688	\N
+6	1	2025-11-20 15:01:56.318692	\N
+4	8	2025-11-20 15:03:01.05203	\N
+4	1	2025-11-20 15:03:01.052033	\N
+3	8	2025-11-20 15:03:26.503989	\N
+3	1	2025-11-20 15:03:26.503992	\N
+19	8	2025-11-20 15:48:53.490756	\N
+19	1	2025-11-20 15:48:53.490761	\N
+20	8	2025-11-20 15:53:02.243122	\N
+20	1	2025-11-20 15:53:02.243127	\N
+21	8	2025-11-20 15:54:20.409074	\N
+21	1	2025-11-20 15:54:20.409079	\N
+22	8	2025-11-20 15:56:00.966914	\N
+22	1	2025-11-20 15:56:00.966946	\N
+24	8	2025-11-20 16:01:05.620199	\N
+25	8	2025-11-20 18:14:55.423925	\N
+25	1	2025-11-20 18:14:55.423942	\N
+23	8	2025-11-20 20:20:26.471089	\N
+23	1	2025-11-20 20:20:26.471104	\N
+5	8	2025-11-21 17:21:35.310359	\N
+5	10	2025-11-21 17:21:35.310373	\N
+5	11	2025-11-21 17:21:35.310377	\N
+5	1	2025-11-21 17:21:35.31038	\N
 \.
 
 
@@ -2530,7 +2942,9 @@ COPY public.user_warehouse (user_id, warehouse_id, assigned_at, assigned_by) FRO
 
 COPY public.warehouse (warehouse_id, warehouse_name, warehouse_type, address1_text, address2_text, parish_code, contact_name, phone_no, email_text, custodian_id, status_code, reason_desc, create_by_id, create_dtime, update_by_id, update_dtime, version_nbr) FROM stdin;
 8	MONTEGO BAY RELIEF CENTER	SUB-HUB	15 BAY STREET	MONTEGO BAY	01	PATRICIA BROWN	+1 (876) 555-0199	patricia.brown@odpem.gov.jm	1	A	\N	system	2025-11-13 23:54:15	TEST.DIRECTOR@ODPEM.	2025-11-16 21:41:28	2
-1	KINGSTON CENTRAL DEPOT	MAIN-HUB	123 Main Street, Kingston	\N	01	JOHN BROWN	+1 (876) 555-1234	\N	1	A	\N	admin	2025-11-12 03:33:09	TEST.DIRECTOR@ODPEM.	2025-11-16 21:44:26	9
+10	TRELAWNY HUB	SUB-HUB	2 Ridge Way Road	\N	07	KIM DOMHUE	+1 (876) 456-2857	kim.domhue@gmail.com	1	A	\N	KAY@GOV.JM	2025-11-21 00:40:19	KAY@GOV.JM	2025-11-21 00:40:19	1
+11	SAV-LA-MAR HUB	SUB-HUB	20 Great Georges Street	\N	10	MARTY BRENT	+1 (876) 783-9856	marty.brent@hotmail.com	1	A	\N	KAY@GOV.JM	2025-11-21 00:43:12	KAY@GOV.JM	2025-11-21 00:43:12	1
+1	KINGSTON CENTRAL DEPOT	MAIN-HUB	123 Main Street, Kingston	\N	01	JOHN BROWN	+1 (876) 555-1234	\N	1	A	\N	admin	2025-11-12 03:33:09	JORDANNE@GOV.JM	2025-11-21 19:46:20	11
 \.
 
 
@@ -2554,21 +2968,21 @@ COPY public.xfreturn_item (xfreturn_id, inventory_id, item_id, usable_qty, defec
 -- Name: agency_account_request_audit_audit_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.agency_account_request_audit_audit_id_seq', 1, false);
+SELECT pg_catalog.setval('public.agency_account_request_audit_audit_id_seq', 1, true);
 
 
 --
 -- Name: agency_account_request_request_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.agency_account_request_request_id_seq', 1, false);
+SELECT pg_catalog.setval('public.agency_account_request_request_id_seq', 1, true);
 
 
 --
 -- Name: agency_agency_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.agency_agency_id_seq', 2, true);
+SELECT pg_catalog.setval('public.agency_agency_id_seq', 7, true);
 
 
 --
@@ -2593,38 +3007,45 @@ SELECT pg_catalog.setval('public.distribution_package_item_id_seq', 1, false);
 
 
 --
+-- Name: dnintake_item_intake_item_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.dnintake_item_intake_item_id_seq', 43, true);
+
+
+--
 -- Name: donation_donation_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.donation_donation_id_seq', 11, true);
+SELECT pg_catalog.setval('public.donation_donation_id_seq', 34, true);
 
 
 --
 -- Name: donor_donor_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.donor_donor_id_seq', 2, true);
+SELECT pg_catalog.setval('public.donor_donor_id_seq', 6, true);
 
 
 --
 -- Name: event_event_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.event_event_id_seq', 3, true);
+SELECT pg_catalog.setval('public.event_event_id_seq', 4, true);
 
 
 --
 -- Name: item_new_item_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.item_new_item_id_seq', 11, true);
+SELECT pg_catalog.setval('public.item_new_item_id_seq', 20, true);
 
 
 --
 -- Name: itembatch_batch_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.itembatch_batch_id_seq', 22, true);
+SELECT pg_catalog.setval('public.itembatch_batch_id_seq', 59, true);
 
 
 --
@@ -2645,7 +3066,7 @@ SELECT pg_catalog.setval('public.location_location_id_seq', 1, false);
 -- Name: notification_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.notification_id_seq', 72, true);
+SELECT pg_catalog.setval('public.notification_id_seq', 483, true);
 
 
 --
@@ -2659,14 +3080,14 @@ SELECT pg_catalog.setval('public.permission_perm_id_seq', 32, true);
 -- Name: reliefpkg_reliefpkg_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.reliefpkg_reliefpkg_id_seq', 12, true);
+SELECT pg_catalog.setval('public.reliefpkg_reliefpkg_id_seq', 46, true);
 
 
 --
 -- Name: reliefrqst_reliefrqst_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.reliefrqst_reliefrqst_id_seq', 28, true);
+SELECT pg_catalog.setval('public.reliefrqst_reliefrqst_id_seq', 67, true);
 
 
 --
@@ -2701,14 +3122,14 @@ SELECT pg_catalog.setval('public.transfer_transfer_id_seq', 1, false);
 -- Name: user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.user_id_seq', 18, true);
+SELECT pg_catalog.setval('public.user_id_seq', 27, true);
 
 
 --
 -- Name: warehouse_warehouse_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.warehouse_warehouse_id_seq', 9, true);
+SELECT pg_catalog.setval('public.warehouse_warehouse_id_seq', 11, true);
 
 
 --
@@ -2791,6 +3212,14 @@ ALTER TABLE ONLY public.distribution_package
 
 
 --
+-- Name: dnintake_item dnintake_item_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dnintake_item
+    ADD CONSTRAINT dnintake_item_pkey PRIMARY KEY (intake_item_id);
+
+
+--
 -- Name: dnintake dnintake_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2860,14 +3289,6 @@ ALTER TABLE ONLY public.batchlocation
 
 ALTER TABLE ONLY public.custodian
     ADD CONSTRAINT pk_custodian PRIMARY KEY (custodian_id);
-
-
---
--- Name: dnintake_item pk_dnintake_item; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.dnintake_item
-    ADD CONSTRAINT pk_dnintake_item PRIMARY KEY (donation_id, inventory_id, item_id, batch_no);
 
 
 --
@@ -2996,6 +3417,14 @@ ALTER TABLE ONLY public.rtintake_item
 
 ALTER TABLE ONLY public.transfer
     ADD CONSTRAINT pk_transfer PRIMARY KEY (transfer_id);
+
+
+--
+-- Name: transfer_item pk_transfer_item; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_item
+    ADD CONSTRAINT pk_transfer_item PRIMARY KEY (transfer_id, item_id, batch_id);
 
 
 --
@@ -3497,6 +3926,20 @@ CREATE INDEX idx_role_code ON public.role USING btree (code);
 
 
 --
+-- Name: idx_transfer_item_batch; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_transfer_item_batch ON public.transfer_item USING btree (inventory_id, batch_id);
+
+
+--
+-- Name: idx_transfer_item_item; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_transfer_item_item ON public.transfer_item USING btree (item_id);
+
+
+--
 -- Name: ix_role_permission_perm_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3529,6 +3972,20 @@ CREATE INDEX ix_user_role_user_id ON public.user_role USING btree (user_id);
 --
 
 CREATE UNIQUE INDEX uk_aar_active_email ON public.agency_account_request USING btree (lower((contact_email)::text)) WHERE (status_code = ANY (ARRAY['S'::bpchar, 'R'::bpchar]));
+
+
+--
+-- Name: uk_dnintake_item_batch; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uk_dnintake_item_batch ON public.dnintake_item USING btree (donation_id, inventory_id, item_id, batch_no) WHERE (batch_no IS NOT NULL);
+
+
+--
+-- Name: uk_dnintake_item_null_batch; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uk_dnintake_item_null_batch ON public.dnintake_item USING btree (donation_id, inventory_id, item_id) WHERE (batch_no IS NULL);
 
 
 --
@@ -4101,6 +4558,46 @@ ALTER TABLE ONLY public.transfer
 
 
 --
+-- Name: transfer_item fk_transfer_item_batch; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_item
+    ADD CONSTRAINT fk_transfer_item_batch FOREIGN KEY (inventory_id, batch_id) REFERENCES public.itembatch(inventory_id, batch_id);
+
+
+--
+-- Name: transfer_item fk_transfer_item_inventory; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_item
+    ADD CONSTRAINT fk_transfer_item_inventory FOREIGN KEY (inventory_id, item_id) REFERENCES public.inventory(inventory_id, item_id);
+
+
+--
+-- Name: transfer_item fk_transfer_item_item; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_item
+    ADD CONSTRAINT fk_transfer_item_item FOREIGN KEY (item_id) REFERENCES public.item(item_id);
+
+
+--
+-- Name: transfer_item fk_transfer_item_transfer; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_item
+    ADD CONSTRAINT fk_transfer_item_transfer FOREIGN KEY (transfer_id) REFERENCES public.transfer(transfer_id) ON DELETE CASCADE;
+
+
+--
+-- Name: transfer_item fk_transfer_item_uom; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_item
+    ADD CONSTRAINT fk_transfer_item_uom FOREIGN KEY (uom_code) REFERENCES public.unitofmeasure(uom_code);
+
+
+--
 -- Name: transfer fk_transfer_warehouse1; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4408,5 +4905,5 @@ ALTER TABLE ONLY public.xfreturn_item
 -- PostgreSQL database dump complete
 --
 
-\unrestrict PRq9hX58qlP0czki0MzTC6MrVRPhwgxwVfj6y37aV5rzgOURALdHhRxkmjF1yAj
+\unrestrict 27Tp6XNxTmBHNpT4T5yXsEoY6SERqawpmnbWlRRU3D2ZBBLzgZHZlgecxVbweKX
 

@@ -4,13 +4,14 @@ Allows Logistics Officers/Managers to prepare relief packages from approved requ
 """
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, abort
 from flask_login import login_required, current_user
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from decimal import Decimal
 from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
 import uuid
 
 from app.db import db
+from app.utils.timezone import now as jamaica_now
 from app.db.models import (
     ReliefRqst, ReliefRqstItem, Item, Warehouse, Inventory, ItemBatch,
     User, Notification,
@@ -218,13 +219,13 @@ def review_approval(reliefrqst_id):
             
             # LM approval: set verify_by_id and verify_dtime
             relief_pkg.verify_by_id = current_user.user_name
-            relief_pkg.verify_dtime = datetime.now()
+            relief_pkg.verify_dtime = jamaica_now()
             
             # Mark package as dispatched
             relief_pkg.status_code = rr_service.PKG_STATUS_DISPATCHED
-            relief_pkg.dispatch_dtime = datetime.now()
+            relief_pkg.dispatch_dtime = jamaica_now()
             relief_pkg.update_by_id = current_user.user_name
-            relief_pkg.update_dtime = datetime.now()
+            relief_pkg.update_dtime = jamaica_now()
             
             # Commit inventory: convert reservations to actual deductions
             success, error_msg = reservation_service.commit_inventory(relief_request.reliefrqst_id)
@@ -233,7 +234,7 @@ def review_approval(reliefrqst_id):
             
             # Update relief request status
             relief_request.action_by_id = current_user.user_name
-            relief_request.action_dtime = datetime.now()
+            relief_request.action_dtime = jamaica_now()
             relief_request.status_code = rr_service.STATUS_PART_FILLED
             relief_request.version_nbr += 1
             
@@ -338,9 +339,18 @@ def approve_package(reliefrqst_id):
         
         # Load existing BATCH-LEVEL allocations from the pending package
         # This ensures LM sees LO's prepared allocations exactly as submitted
+        # CRITICAL: Build set of items with allocation activity BEFORE processing allocations
+        items_with_pkg_records = set()
+        
+        # CRITICAL: Explicitly query ReliefPkgItem records to ensure zero-qty markers are loaded
         existing_batch_allocations = {}
-        for pkg_item in relief_pkg.items:
+        pkg_items = ReliefPkgItem.query.filter_by(reliefpkg_id=relief_pkg.reliefpkg_id).all()
+        for pkg_item in pkg_items:
             item_id = pkg_item.item_id
+            
+            # CRITICAL: Mark this item as having allocation activity
+            items_with_pkg_records.add(item_id)
+            
             warehouse_id = pkg_item.fr_inventory_id  # fr_inventory_id IS the warehouse_id
             batch_id = pkg_item.batch_id
             
@@ -359,22 +369,32 @@ def approve_package(reliefrqst_id):
         
         # Compute item status options
         item_status_options = {}
+        
+        # items_with_pkg_records was already built from the explicit ReliefPkgItem query above
+        # This includes zero-qty records that serve as activity markers
+        
         for item in relief_request.items:
             total_allocated = Decimal('0')
             if item.item_id in existing_batch_allocations:
                 for batch_allocation in existing_batch_allocations[item.item_id]:
                     total_allocated += Decimal(str(batch_allocation['qty']))
             
+            # Check if item has allocation activity (drawer opened/saved)
+            # An item has activity if a ReliefPkgItem record exists, even with qty=0
+            has_allocation_activity = item.item_id in items_with_pkg_records
+            
             auto_status, allowed_codes = item_status_service.compute_allowed_statuses(
                 item.status_code,
                 total_allocated,
-                item.request_qty
+                item.request_qty,
+                has_allocation_activity
             )
             
             item_status_options[item.item_id] = {
                 'auto_status': auto_status,
                 'allowed_codes': allowed_codes,
-                'total_allocated': float(total_allocated)
+                'total_allocated': float(total_allocated),
+                'has_allocation_activity': has_allocation_activity
             }
         
         return render_template('packaging/approve.html',
@@ -427,7 +447,7 @@ def _save_draft_approval(relief_request, relief_pkg, relief_request_version, pac
         # Keep package in pending status
         relief_pkg.status_code = rr_service.PKG_STATUS_PENDING
         relief_pkg.update_by_id = current_user.user_name
-        relief_pkg.update_dtime = datetime.now()
+        relief_pkg.update_dtime = jamaica_now()
         relief_pkg.version_nbr += 1
         
         # Flush to persist allocations before reservation
@@ -554,13 +574,13 @@ def _approve_and_dispatch(relief_request, relief_pkg, relief_request_version, pa
         
         # LM approval: set verify_by_id and verify_dtime
         relief_pkg.verify_by_id = current_user.user_name
-        relief_pkg.verify_dtime = datetime.now()
+        relief_pkg.verify_dtime = jamaica_now()
         
         # Mark package as dispatched
         relief_pkg.status_code = rr_service.PKG_STATUS_DISPATCHED
-        relief_pkg.dispatch_dtime = datetime.now()
+        relief_pkg.dispatch_dtime = jamaica_now()
         relief_pkg.update_by_id = current_user.user_name
-        relief_pkg.update_dtime = datetime.now()
+        relief_pkg.update_dtime = jamaica_now()
         relief_pkg.version_nbr += 1
         
         # Flush to persist allocations
@@ -573,7 +593,7 @@ def _approve_and_dispatch(relief_request, relief_pkg, relief_request_version, pa
         
         # Update relief request status
         relief_request.action_by_id = current_user.user_name
-        relief_request.action_dtime = datetime.now()
+        relief_request.action_dtime = jamaica_now()
         relief_request.status_code = rr_service.STATUS_PART_FILLED
         relief_request.version_nbr += 1
         
@@ -700,7 +720,7 @@ def transaction_summary(reliefpkg_id):
                          total_items=total_items,
                          total_batches=total_batches,
                          warehouses_used=warehouses_used,
-                         generated_at=datetime.now(),
+                         generated_at=jamaica_now(),
                          from_tab=from_tab)
 
 
@@ -801,6 +821,8 @@ def pending_fulfillment():
     List all approved relief requests awaiting package preparation.
     Shows SUBMITTED (3) and PART_FILLED (5) requests for LO/LM to fulfill.
     Also shows approved packages (status='D') for informational purposes.
+    
+    Uses tab-specific dataset builders to ensure badge counts exactly match displayed rows.
     """
     from app.core.rbac import is_logistics_officer, is_logistics_manager
     if not (is_logistics_officer() or is_logistics_manager()):
@@ -808,278 +830,231 @@ def pending_fulfillment():
         abort(403)
     
     filter_type = request.args.get('filter', 'awaiting')
+    current_user_name = current_user.user_name
+    is_lm = is_logistics_manager()
     
-    # Handle approved_for_dispatch filter - shows approved packages WITH items allocated
-    if filter_type == 'approved_for_dispatch':
-        # Query approved packages (status='D') with items allocated
-        approved_packages = ReliefPkg.query.options(
+    # Helper functions
+    def has_pending_approval(req):
+        """
+        Check if request has a package submitted for LM approval.
+        
+        Distinguishes "submitted for approval" from "draft being prepared":
+        - Submitted: verify_by_id == '__PENDING_LM__' (sentinel marker)
+        - Draft: verify_by_id == NULL
+        - Approved: verify_by_id == LM's username
+        """
+        return (req.status_code == rr_service.STATUS_PART_FILLED and
+                any(pkg.status_code == rr_service.PKG_STATUS_PENDING 
+                    and pkg.dispatch_dtime is None
+                    and pkg.verify_by_id == '__PENDING_LM__'  # Must be submitted (not draft)
+                    for pkg in req.packages))
+    
+    def has_dispatched_package(req):
+        """Check if request has any packages that have been approved and dispatched."""
+        return any(pkg.status_code == rr_service.PKG_STATUS_DISPATCHED 
+                   for pkg in req.packages)
+    
+    def is_lo_involved_with_request(req):
+        """Check if LO is involved with this request (created, took action on, or worked on packages/items)."""
+        # LO created the request
+        if req.create_by_id == current_user_name:
+            return True
+        # LO took action on the request (fulfillment actions)
+        if hasattr(req, 'action_by_id') and req.action_by_id == current_user_name:
+            return True
+        # LO took action on any request items
+        if any(hasattr(item, 'action_by_id') and item.action_by_id == current_user_name 
+               for item in req.items):
+            return True
+        # LO worked on any packages
+        return any(pkg.create_by_id == current_user_name or pkg.update_by_id == current_user_name 
+                  for pkg in req.packages)
+    
+    def is_lo_involved_with_package(pkg):
+        """Check if LO is involved with this package."""
+        return (pkg.create_by_id == current_user_name or 
+                pkg.update_by_id == current_user_name or
+                (pkg.relief_request and pkg.relief_request.create_by_id == current_user_name))
+    
+    # Tab-specific dataset builders - each returns the EXACT dataset to be displayed
+    def get_awaiting_requests():
+        """Get requests awaiting to be filled (SUBMITTED status)."""
+        all_requests = ReliefRqst.query.options(
+            joinedload(ReliefRqst.agency),
+            joinedload(ReliefRqst.eligible_event),
+            joinedload(ReliefRqst.status),
+            joinedload(ReliefRqst.items),
+            joinedload(ReliefRqst.packages)
+        ).filter(
+            ReliefRqst.status_code == rr_service.STATUS_SUBMITTED
+        ).order_by(ReliefRqst.create_dtime.desc()).all()
+        
+        results = []
+        for req in all_requests:
+            # Skip requests with pending approval or dispatched packages
+            if has_pending_approval(req) or has_dispatched_package(req):
+                continue
+            # All LOs and LMs see all approved/eligible requests (no ownership filtering)
+            results.append(req)
+        return results
+    
+    def get_in_progress_requests():
+        """Get requests being prepared (PART_FILLED status)."""
+        all_requests = ReliefRqst.query.options(
+            joinedload(ReliefRqst.agency),
+            joinedload(ReliefRqst.eligible_event),
+            joinedload(ReliefRqst.status),
+            joinedload(ReliefRqst.items),
+            joinedload(ReliefRqst.packages)
+        ).filter(
+            ReliefRqst.status_code == rr_service.STATUS_PART_FILLED
+        ).order_by(ReliefRqst.create_dtime.desc()).all()
+        
+        results = []
+        for req in all_requests:
+            # Skip requests with pending approval or dispatched packages
+            if has_pending_approval(req) or has_dispatched_package(req):
+                continue
+            # All LOs and LMs see all approved/eligible requests (no ownership filtering)
+            results.append(req)
+        return results
+    
+    def get_pending_approval_requests():
+        """Get requests with packages awaiting LM approval."""
+        all_requests = ReliefRqst.query.options(
+            joinedload(ReliefRqst.agency),
+            joinedload(ReliefRqst.eligible_event),
+            joinedload(ReliefRqst.status),
+            joinedload(ReliefRqst.items),
+            joinedload(ReliefRqst.packages)
+        ).filter(
+            ReliefRqst.status_code.in_([rr_service.STATUS_SUBMITTED, rr_service.STATUS_PART_FILLED])
+        ).order_by(ReliefRqst.create_dtime.desc()).all()
+        
+        results = []
+        for req in all_requests:
+            if not has_pending_approval(req):
+                continue
+            # All LOs and LMs see all approved/eligible requests (no ownership filtering)
+            results.append(req)
+        return results
+    
+    def get_approved_packages_with_items():
+        """Get approved packages WITH items allocated (total quantity > 0)."""
+        all_packages = ReliefPkg.query.options(
             joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.agency),
             joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.eligible_event),
             joinedload(ReliefPkg.items).joinedload(ReliefPkgItem.item)
         ).filter(
-            ReliefPkg.status_code == rr_service.PKG_STATUS_DISPATCHED
+            ReliefPkg.status_code == rr_service.PKG_STATUS_DISPATCHED,
+            ReliefPkg.received_dtime.is_(None)
         ).order_by(ReliefPkg.dispatch_dtime.desc()).all()
         
-        # Filter to only packages WITH items allocated AND user should see them
-        current_user_name = current_user.user_name
-        package_data = []
-        for pkg in approved_packages:
-            item_count = len(pkg.items)
-            
-            # Determine if user should see this package
-            if is_logistics_manager():
-                # LM: Can see all packages
-                user_should_see = True
-            else:
-                # LO: Can see packages they created/updated OR relief requests they created
-                user_should_see = (
-                    pkg.create_by_id == current_user_name or 
-                    pkg.update_by_id == current_user_name or
-                    (pkg.relief_request and pkg.relief_request.create_by_id == current_user_name)
-                )
-            
-            if item_count > 0 and user_should_see:  # Only packages with allocated items AND user can see
-                package_data.append({
-                    'package': pkg,
-                    'relief_request': pkg.relief_request,
-                    'item_count': item_count,
-                    'total_qty': sum(item.item_qty for item in pkg.items if item.item_qty)
-                })
-        
-        # Count approved packages with items (user-specific or all for LM)
-        total_approved = len(package_data)
-        awaiting_handover = len([p['package'] for p in package_data if not p['package'].received_dtime])
-        
-        # Count packages with no allocation for global counts
-        if is_logistics_manager():
-            # LM: Count all packages with no allocation
-            approved_no_allocation_count = len([pkg for pkg in approved_packages if len(pkg.items) == 0])
-        else:
-            # LO: Count only their packages with no allocation (or relief requests they created)
-            approved_no_allocation_count = len([pkg for pkg in approved_packages 
-                                               if len(pkg.items) == 0 
-                                               and (pkg.create_by_id == current_user_name or 
-                                                    pkg.update_by_id == current_user_name or
-                                                    (pkg.relief_request and pkg.relief_request.create_by_id == current_user_name))])
-        
-        return render_template('packaging/pending_fulfillment.html',
-                             requests=[],
-                             packages=package_data,
-                             counts={'approved': total_approved, 'awaiting_handover': awaiting_handover},
-                             global_counts={'approved': total_approved, 'approved_no_allocation': approved_no_allocation_count},
-                             current_filter=filter_type,
-                             now=datetime.now())
+        results = []
+        for pkg in all_packages:
+            # Calculate total quantity - matches template logic
+            total_qty = sum(item.item_qty for item in pkg.items if item.item_qty)
+            # Only packages WITH total quantity > 0
+            if total_qty == 0:
+                continue
+            # All LOs and LMs see all approved packages (no ownership filtering)
+            results.append(pkg)
+        return results
     
-    # Handle approved_no_allocation filter - shows approved packages WITHOUT items allocated
-    if filter_type == 'approved_no_allocation':
-        # Query all approved packages (status='D')
-        all_approved_packages = ReliefPkg.query.options(
+    def get_approved_packages_no_items():
+        """Get approved packages WITHOUT items allocated (total quantity == 0)."""
+        all_packages = ReliefPkg.query.options(
             joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.agency),
             joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.eligible_event),
             joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.items),
             joinedload(ReliefPkg.items).joinedload(ReliefPkgItem.item)
         ).filter(
-            ReliefPkg.status_code == rr_service.PKG_STATUS_DISPATCHED
+            ReliefPkg.status_code == rr_service.PKG_STATUS_DISPATCHED,
+            ReliefPkg.received_dtime.is_(None)
         ).order_by(ReliefPkg.dispatch_dtime.desc()).all()
         
-        # Filter to only packages WITHOUT items allocated AND user should see them
-        current_user_name = current_user.user_name
+        results = []
+        for pkg in all_packages:
+            # Calculate total quantity - matches template logic
+            total_qty = sum(item.item_qty for item in pkg.items if item.item_qty)
+            # Only packages WITHOUT total quantity (zero or no items)
+            if total_qty > 0:
+                continue
+            # All LOs and LMs see all approved packages (no ownership filtering)
+            results.append(pkg)
+        return results
+    
+    # Build ALL tab datasets and calculate counts from them
+    # This ensures badge counts EXACTLY match displayed rows
+    awaiting_requests = get_awaiting_requests()
+    in_progress_requests = get_in_progress_requests()
+    pending_approval_requests = get_pending_approval_requests()
+    approved_with_items = get_approved_packages_with_items()
+    approved_no_items = get_approved_packages_no_items()
+    
+    # Calculate counts from the EXACT datasets that will be displayed
+    all_tab_counts = {
+        'submitted': len(awaiting_requests),
+        'in_progress': len(in_progress_requests),
+        'pending_approval': len(pending_approval_requests),
+        'approved': len(approved_with_items),
+        'approved_no_allocation': len(approved_no_items)
+    }
+    
+    # Return the appropriate dataset based on filter_type
+    if filter_type == 'approved_for_dispatch':
+        # Show approved packages WITH items - use pre-built dataset
         package_data = []
-        for pkg in all_approved_packages:
-            # Determine if user should see this package
-            if is_logistics_manager():
-                # LM: Can see all packages
-                user_should_see = True
-            else:
-                # LO: Can see packages they created/updated OR relief requests they created
-                user_should_see = (
-                    pkg.create_by_id == current_user_name or 
-                    pkg.update_by_id == current_user_name or
-                    (pkg.relief_request and pkg.relief_request.create_by_id == current_user_name)
-                )
-            
-            if len(pkg.items) == 0 and user_should_see:  # Only packages with NO allocated items AND user can see
-                package_data.append({
-                    'package': pkg,
-                    'relief_request': pkg.relief_request,
-                    'item_count': 0,
-                    'total_qty': 0
-                })
-        
-        # Count packages with no allocation (user-specific or all for LM)
-        total_no_allocation = len(package_data)
-        
-        # Count packages with items for global counts
-        if is_logistics_manager():
-            # LM: Count all packages with items
-            approved_with_items_count = len([pkg for pkg in all_approved_packages if len(pkg.items) > 0])
-        else:
-            # LO: Count only their packages with items (or relief requests they created)
-            approved_with_items_count = len([pkg for pkg in all_approved_packages 
-                                            if len(pkg.items) > 0 
-                                            and (pkg.create_by_id == current_user_name or 
-                                                 pkg.update_by_id == current_user_name or
-                                                 (pkg.relief_request and pkg.relief_request.create_by_id == current_user_name))])
+        for pkg in approved_with_items:
+            package_data.append({
+                'package': pkg,
+                'relief_request': pkg.relief_request,
+                'item_count': len(pkg.items),
+                'total_qty': sum(item.item_qty for item in pkg.items if item.item_qty)
+            })
         
         return render_template('packaging/pending_fulfillment.html',
                              requests=[],
                              packages=package_data,
-                             counts={'approved_no_allocation': total_no_allocation},
-                             global_counts={'approved': approved_with_items_count, 'approved_no_allocation': total_no_allocation},
+                             counts=all_tab_counts,
+                             global_counts=all_tab_counts,
                              current_filter=filter_type,
-                             now=datetime.now())
+                             now=jamaica_now())
     
-    # Normal request-based filters
-    base_query = ReliefRqst.query.options(
-        joinedload(ReliefRqst.agency),
-        joinedload(ReliefRqst.eligible_event),
-        joinedload(ReliefRqst.status),
-        joinedload(ReliefRqst.items),
-        joinedload(ReliefRqst.packages)  # Load packages to check for pending approval
-    ).filter(
-        ReliefRqst.status_code.in_([rr_service.STATUS_SUBMITTED, rr_service.STATUS_PART_FILLED])
-    ).order_by(ReliefRqst.create_dtime.desc())
+    elif filter_type == 'approved_no_allocation':
+        # Show approved packages WITHOUT items - use pre-built dataset
+        package_data = []
+        for pkg in approved_no_items:
+            package_data.append({
+                'package': pkg,
+                'relief_request': pkg.relief_request,
+                'item_count': 0,
+                'total_qty': 0
+            })
+        
+        return render_template('packaging/pending_fulfillment.html',
+                             requests=[],
+                             packages=package_data,
+                             counts=all_tab_counts,
+                             global_counts=all_tab_counts,
+                             current_filter=filter_type,
+                             now=jamaica_now())
     
-    all_requests = base_query.all()
-    
-    # Helper function to check if request has package pending LM approval
-    def has_pending_approval(req):
-        """
-        Check if request has a package submitted for LM approval.
-        
-        Differentiates between:
-        - Draft packages: request status=SUBMITTED, package status='P', dispatch_dtime=NULL (shows in "Being Prepared")
-        - Submitted packages: request status=PART_FILLED, package status='P', dispatch_dtime=NULL (shows in "Awaiting Approval")
-        
-        Key insight: When LO submits for approval, relief request status changes to PART_FILLED (line 1347)
-        """
-        return (req.status_code == rr_service.STATUS_PART_FILLED and
-                any(pkg.status_code == rr_service.PKG_STATUS_PENDING 
-                    and pkg.dispatch_dtime is None
-                    for pkg in req.packages))
-    
-    # Helper function to check if request has dispatched packages
-    def has_dispatched_package(req):
-        """
-        Check if request has any packages that have been approved and dispatched.
-        Dispatched packages should only appear in the "Approved for Dispatch" tab.
-        """
-        return any(pkg.status_code == rr_service.PKG_STATUS_DISPATCHED 
-                   for pkg in req.packages)
-    
-    # Helper function to check if current user has worked on this request
-    def is_user_involved(req):
-        """
-        Check if the current user should see this request.
-        
-        For Logistics Officers (LO):
-        - Shows packages the LO created or updated
-        - Shows packages tied to relief requests the LO created
-        
-        For Logistics Managers (LM):
-        - Shows ALL packages from all LOs and themselves
-        - Shows packages they verified or are awaiting their approval
-        """
-        current_user_name = current_user.user_name
-        
-        # LM: Can see all packages from all LOs and themselves
-        if is_logistics_manager():
-            # If request has any packages, LM can see it
-            return len(req.packages) > 0
-        
-        # LO: Can see packages they created/updated OR relief requests they created
-        for pkg in req.packages:
-            if (pkg.create_by_id == current_user_name or 
-                pkg.update_by_id == current_user_name or
-                req.create_by_id == current_user_name):
-                return True
-        
-        return False
-    
-    if filter_type == 'awaiting':
-        # Show all SUBMITTED requests (not yet partially filled)
-        # Exclude requests with dispatched packages (they belong in Approved for Dispatch tab)
-        filtered_requests = [r for r in all_requests 
-                           if r.status_code == rr_service.STATUS_SUBMITTED 
-                           and not has_pending_approval(r)
-                           and not has_dispatched_package(r)]
+    elif filter_type == 'awaiting':
+        filtered_requests = awaiting_requests
     elif filter_type == 'in_progress':
-        # Being Prepared: Show PART_FILLED requests (in active preparation)
-        # Exclude requests with dispatched packages (they belong in Approved for Dispatch tab)
-        filtered_requests = [r for r in all_requests 
-                           if r.status_code == rr_service.STATUS_PART_FILLED
-                           and not has_pending_approval(r)
-                           and not has_dispatched_package(r)]
+        filtered_requests = in_progress_requests
     elif filter_type == 'pending_approval':
-        # Show only requests with packages awaiting LM approval AND user is involved
-        filtered_requests = [r for r in all_requests if has_pending_approval(r) and is_user_involved(r)]
+        filtered_requests = pending_approval_requests
     else:
-        # "All" tab: Show only requests where current user is involved
-        filtered_requests = [r for r in all_requests if is_user_involved(r)]
-    
-    # Count approved packages for the tabs
-    # Get all approved packages and split by allocation status
-    all_approved_pkgs = ReliefPkg.query.options(
-        joinedload(ReliefPkg.items)
-    ).filter(
-        ReliefPkg.status_code == rr_service.PKG_STATUS_DISPATCHED
-    ).all()
-    
-    approved_with_items = len([pkg for pkg in all_approved_pkgs if len(pkg.items) > 0])
-    approved_no_allocation = len([pkg for pkg in all_approved_pkgs if len(pkg.items) == 0])
-    
-    # For LOs: Filter approved packages by user involvement
-    current_user_name = current_user.user_name
-    if is_logistics_manager():
-        # LM sees all packages
-        user_approved_pkgs = all_approved_pkgs
-    else:
-        # LO sees only packages they created or updated
-        user_approved_pkgs = [pkg for pkg in all_approved_pkgs 
-                             if pkg.create_by_id == current_user_name or pkg.update_by_id == current_user_name]
-    
-    user_approved_with_items = len([pkg for pkg in user_approved_pkgs if len(pkg.items) > 0])
-    user_approved_no_allocation = len([pkg for pkg in user_approved_pkgs if len(pkg.items) == 0])
-    
-    # For badge counts: Use user-involved requests (all requests the user should see)
-    # This ensures badge counts are correct regardless of which tab is active
-    user_requests = [r for r in all_requests if is_user_involved(r)]
-    
-    global_counts = {
-        'submitted': len([r for r in all_requests 
-                         if r.status_code == rr_service.STATUS_SUBMITTED 
-                         and not has_pending_approval(r)
-                         and not has_dispatched_package(r)]),
-        'in_progress': len([r for r in all_requests 
-                           if r.status_code == rr_service.STATUS_PART_FILLED
-                           and not has_pending_approval(r)
-                           and not has_dispatched_package(r)]),
-        'pending_approval': len([r for r in all_requests if has_pending_approval(r)]),
-        'approved': approved_with_items,
-        'approved_no_allocation': approved_no_allocation
-    }
-    
-    # Calculate user-scoped counts from ALL user requests (not just filtered by current tab)
-    # This ensures badge counts show correct numbers on all tabs
-    filtered_counts = {
-        'submitted': len([r for r in user_requests 
-                         if r.status_code == rr_service.STATUS_SUBMITTED 
-                         and not has_pending_approval(r)
-                         and not has_dispatched_package(r)]),
-        'in_progress': len([r for r in user_requests 
-                           if r.status_code == rr_service.STATUS_PART_FILLED
-                           and not has_pending_approval(r)
-                           and not has_dispatched_package(r)]),
-        'pending_approval': len([r for r in user_requests if has_pending_approval(r)]),
-        'approved': user_approved_with_items,
-        'approved_no_allocation': user_approved_no_allocation
-    }
+        # Default: show all requests user is involved with
+        filtered_requests = (awaiting_requests + in_progress_requests + pending_approval_requests)
     
     return render_template('packaging/pending_fulfillment.html',
                          requests=filtered_requests,
                          packages=[],
-                         counts=filtered_counts,
-                         global_counts=global_counts,
+                         counts=all_tab_counts,
+                         global_counts=all_tab_counts,
                          current_filter=filter_type,
                          STATUS_SUBMITTED=rr_service.STATUS_SUBMITTED,
                          STATUS_PART_FILLED=rr_service.STATUS_PART_FILLED)
@@ -1134,13 +1109,24 @@ def prepare_package(reliefrqst_id):
         
         # Get existing package for this relief request (should only be one)
         existing_package = ReliefPkg.query.filter_by(reliefrqst_id=reliefrqst_id).first()
-        existing_packages = [existing_package] if existing_package else []
         
         existing_allocations = {}
         existing_batch_allocations = {}
-        for pkg in existing_packages:
-            for pkg_item in pkg.items:
+        
+        # CRITICAL: Build set of items with allocation activity BEFORE processing allocations
+        # This includes items with zero-qty ReliefPkgItem records (activity markers)
+        items_with_pkg_records = set()
+        
+        # CRITICAL: Explicitly query ReliefPkgItem records to ensure zero-qty markers are loaded
+        # SQLAlchemy relationships may not eagerly load all records, so we query directly
+        if existing_package:
+            pkg_items = ReliefPkgItem.query.filter_by(reliefpkg_id=existing_package.reliefpkg_id).all()
+            for pkg_item in pkg_items:
                 item_id = pkg_item.item_id
+                
+                # CRITICAL: Mark this item as having allocation activity
+                items_with_pkg_records.add(item_id)
+                
                 # fr_inventory_id IS the warehouse_id (inventory_id = warehouse_id in schema)
                 warehouse_id = pkg_item.fr_inventory_id
                 batch_id = pkg_item.batch_id
@@ -1169,6 +1155,10 @@ def prepare_package(reliefrqst_id):
         
         # Compute allowed status options for each item based on allocation state
         item_status_options = {}
+        
+        # items_with_pkg_records was already built from the explicit ReliefPkgItem query above
+        # This includes zero-qty records that serve as activity markers
+        
         for item in relief_request.items:
             # Calculate total allocated for this item
             total_allocated = Decimal('0')
@@ -1176,17 +1166,23 @@ def prepare_package(reliefrqst_id):
                 for warehouse_qty in existing_allocations[item.item_id].values():
                     total_allocated += warehouse_qty
             
+            # Check if item has allocation activity (drawer opened/saved)
+            # An item has activity if a ReliefPkgItem record exists, even with qty=0
+            has_allocation_activity = item.item_id in items_with_pkg_records
+            
             # Get auto status and allowed transitions
             auto_status, allowed_codes = item_status_service.compute_allowed_statuses(
                 item.status_code,
                 total_allocated,
-                item.request_qty
+                item.request_qty,
+                has_allocation_activity
             )
             
             item_status_options[item.item_id] = {
                 'auto_status': auto_status,
                 'allowed_codes': allowed_codes,
-                'total_allocated': float(total_allocated)
+                'total_allocated': float(total_allocated),
+                'has_allocation_activity': has_allocation_activity
             }
         
         return render_template('packaging/prepare.html',
@@ -1223,9 +1219,10 @@ def _save_draft(relief_request, relief_request_version, package_version):
     
     Draft packages:
     - Change request status to PART_FILLED (to show in "Being Prepared" tab)
-    - Create ReliefPkg with status='P' but verify_by_id=NULL (not submitted for approval)
+    - Create ReliefPkg with status='P' and received_by_id=NULL (draft marker)
     - Reserve inventory
     - NO notifications sent
+    - Package stays in "Being Prepared" tab and OUT of "Pending Approval" tab
     
     IMPORTANT: Uses atomic transaction to ensure allocations and reservations stay in sync.
     If inventory reservation fails, entire transaction rolls back to prevent phantom allocations.
@@ -1243,10 +1240,20 @@ def _save_draft(relief_request, relief_request_version, package_version):
         # Process and validate allocations (creates ReliefPkgItem records in pending transaction)
         new_allocations = _process_allocations(relief_request, validate_complete=False)
         
+        # Get the package created/updated by _process_allocations
+        relief_pkg = ReliefPkg.query.filter_by(reliefrqst_id=relief_request.reliefrqst_id).first()
+        if relief_pkg:
+            # CRITICAL: Ensure verify_by_id is NULL for drafts (distinguishes draft from submitted)
+            # Only "Submit for Approval" sets verify_by_id to '__PENDING_LM__' sentinel
+            # This keeps drafts OUT of "Pending Approval" tab
+            relief_pkg.verify_by_id = None
+            relief_pkg.verify_dtime = None
+            # NOTE: Do NOT increment version_nbr here - _process_allocations already does it
+        
         # Change request status to PART_FILLED to show in "Being Prepared" tab
         relief_request.status_code = rr_service.STATUS_PART_FILLED
         relief_request.action_by_id = current_user.user_name
-        relief_request.action_dtime = datetime.now()
+        relief_request.action_dtime = jamaica_now()
         relief_request.version_nbr += 1
         
         # Flush to database (still in transaction - not committed yet)
@@ -1348,17 +1355,20 @@ def _submit_for_approval(relief_request, relief_request_version, package_version
                 return redirect(url_for('packaging.pending_fulfillment'))
         
         # Mark package as submitted for approval (status stays 'P' but we're now in "awaiting LM approval" state)
-        # Set update_by_id to mark who submitted (LO), but keep verify_by_id NULL until LM actually verifies
-        # The "submitted for LM approval" state is indicated by: status='P' + update_by_id set + dispatch_dtime NULL
+        # CRITICAL: Set verify_by_id to sentinel value '__PENDING_LM__' to mark as submitted
+        # This distinguishes "submitted for approval" from "draft being prepared"
+        # LM approval will overwrite this sentinel with the actual LM's username
         relief_pkg.status_code = rr_service.PKG_STATUS_PENDING
+        relief_pkg.verify_by_id = '__PENDING_LM__'  # Sentinel: submitted for LM approval
+        relief_pkg.verify_dtime = jamaica_now()  # Mark submission time
         relief_pkg.update_by_id = current_user.user_name
-        relief_pkg.update_dtime = datetime.now()
+        relief_pkg.update_dtime = jamaica_now()
         relief_pkg.version_nbr += 1
         
         # Change request status to PART_FILLED (submitted for approval)
         relief_request.status_code = rr_service.STATUS_PART_FILLED
         relief_request.action_by_id = current_user.user_name
-        relief_request.action_dtime = datetime.now()
+        relief_request.action_dtime = jamaica_now()
         relief_request.version_nbr += 1
         
         # Flush to persist allocations before calculating reservation deltas
@@ -1440,13 +1450,13 @@ def _send_for_dispatch(relief_request, relief_request_version, package_version):
         
         # LM approval: set verify_by_id to current LM (bypasses LO approval step)
         relief_pkg.verify_by_id = current_user.user_name
-        relief_pkg.verify_dtime = datetime.now()
+        relief_pkg.verify_dtime = jamaica_now()
         
         # Mark package as dispatched
         relief_pkg.status_code = rr_service.PKG_STATUS_DISPATCHED
-        relief_pkg.dispatch_dtime = datetime.now()
+        relief_pkg.dispatch_dtime = jamaica_now()
         relief_pkg.update_by_id = current_user.user_name
-        relief_pkg.update_dtime = datetime.now()
+        relief_pkg.update_dtime = jamaica_now()
         
         # Flush to persist allocations
         db.session.flush()
@@ -1458,7 +1468,7 @@ def _send_for_dispatch(relief_request, relief_request_version, package_version):
         
         # Update relief request status
         relief_request.action_by_id = current_user.user_name
-        relief_request.action_dtime = datetime.now()
+        relief_request.action_dtime = jamaica_now()
         relief_request.status_code = rr_service.STATUS_PART_FILLED
         relief_request.version_nbr += 1
         
@@ -1530,9 +1540,9 @@ def _process_allocations(relief_request, validate_complete=False):
             start_date=date.today(),
             status_code='P',  # Preparing
             create_by_id=current_user.user_name,
-            create_dtime=datetime.now(),
+            create_dtime=jamaica_now(),
             update_by_id=current_user.user_name,
-            update_dtime=datetime.now(),
+            update_dtime=jamaica_now(),
             verify_by_id=None,  # NULL for drafts, set when submitted for approval
             received_by_id=None,  # NULL until package is received
             version_nbr=1
@@ -1540,18 +1550,28 @@ def _process_allocations(relief_request, validate_complete=False):
         db.session.add(relief_pkg)
         db.session.flush()  # Get the reliefpkg_id
     
-    # CRITICAL: Capture existing allocations BEFORE deletion for reservation delta calculation
+    # CRITICAL: Capture existing allocations BEFORE modification for reservation delta calculation
     existing_pkg_items = ReliefPkgItem.query.filter_by(reliefpkg_id=relief_pkg.reliefpkg_id).all()
     existing_allocations_map = {}
+    existing_records_map = {}  # Map composite key to ReliefPkgItem object for upsert logic
+    items_with_existing_pkg_records = set()  # Track which items have allocation activity
     for pkg_item in existing_pkg_items:
-        # Track by (item_id, batch_id) for batch-level reservations
-        existing_allocations_map[(pkg_item.item_id, pkg_item.batch_id)] = pkg_item.item_qty
+        # Track by (item_id, inventory_id, batch_id) for batch-level reservations
+        # fr_inventory_id IS the warehouse_id (inventory_id in the composite PK)
+        key = (pkg_item.item_id, pkg_item.fr_inventory_id, pkg_item.batch_id)
+        existing_allocations_map[key] = pkg_item.item_qty
+        # Store the actual object for upsert logic (respecting composite PK)
+        # Composite key: (reliefpkg_id, fr_inventory_id, batch_id, item_id)
+        record_key = (pkg_item.reliefpkg_id, pkg_item.fr_inventory_id, pkg_item.batch_id, pkg_item.item_id)
+        existing_records_map[record_key] = pkg_item
+        # Track items that have ReliefPkgItem records (allocation activity)
+        items_with_existing_pkg_records.add(pkg_item.item_id)
     
     # Store old allocations on relief_request object for access in save/submit functions
     relief_request._old_allocations = existing_allocations_map
     
-    # Now clear existing package items to rebuild from form data
-    ReliefPkgItem.query.filter_by(reliefpkg_id=relief_pkg.reliefpkg_id).delete()
+    # Track which records we're keeping/updating (to delete orphaned records later)
+    processed_record_keys = set()
     
     for item in relief_request.items:
         item_id = item.item_id
@@ -1572,26 +1592,34 @@ def _process_allocations(relief_request, validate_complete=False):
                 batch_id = int(parts[3])
                 allocated_qty = Decimal(request.form.get(key) or '0')
                 
+                # Get batch details first (needed for warehouse_id and validation)
+                batch = ItemBatch.query.options(
+                    joinedload(ItemBatch.inventory).joinedload(Inventory.warehouse)
+                ).get(batch_id)
+                
+                if not batch:
+                    raise ValueError(f'Batch {batch_id} not found')
+                
+                # Look up current allocation for this batch from existing package
+                # Key: (item_id, inventory_id, batch_id)
+                existing_key = (item_id, batch.inventory_id, batch_id)
+                current_allocated_qty = existing_allocations_map.get(existing_key, Decimal('0'))
+                
+                # Validate batch allocation (with "release" logic for re-allocation)
                 if allocated_qty > 0:
-                    # Validate batch allocation
                     is_valid, error_msg = BatchAllocationService.validate_batch_allocation(
-                        batch_id, item_id, allocated_qty
+                        batch_id, item_id, allocated_qty, current_allocated_qty
                     )
                     if not is_valid:
                         raise ValueError(error_msg)
-                    
-                    # Get batch details for warehouse tracking
-                    batch = ItemBatch.query.options(
-                        joinedload(ItemBatch.inventory).joinedload(Inventory.warehouse)
-                    ).get(batch_id)
-                    
-                    if not batch:
-                        raise ValueError(f'Batch {batch_id} not found')
-                    
-                    total_allocated += allocated_qty
-                    batch_allocations.append((batch_id, batch.inventory_id, allocated_qty, batch.uom_code))
-                    
-                    # Collect for reservation service (track by warehouse for aggregation)
+                
+                total_allocated += allocated_qty
+                # CRITICAL: Include zero-qty allocations to track drawer activity
+                # This ensures ReliefPkgItem records persist even when qty=0
+                batch_allocations.append((batch_id, batch.inventory_id, allocated_qty, batch.uom_code))
+                
+                # Collect for reservation service (only non-zero allocations)
+                if allocated_qty > 0:
                     new_allocations.append({
                         'item_id': item_id,
                         'batch_id': batch_id,
@@ -1642,13 +1670,22 @@ def _process_allocations(relief_request, validate_complete=False):
         # Get custom reason if provided (for D/L statuses)
         custom_reason = request.form.get(f'status_reason_{item_id}', '').strip()
         
+        # Determine if item has allocation activity
+        # CRITICAL: Check database for existing records OR form keys
+        # This prevents bypassing validation by manipulating form data
+        has_allocation_activity = (
+            item_id in items_with_existing_pkg_records or  # Database check (persisted records)
+            len(allocation_keys) > 0  # Form check (current submission)
+        )
+        
         # Validate status transition using service
         is_valid, error_msg = item_status_service.validate_status_transition(
             item_id,
             item.status_code,
             requested_status,
             total_allocated,
-            request_qty
+            request_qty,
+            has_allocation_activity
         )
         if not is_valid:
             raise ValueError(error_msg)
@@ -1689,7 +1726,7 @@ def _process_allocations(relief_request, validate_complete=False):
         # Only set action_by_id when status is NOT 'R' (per constraint c_reliefrqst_item_7)
         if requested_status != 'R':
             item.action_by_id = current_user.user_name
-            item.action_dtime = datetime.now()
+            item.action_dtime = jamaica_now()
         else:
             # When status is 'R', action_by_id must be NULL
             item.action_by_id = None
@@ -1697,23 +1734,49 @@ def _process_allocations(relief_request, validate_complete=False):
         
         item.version_nbr += 1
         
-        # Create ReliefPkgItem records for each batch allocation
+        # Create or update ReliefPkgItem records for each batch allocation (including zero-qty)
+        # CRITICAL: Zero-qty records serve as markers that the drawer was opened/used
+        # This ensures has_allocation_activity persists across page reloads
+        # UPSERT LOGIC: Respect composite PK (reliefpkg_id, fr_inventory_id, batch_id, item_id)
         for batch_id, inventory_id, allocated_qty, uom_code in batch_allocations:
-            if allocated_qty > 0:
+            # Composite primary key for this allocation
+            record_key = (relief_pkg.reliefpkg_id, inventory_id, batch_id, item_id)
+            
+            # Check if record already exists
+            if record_key in existing_records_map:
+                # UPDATE existing record
+                pkg_item = existing_records_map[record_key]
+                pkg_item.item_qty = allocated_qty
+                pkg_item.uom_code = uom_code
+                pkg_item.update_by_id = current_user.user_name
+                pkg_item.update_dtime = jamaica_now()
+                pkg_item.version_nbr += 1
+            else:
+                # INSERT new record
                 pkg_item = ReliefPkgItem(
                     reliefpkg_id=relief_pkg.reliefpkg_id,
                     fr_inventory_id=inventory_id,
                     item_id=item_id,
                     batch_id=batch_id,  # REQUIRED in new schema
-                    item_qty=allocated_qty,
+                    item_qty=allocated_qty,  # Can be zero
                     uom_code=uom_code,
                     create_by_id=current_user.user_name,
-                    create_dtime=datetime.now(),
+                    create_dtime=jamaica_now(),
                     update_by_id=current_user.user_name,
-                    update_dtime=datetime.now(),
+                    update_dtime=jamaica_now(),
                     version_nbr=1
                 )
                 db.session.add(pkg_item)
+            
+            # Track that we processed this record (keep it, don't delete)
+            processed_record_keys.add(record_key)
+    
+    # Delete orphaned records (allocations removed by user)
+    # These are records that exist in the database but weren't in the new form submission
+    for record_key, pkg_item in existing_records_map.items():
+        if record_key not in processed_record_keys:
+            # This record was not processed (user removed this allocation)
+            db.session.delete(pkg_item)
     
     return new_allocations
 
@@ -1791,6 +1854,7 @@ def get_item_batches(item_id):
         remaining_qty = request.args.get('remaining_qty', type=float)
         required_uom = request.args.get('required_uom', type=str)
         allocated_batch_ids_str = request.args.get('allocated_batch_ids', type=str)
+        current_allocations_str = request.args.get('current_allocations', type=str)
         
         # Parse allocated batch IDs from comma-separated string
         allocated_batch_ids = []
@@ -1799,6 +1863,17 @@ def get_item_batches(item_id):
                 allocated_batch_ids = [int(bid) for bid in allocated_batch_ids_str.split(',') if bid.strip()]
             except ValueError:
                 pass  # Ignore invalid batch IDs
+        
+        # Parse current allocations from JSON (batch_id -> quantity mapping)
+        current_allocations = {}
+        if current_allocations_str:
+            try:
+                import json
+                current_allocations = json.loads(current_allocations_str)
+                # Convert keys to int and values to Decimal (JSON keys are strings)
+                current_allocations = {int(k): Decimal(str(v)) for k, v in current_allocations.items()}
+            except (ValueError, json.JSONDecodeError):
+                pass  # Ignore invalid JSON
         
         # Get item to check if it's batched
         item = Item.query.get(item_id)
@@ -1812,7 +1887,8 @@ def get_item_batches(item_id):
                 item_id,
                 Decimal(str(remaining_qty)),
                 required_uom,
-                allocated_batch_ids
+                allocated_batch_ids,
+                current_allocations
             )
             
             # Debug logging
@@ -1827,7 +1903,9 @@ def get_item_batches(item_id):
             # Format batches with priority groups
             result = []
             for batch, priority_group in batch_groups:
-                available_qty = batch.usable_qty - batch.reserved_qty
+                # Calculate available_qty: release current package's allocations from reserved_qty
+                released_qty = current_allocations.get(batch.batch_id, Decimal('0'))
+                available_qty = batch.usable_qty - (batch.reserved_qty - released_qty)
                 batch_info = {
                     'batch_id': batch.batch_id,
                     'batch_no': batch.batch_no,
@@ -2173,9 +2251,9 @@ def mark_handover(reliefpkg_id):
     try:
         # Mark as received/handed over
         relief_pkg.received_by_id = current_user.user_name
-        relief_pkg.received_dtime = datetime.now()
+        relief_pkg.received_dtime = jamaica_now()
         relief_pkg.update_by_id = current_user.user_name
-        relief_pkg.update_dtime = datetime.now()
+        relief_pkg.update_dtime = jamaica_now()
         
         # Note: Status remains 'D' (Dispatched). We use received_dtime to track handover.
         # Status changes to 'C' (Completed) when agency signs off, if needed.
@@ -2261,7 +2339,7 @@ def dispatch_received():
     if current_filter == 'recent':
         # Last 30 days
         from datetime import timedelta
-        cutoff_date = datetime.now() - timedelta(days=30)
+        cutoff_date = jamaica_now() - timedelta(days=30)
         packages = base_query.filter(
             ReliefPkg.received_dtime >= cutoff_date
         ).order_by(ReliefPkg.received_dtime.desc()).all()
@@ -2270,7 +2348,7 @@ def dispatch_received():
     
     # Calculate counts
     from datetime import timedelta
-    cutoff_date = datetime.now() - timedelta(days=30)
+    cutoff_date = jamaica_now() - timedelta(days=30)
     global_counts = {
         'recent': base_query.filter(ReliefPkg.received_dtime >= cutoff_date).count(),
         'all': base_query.count()

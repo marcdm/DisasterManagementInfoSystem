@@ -1,0 +1,71 @@
+On Submit for Approval for a relief package, update the persistence logic for reliefpkg_item so that it records allocations per warehouse + batch + item, not just aggregated by item.
+Do not break any existing code, logic, workflow, behaviour, or database schema.
+
+1. Persist allocations per (inventory, batch, item)
+
+When the LO/LM clicks Submit for Approval:
+
+For each item in the relief package, do not aggregate by item only.
+
+Instead, iterate over all selected allocations per batch per warehouse from the side drawer and, for each allocation where item_qty > 0:
+
+For each unique combination of
+(reliefpkg_id, fr_inventory_id, batch_id, item_id):
+
+Insert or update a row in reliefpkg_item with:
+
+reliefpkg_id = current package ID
+
+fr_inventory_id = inventory/warehouse from which the batch is drawn
+
+batch_id = the itembatch ID
+
+item_id = the item being allocated
+
+item_qty = quantity allocated from that specific batch
+
+uom_code = UOM for that allocation
+
+create_by_id / create_dtime set on insert
+
+update_by_id / update_dtime always updated on change
+
+version_nbr initialized on insert and incremented on every update
+
+2. Respect the existing composite primary key
+
+pk_reliefpkg_item = primary key (reliefpkg_id, fr_inventory_id, batch_id, item_id)
+
+If a row already exists for that exact key:
+
+Update the existing row’s item_qty (and audit fields, version_nbr) instead of inserting a duplicate.
+
+If no row exists:
+
+Insert a new row.
+
+3. No allocations must be lost
+
+Example: if the user allocates Item A as:
+
+5 units from Warehouse 1, Batch 101
+
+7 units from Warehouse 2, Batch 202
+
+Then after Submit for Approval, reliefpkg_item must contain two distinct rows:
+
+(reliefpkg_id, fr_inventory_id = Warehouse1, batch_id = 101, item_id = A, item_qty = 5, uom_code = ...)
+
+(reliefpkg_id, fr_inventory_id = Warehouse2, batch_id = 202, item_id = A, item_qty = 7, uom_code = ...)
+
+Do not aggregate these into a single row.
+
+4. Transactional consistency
+
+This logic must run inside the same transaction where you:
+
+Commit reserved quantities to itembatch and inventory, and
+
+Create/update the relief package header.
+
+If anything fails, the whole transaction (header, itembatch/inventory updates, and reliefpkg_item rows) must roll back together.

@@ -1,0 +1,64 @@
+On the Prepare Relief Package page/form (for both Logistics Officer (LO) and Logistics Manager (LM)), update the Cancel Package Preparation behaviour so that reserved quantities are correctly released.
+Do not break any existing code, logic, behaviour, workflows, or modify the database schema.
+
+Required Behaviour – Cancel Package Preparation
+
+Release reserved quantities on Cancel
+
+When the LO/LM clicks “Cancel Package Preparation” on the Prepare Relief Package screen for a given relief package:
+
+For all item allocations in that package that have been reserved:
+
+In the itembatch table:
+
+Reduce reserved_qty by the amount reserved for this package (for each batch used).
+
+In the inventory table:
+
+Reduce reserved_qty for the corresponding item_id + inventory_id combination by the same total amount.
+
+After cancellation:
+
+No reserved quantity for this package should remain in either itembatch or inventory.
+
+Delta-based release (per batch)
+
+For each itembatch row that was reserved by this package:
+
+Calculate the reserved quantity for this package (based on existing allocation records).
+
+Update as:
+
+itembatch.reserved_qty = itembatch.reserved_qty - reserved_for_this_package
+
+Aggregate that delta per item_id + inventory_id and apply to inventory.reserved_qty:
+
+inventory.reserved_qty = inventory.reserved_qty - total_reserved_for_this_package
+
+Ensure results never go below zero (guard against negative reserved_qty).
+
+Apply only to package being cancelled
+
+Only release reservations that belong to the current package being cancelled.
+
+Do not touch reservations for other relief packages or other requests using the same batches.
+
+One atomic transaction
+
+The cancellation operation must:
+
+Clear all allocations/reservations for the package, and
+
+Update itembatch and inventory reserved_qty
+
+In a single atomic transaction (all succeed or all rollback).
+
+No workflow or schema changes
+
+Do not:
+
+Change any status codes or high-level workflow logic.
+
+Modify any database schema (no new columns, no changes to constraints).
+
+Keep all existing UI, routing, and business logic intact; only enhance the Cancel Package Preparation action so that it releases reserved quantities from both itembatch and inventory when the user cancels.

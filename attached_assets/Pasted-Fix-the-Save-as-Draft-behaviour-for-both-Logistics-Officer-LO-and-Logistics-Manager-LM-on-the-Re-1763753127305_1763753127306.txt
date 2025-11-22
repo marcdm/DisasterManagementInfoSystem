@@ -1,0 +1,73 @@
+Fix the Save as Draft behaviour for both Logistics Officer (LO) and Logistics Manager (LM) on the Relief Fulfillment / Prepare Relief Package pages.
+
+Problem
+
+The “Save as Draft” button is currently behaving like “Submit for Approval”:
+
+Clicking Save as Draft ends up submitting the package for approval and moving it into the Awaiting Approval flow.
+
+This is wrong for both LO and LM.
+
+Required Behaviour
+
+Save as Draft – LO
+
+When the LO clicks Save as Draft:
+
+The system must:
+
+Persist all current allocations, statuses, and changes as a draft.
+
+Keep the package in the “Being Prepared” / draft state for the LO (and LM, if applicable).
+
+Must NOT:
+
+Change the status to “Awaiting Approval”.
+
+Create any entry in the LM’s Awaiting Approval tab/queue.
+
+Send any submit/approval notifications.
+
+After Save as Draft:
+
+The LO (and LM) must be able to reopen the package from the Being Prepared tab and continue editing.
+
+Save as Draft – LM
+
+When the LM is adjusting allocations on the Approve/Prepare pages and clicks Save as Draft:
+
+The system must:
+
+Save all LM changes as a draft.
+
+Keep the package in Awaiting LM Approval / Being Prepared by LM (not approved/ready for dispatch).
+
+Must NOT:
+
+Mark the package as approved.
+
+Move it to Approved for Dispatch.
+
+Notify Inventory Clerk.
+
+After Save as Draft:
+
+The LM must be able to return later, reopen the package, and continue editing before final approval.
+
+Submit / Approve must remain separate
+
+Only the explicit actions (e.g. “Submit for Approval” for LO, “Approve and Dispatch” for LM) should:
+
+Change workflow status to Awaiting LM Approval or Ready for Dispatch.
+
+Trigger notifications and move the package into the relevant approval/dispatch queues.
+
+Save as Draft must never trigger these flows.
+
+Constraints
+
+Do not change any database schema (no new columns, no modified types).
+
+Do not break or alter the existing approval/disptach workflows; only correct the Save as Draft button behaviour and routing.
+
+Ensure Save as Draft works consistently for both LO and LM and is clearly separated from any submission/approval logic.

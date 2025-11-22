@@ -1,0 +1,148 @@
+n the Prepare Relief Package flow, when LO or LM saves selected item batches as a Draft, fix the quantity update logic so that itembatch and inventory stay consistent.
+Current Issue
+
+
+When LO/LM selects batches in the side drawer and clicks Save Draft:
+
+
+The inventory table reserved_qty is updated.
+
+
+But the itembatch table reserved_qty is not updated to reflect those same reservations.
+
+
+
+
+This causes a mismatch between:
+
+
+Batch-level data (itembatch.reserved_qty), and
+
+
+Warehouse-level totals (inventory.reserved_qty).
+
+
+
+
+Required Behaviour
+
+
+Update both itembatch and inventory on Save Draft
+
+
+
+
+When LO/LM saves allocations as Draft (not final approval), for each selected batch:
+
+
+Compute the delta (change) in allocated quantity for that itembatch row.
+
+
+Apply the same delta to:
+
+
+itembatch.reserved_qty
+
+
+inventory.reserved_qty for the corresponding item_id + inventory_id.
+
+
+
+
+
+
+After Save Draft:
+
+
+The sum of itembatch.reserved_qty for a given item & inventory must match the inventory.reserved_qty for that item & inventory.
+
+
+
+
+
+
+Use delta-based updates
+
+
+
+
+Do not blindly overwrite quantities.
+
+
+For each batch:
+
+
+new_reserved = old_reserved + (new_allocated - old_allocated)
+
+
+
+
+Apply this same change at:
+
+
+itembatch row level, and
+
+
+The corresponding inventory record.
+
+
+
+
+
+
+Save Draft only – no workflow change
+
+
+
+
+This fix is for Save Draft during preparation (LO/LM), not for final Approve/Dispatch logic (which should already be updating both properly).
+
+
+Save Draft must:
+
+
+Persist draft allocations.
+
+
+Keep the package in the Being Prepared / Awaiting LM Approval state (as currently designed).
+
+
+Not trigger approval, dispatch, or status changes — only ensure quantities are correctly reflected in both tables.
+
+
+
+
+
+
+Consistency guarantee
+
+
+
+
+After any Save Draft:
+
+
+For every item_id + inventory_id pair touched:
+
+
+inventory.reserved_qty must equal the sum of itembatch.reserved_qty for that same item & inventory.
+
+
+
+
+
+
+This ensures subsequent logic (FEFO/FIFO, batch selection, availability checks) sees accurate batch-level reserved quantities.
+
+
+Constraints
+
+
+Do not change any database schema (no new columns, no altered types).
+
+
+Do not break or change existing workflows, status transitions, or UI behaviour.
+
+
+Only fix the backend logic for Save Draft so that both itembatch and inventory reserved_qty are updated consistently when LO/LM saves selected batches as draft.
+

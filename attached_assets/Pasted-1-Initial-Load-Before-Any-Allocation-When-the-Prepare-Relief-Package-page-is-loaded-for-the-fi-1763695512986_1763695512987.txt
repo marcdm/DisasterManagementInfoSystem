@@ -1,0 +1,65 @@
+1. Initial Load (Before Any Allocation)
+•	When the Prepare Relief Package page is loaded for the first time for a package and:
+o	No allocations have been made for any items yet (Allocated Qty = 0 for all items), and
+o	No drawer has been opened/saved for those items,
+then for each item row:
+o	The Status dropdown must default to “REQUESTED”.
+o	The dropdown options in this initial state must be:
+	REQUESTED
+	UNAVAILABLE
+	DENIED
+	AWAITING AVAILABILITY
+o	The user may manually change “REQUESTED” to any of the other options in that list even before doing any allocation.
+Once an item has gone through an allocation cycle (drawer opened and saved), the normal allocation-based rules apply (below), and “REQUESTED” will no longer be auto-assigned.
+________________________________________
+2. After Allocation Activity Begins (Drawer Used / Allocations Evaluated)
+After the user has started using the drawer (i.e., for an item, allocations have been calculated and saved from the side drawer), the status logic uses Allocated vs Requested and no longer treats that item as “first load”.
+2.1 Fully Allocated (Allocated == Requested)
+•	If Allocated Qty == Requested Qty for an item:
+o	Status must be set to FILLED.
+o	The Status dropdown:
+	Shows FILLED only.
+	Is read-only (user cannot change it).
+2.2 No Allocation (Allocated == 0) After Allocation Logic Runs
+•	If Allocated Qty == 0 for an item after the user has opened/saved the drawer or after the first allocation evaluation:
+o	Status must default to UNAVAILABLE.
+o	The Status dropdown options must be:
+	UNAVAILABLE
+	DENIED
+	AWAITING AVAILABILITY
+o	The user can toggle between those three values.
+o	“REQUESTED” is no longer auto-applied at this stage.
+Example:
+•	Page first opens → item shows REQUESTED.
+•	User opens drawer, makes no allocations, clicks Save/Done → Allocated still 0.
+•	On returning to main screen, status now defaults to UNAVAILABLE, not back to REQUESTED.
+2.3 Partially Allocated (0 < Allocated < Requested)
+•	If 0 < Allocated Qty < Requested Qty:
+o	Status must default to PARTLY FILLED.
+o	The Status dropdown options must be:
+	PARTLY FILLED
+	ALLOWED LIMIT
+o	The user can toggle between those two values.
+________________________________________
+3. Refreshing Status After Drawer Changes
+•	Every time the user:
+o	Opens the drawer,
+o	Changes allocations,
+o	Saves/closes the drawer,
+the system must:
+4.	Recalculate Allocated Qty for that item.
+5.	Compare to Requested Qty.
+6.	Set the Status and allowed options according to:
+	Initial page load, no allocation yet → REQUESTED (with REQUESTED/UNAVAILABLE/DENIED/AWAITING AVAILABILITY).
+	After allocation logic:
+	Allocated == Requested → FILLED (locked).
+	Allocated == 0 → UNAVAILABLE (+ DENIED, AWAITING AVAILABILITY).
+	0 < Allocated < Requested → PARTLY FILLED (+ ALLOWED LIMIT).
+•	The main grid must update Allocated Qty, Remaining Qty, and Status together so they are always consistent.
+________________________________________
+4. Guardrails
+•	The system must never allow these inconsistent combinations:
+o	FILLED if Allocated != Requested.
+o	UNAVAILABLE / DENIED / AWAITING AVAILABILITY / REQUESTED if Allocated > 0 and the item has already been evaluated.
+o	PARTLY FILLED / ALLOWED LIMIT if Allocated == 0 or Allocated == Requested.
+If such a mismatch would occur (e.g., due to data refresh), Status must be reset to the correct default based on the latest Allocated vs Requested values and the stage (first-load or post-allocation).

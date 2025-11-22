@@ -156,6 +156,18 @@ class FeatureRegistry:
             'navigation_group': 'dashboard',
             'priority': 25
         },
+        'operations_dashboard': {
+            'name': 'Operations Dashboard',
+            'description': 'Executive performance metrics for donations and relief fulfillment',
+            'roles': ['ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD'],
+            'route': 'operations_dashboard.index',
+            'url': '/executive/operations',
+            'icon': 'bi-graph-up',
+            'category': 'analytics',
+            'dashboard_widget': None,
+            'navigation_group': 'dashboard',
+            'priority': 24
+        },
         
         # =================================================================
         # PACKAGE FULFILLMENT (Logistics Officers & Managers)
@@ -457,6 +469,19 @@ class FeatureRegistry:
             'navigation_group': 'dashboard',
             'is_dashboard': True,
             'priority': 100
+        },
+        'lo_dashboard': {
+            'name': 'My Activity Dashboard',
+            'description': 'Personal activity dashboard for Logistics Officers with charts and metrics',
+            'roles': ['LOGISTICS_OFFICER'],
+            'route': 'dashboard.lo_dashboard',
+            'url': '/dashboard/lo',
+            'icon': 'bi-person-badge',
+            'category': 'logistics',
+            'dashboard_widget': 'lo_overview',
+            'navigation_group': 'logistics',
+            'is_dashboard': False,
+            'priority': 45
         },
     }
     

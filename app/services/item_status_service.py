@@ -41,14 +41,20 @@ def load_status_map(force_reload: bool = False) -> Dict[str, Dict[str, str]]:
     
     return _status_cache
 
-def compute_allowed_statuses(current_status: str, total_allocated: Decimal, requested_qty: Decimal) -> Tuple[str, List[str]]:
+def compute_allowed_statuses(
+    current_status: str, 
+    total_allocated: Decimal, 
+    requested_qty: Decimal,
+    has_allocation_activity: bool = False
+) -> Tuple[str, List[str]]:
     """
-    Compute allowed status options based on allocation state and current status.
+    Compute allowed status options based on allocation state and allocation activity history.
     
     Args:
         current_status: Current item status code
         total_allocated: Total quantity allocated across all warehouses
         requested_qty: Requested quantity for the item
+        has_allocation_activity: True if drawer has been opened/saved for this item
     
     Returns:
         Tuple of (auto_status, allowed_status_codes)
@@ -56,28 +62,44 @@ def compute_allowed_statuses(current_status: str, total_allocated: Decimal, requ
         - allowed_status_codes: List of status codes that can be manually selected
     
     Rules:
-        - allocated == 0: auto=R, allowed={R, D, U, W}
-        - 0 < allocated < requested: auto=P, allowed={P, L, D, U, W}
-        - allocated >= requested: auto=F, allowed={F, L, D, U, W}
-    
-    Note: D (Denied), U (Unavailable), W (Awaiting Availability) can override any allocation
-    Note: L (Allowed Limit) allows manual override even when fully allocated
+        1. Initial Load (has_allocation_activity=False, allocated==0):
+           - auto='R' (REQUESTED), allowed=['R', 'U', 'D', 'W']
+        
+        2. After Allocation Activity (has_allocation_activity=True, allocated==0):
+           - auto='U' (UNAVAILABLE), allowed=['U', 'D', 'W']
+           - REQUESTED no longer available
+        
+        3. Fully Allocated (allocated==requested):
+           - auto='F' (FILLED), allowed=['F']
+           - Dropdown is locked (read-only)
+        
+        4. Partially Allocated (0<allocated<requested):
+           - auto='P' (PARTLY FILLED), allowed=['P', 'L']
     """
     status_map = load_status_map()
     
-    # Determine auto status based on allocation
+    # Determine auto status and allowed statuses based on allocation
     if total_allocated == Decimal('0'):
-        auto_status = 'R'  # Requested
-        # When zero allocated, allow request or denial/unavailability statuses
-        allowed_statuses = ['R', 'D', 'U', 'W']
-    elif total_allocated >= requested_qty:
-        auto_status = 'F'  # Filled
-        # When fully allocated, allow Filled, Allowed Limit, or denial/unavailability overrides
-        allowed_statuses = ['F', 'L', 'D', 'U', 'W']
+        if not has_allocation_activity:
+            # Case 1: Initial Load - No allocation activity yet
+            auto_status = 'R'  # REQUESTED
+            allowed_statuses = ['R', 'U', 'D', 'W']
+        else:
+            # Case 2: After allocation activity with zero allocation
+            auto_status = 'U'  # UNAVAILABLE
+            allowed_statuses = ['U', 'D', 'W']  # No REQUESTED anymore
+    elif total_allocated == requested_qty:
+        # Case 3: Fully Allocated
+        auto_status = 'F'  # FILLED
+        allowed_statuses = ['F']  # Locked to FILLED only
+    elif total_allocated < requested_qty:
+        # Case 4: Partially Allocated
+        auto_status = 'P'  # PARTLY FILLED
+        allowed_statuses = ['P', 'L']  # PARTLY FILLED or ALLOWED LIMIT
     else:
-        auto_status = 'P'  # Partly filled
-        # When partially allocated, allow Partly Filled, Allowed Limit, or denial/unavailability overrides
-        allowed_statuses = ['P', 'L', 'D', 'U', 'W']
+        # Over-allocated (should not normally happen, but handle gracefully)
+        auto_status = 'F'  # FILLED
+        allowed_statuses = ['F']
     
     # Filter to only active statuses that exist in the database
     allowed_statuses = [s for s in allowed_statuses if s in status_map]
@@ -89,10 +111,19 @@ def validate_status_transition(
     current_status: str,
     new_status: str,
     total_allocated: Decimal,
-    requested_qty: Decimal
+    requested_qty: Decimal,
+    has_allocation_activity: bool = False
 ) -> Tuple[bool, str]:
     """
     Validate if a status transition is allowed based on allocation state.
+    
+    Args:
+        item_id: The item ID being validated
+        current_status: Current status code
+        new_status: Requested new status code
+        total_allocated: Total quantity allocated
+        requested_qty: Requested quantity
+        has_allocation_activity: Whether the batch drawer has been opened/used for this item
     
     Returns:
         Tuple of (is_valid, error_message)
@@ -102,7 +133,7 @@ def validate_status_transition(
         return True, ""
     
     auto_status, allowed_statuses = compute_allowed_statuses(
-        current_status, total_allocated, requested_qty
+        current_status, total_allocated, requested_qty, has_allocation_activity
     )
     
     if new_status not in allowed_statuses:

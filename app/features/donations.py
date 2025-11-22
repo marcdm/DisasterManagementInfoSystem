@@ -12,6 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import StaleDataError
 
 from app.db import db
+from app.utils.timezone import now as jamaica_now
 from app.db.models import Donation, DonationItem, Donor, Event, Custodian, Item, UnitOfMeasure
 from app.core.audit import add_audit_fields, add_verify_fields
 from app.core.decorators import feature_required
@@ -157,7 +158,7 @@ def create_donation():
                 items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
                 uoms = UnitOfMeasure.query.filter_by(status_code='A').order_by(UnitOfMeasure.uom_desc).all()
                 adhoc_event = _get_adhoc_event()
-                items_json = [{'item_id': item.item_id, 'item_name': item.item_name} for item in items]
+                items_json = [{'item_id': item.item_id, 'item_name': item.item_name, 'sku_code': item.sku_code, 'default_uom_code': item.default_uom_code} for item in items]
                 uoms_json = [{'uom_code': uom.uom_code, 'uom_desc': uom.uom_desc} for uom in uoms]
                 return render_template('donations/create.html', 
                                      donors=donors, 
@@ -178,7 +179,7 @@ def create_donation():
             donation.status_code = 'V'
             donation.comments_text = comments_text.upper() if comments_text else None
             
-            current_timestamp = datetime.now()
+            current_timestamp = jamaica_now()
             
             add_audit_fields(donation, current_user, is_new=True)
             
@@ -218,7 +219,7 @@ def create_donation():
             items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
             uoms = UnitOfMeasure.query.filter_by(status_code='A').order_by(UnitOfMeasure.uom_desc).all()
             adhoc_event = _get_adhoc_event()
-            items_json = [{'item_id': item.item_id, 'item_name': item.item_name} for item in items]
+            items_json = [{'item_id': item.item_id, 'item_name': item.item_name, 'sku_code': item.sku_code, 'default_uom_code': item.default_uom_code} for item in items]
             uoms_json = [{'uom_code': uom.uom_code, 'uom_desc': uom.uom_desc} for uom in uoms]
             return render_template('donations/create.html', 
                                  donors=donors, 
@@ -238,7 +239,7 @@ def create_donation():
             items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
             uoms = UnitOfMeasure.query.filter_by(status_code='A').order_by(UnitOfMeasure.uom_desc).all()
             adhoc_event = _get_adhoc_event()
-            items_json = [{'item_id': item.item_id, 'item_name': item.item_name} for item in items]
+            items_json = [{'item_id': item.item_id, 'item_name': item.item_name, 'sku_code': item.sku_code, 'default_uom_code': item.default_uom_code} for item in items]
             uoms_json = [{'uom_code': uom.uom_code, 'uom_desc': uom.uom_desc} for uom in uoms]
             return render_template('donations/create.html', 
                                  donors=donors, 
@@ -293,7 +294,7 @@ def create_donation():
         flash('No units of measure available. Please create UOMs first.', 'warning')
         return redirect(url_for('donations.list_donations'))
     
-    items_json = [{'item_id': item.item_id, 'item_name': item.item_name} for item in items]
+    items_json = [{'item_id': item.item_id, 'item_name': item.item_name, 'sku_code': item.sku_code, 'default_uom_code': item.default_uom_code} for item in items]
     uoms_json = [{'uom_code': uom.uom_code, 'uom_desc': uom.uom_desc} for uom in uoms]
     
     return render_template('donations/create.html', 
@@ -336,6 +337,11 @@ def view_donation(donation_id):
 def edit_donation(donation_id):
     """Edit donation header (optimistic locking)"""
     donation = Donation.query.get_or_404(donation_id)
+    
+    # Prevent editing of verified or processed donations
+    if donation.status_code == 'V':
+        flash('Cannot edit a verified donation. Donation has been verified and is now read-only.', 'danger')
+        return redirect(url_for('donations.view_donation', donation_id=donation_id))
     
     # Prevent editing of processed donations (already in warehouse)
     if donation.status_code == 'P':
@@ -407,7 +413,7 @@ def edit_donation(donation_id):
             # Update verify fields to reflect current user and timestamp
             if status_code == 'V':
                 donation.verify_by_id = current_user.user_name
-                donation.verify_dtime = datetime.now()
+                donation.verify_dtime = jamaica_now()
             
             db.session.commit()
             
@@ -445,6 +451,11 @@ def delete_donation(donation_id):
     """Delete donation (only if no items exist)"""
     donation = Donation.query.get_or_404(donation_id)
     
+    # Prevent deleting verified or processed donations
+    if donation.status_code == 'V':
+        flash('Cannot delete a verified donation. Donation has been verified and is now read-only.', 'danger')
+        return redirect(url_for('donations.view_donation', donation_id=donation_id))
+    
     # Prevent deleting processed donations (already in warehouse)
     if donation.status_code == 'P':
         flash('Cannot delete a processed donation. It has already been added to warehouse inventory.', 'danger')
@@ -471,6 +482,11 @@ def delete_donation(donation_id):
 def add_donation_item(donation_id):
     """Add item to donation"""
     donation = Donation.query.get_or_404(donation_id)
+    
+    # Prevent adding items to verified or processed donations
+    if donation.status_code == 'V':
+        flash('Cannot add items to a verified donation. Donation has been verified and items cannot be modified.', 'danger')
+        return redirect(url_for('donations.view_donation', donation_id=donation_id))
     
     # Prevent adding items to processed donations (already in warehouse)
     if donation.status_code == 'P':
@@ -526,7 +542,7 @@ def add_donation_item(donation_id):
             donation_item.status_code = 'V'
             donation_item.comments_text = comments_text.upper() if comments_text else None
             
-            current_timestamp = datetime.now()
+            current_timestamp = jamaica_now()
             
             add_audit_fields(donation_item, current_user, is_new=True)
             
@@ -565,6 +581,11 @@ def edit_donation_item(donation_id, item_id):
     """Edit donation item (optimistic locking)"""
     donation = Donation.query.get_or_404(donation_id)
     donation_item = DonationItem.query.get_or_404((donation_id, item_id))
+    
+    # Prevent editing items from verified or processed donations
+    if donation.status_code == 'V':
+        flash('Cannot edit items from a verified donation. Donation has been verified and items cannot be modified.', 'danger')
+        return redirect(url_for('donations.view_donation', donation_id=donation_id))
     
     # Prevent editing of processed donations (already in warehouse)
     if donation.status_code == 'P':
@@ -623,7 +644,7 @@ def edit_donation_item(donation_id, item_id):
             # Status remains 'V' and verify fields are updated
             if status_code == 'V':
                 donation_item.verify_by_id = current_user.user_name
-                donation_item.verify_dtime = datetime.now()
+                donation_item.verify_dtime = jamaica_now()
             
             db.session.commit()
             
@@ -658,6 +679,11 @@ def delete_donation_item(donation_id, item_id):
     """Delete donation item"""
     donation = Donation.query.get_or_404(donation_id)
     donation_item = DonationItem.query.get_or_404((donation_id, item_id))
+    
+    # Prevent deleting items from verified or processed donations
+    if donation.status_code == 'V':
+        flash('Cannot delete items from a verified donation. Donation has been verified and items cannot be modified.', 'danger')
+        return redirect(url_for('donations.view_donation', donation_id=donation_id))
     
     # Prevent deleting items from processed donations (already in warehouse)
     if donation.status_code == 'P':

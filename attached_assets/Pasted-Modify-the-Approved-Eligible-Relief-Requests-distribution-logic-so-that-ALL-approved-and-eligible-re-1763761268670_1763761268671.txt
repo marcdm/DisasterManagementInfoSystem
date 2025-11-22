@@ -1,0 +1,86 @@
+Modify the Approved Eligible Relief Requests distribution logic so that ALL approved and eligible relief requests are routed to BOTH the Logistics Officer (LO) and the Logistics Manager (LM)—regardless of which user (LO or LM) originally created the request on behalf of the agency.
+
+Current Issue
+
+When a relief request is approved for fulfillment:
+
+It is only showing for the user role that created the request.
+
+This is incorrect because:
+
+LO and LM both need to see all eligible requests that need to be fulfilled.
+
+Operations require BOTH roles to collaborate and step in when needed.
+
+Required Behaviour
+
+When a relief request becomes eligible for fulfillment:
+
+Add it to the Pending Fulfillment / Awaiting to be Filled queue for:
+
+ALL Logistics Officers, and
+
+ALL Logistics Managers.
+
+It must not be limited to:
+
+The creator of the request, or
+
+The creator’s role.
+
+Visibility Rules
+
+Both LO and LM dashboards must list:
+
+All approved, eligible, not-yet-fulfilled relief requests.
+
+Filtering logic must not apply user-based ownership to eligible requests.
+
+LO and LM should always see the exact same set of eligible requests.
+
+No Workflow Changes
+
+Do not alter:
+
+The approval workflow by Senior Director / Deputy Director / DG / PEOD.
+
+Priority settings.
+
+Status transitions.
+
+Only adjust the visibility / routing of eligible requests.
+
+No Code Breakage
+
+Do not modify the database schema.
+
+Do not remove or rename existing fields or status codes.
+
+Ensure existing behaviour for:
+
+Drafts
+
+Being Prepared
+
+Awaiting Approval
+
+Approved for Dispatch
+remains unaffected.
+
+Security & Access Control
+
+Maintain role-based visibility:
+
+LO and LM see all approved requests.
+
+Other roles (e.g., Agency, Inventory Clerk, Management roles) continue to see only their designated views.
+
+Outcome
+
+After implementing this prompt:
+
+Every time a relief request is approved and eligible, it appears for every LO and LM.
+
+LO and LM always have a synchronized, identical view of all eligible requests.
+
+No changes to workflow, schema, or existing behaviour—only visibility improvements.

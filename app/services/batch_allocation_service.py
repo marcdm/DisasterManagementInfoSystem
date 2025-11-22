@@ -60,6 +60,61 @@ class BatchAllocationService:
         return query.all()
     
     @staticmethod
+    def sort_batches_for_drawer(batches: List[ItemBatch], item: Item) -> List[ItemBatch]:
+        """
+        Sort batches for drawer display based ONLY on can_expire_flag.
+        Ignores item.issuance_order field to ensure consistent FEFO/FIFO behavior.
+        
+        Drawer Sorting Rules (per warehouse):
+        - If can_expire_flag = TRUE: Sort by earliest expiry_date, then oldest batch_date
+        - If can_expire_flag = FALSE: Sort by oldest batch_date (FIFO)
+        
+        Args:
+            batches: List of batches to sort (already filtered for available qty > 0)
+            item: Item object with can_expire_flag
+            
+        Returns:
+            Sorted list of batches
+        """
+        today = date.today()
+        
+        # Filter out expired batches if item can expire
+        # NULL expiry dates are treated as "never expires" and are allowed
+        if item.can_expire_flag:
+            active_batches = [
+                b for b in batches 
+                if not b.expiry_date or b.expiry_date >= today
+            ]
+        else:
+            active_batches = batches
+        
+        # Filter out batches with zero available quantity
+        active_batches = [
+            b for b in active_batches 
+            if (b.usable_qty - b.reserved_qty) > 0
+        ]
+        
+        # Sort based ONLY on can_expire_flag (ignore issuance_order)
+        if item.can_expire_flag:
+            # FEFO: Sort by earliest expiry date, then oldest batch date
+            return sorted(
+                active_batches,
+                key=lambda b: (
+                    b.expiry_date is None,  # NULL expiry dates go to end
+                    b.expiry_date if b.expiry_date else date.max, 
+                    b.batch_date if b.batch_date else date.max
+                )
+            )
+        else:
+            # FIFO: Sort by oldest batch date
+            return sorted(
+                active_batches, 
+                key=lambda b: (
+                    b.batch_date if b.batch_date else date.min
+                )
+            )
+    
+    @staticmethod
     def sort_batches_by_allocation_rule(batches: List[ItemBatch], item: Item) -> List[ItemBatch]:
         """
         Sort batches according to FEFO/FIFO rules based on item configuration.
@@ -237,15 +292,22 @@ class BatchAllocationService:
     def validate_batch_allocation(
         batch_id: int,
         item_id: int,
-        allocated_qty: Decimal
+        allocated_qty: Decimal,
+        current_allocated_qty: Decimal = Decimal('0')
     ) -> Tuple[bool, str]:
         """
         Validate a batch allocation.
+        
+        When re-allocating from an existing package, the current package's allocation
+        is "released" from reserved_qty to calculate true availability. This allows
+        users to modify their existing allocations without false "no inventory" errors.
         
         Args:
             batch_id: Batch ID to allocate from
             item_id: Item being allocated
             allocated_qty: Quantity to allocate
+            current_allocated_qty: Current allocation from this package for this batch (default: 0)
+                                   This qty is "released" from reserved_qty when calculating availability
             
         Returns:
             Tuple of (is_valid, error_message)
@@ -266,7 +328,9 @@ class BatchAllocationService:
             return False, f'Batch {batch.batch_no} is expired (expiry: {batch.expiry_date})'
         
         # Check quantity
-        available_qty = batch.usable_qty - batch.reserved_qty
+        # CRITICAL: "Release" current package's allocation when calculating availability
+        # This prevents false "no inventory" errors when re-allocating from existing packages
+        available_qty = batch.usable_qty - (batch.reserved_qty - current_allocated_qty)
         if allocated_qty > available_qty:
             if available_qty <= 0:
                 return False, (f'Batch {batch.batch_no} has no available inventory (all {batch.usable_qty} units are reserved or allocated). '
@@ -312,7 +376,8 @@ class BatchAllocationService:
         item_id: int,
         remaining_qty: Decimal,
         required_uom: str = None,
-        allocated_batch_ids: List[int] = None
+        allocated_batch_ids: List[int] = None,
+        current_allocations: dict = None
     ) -> Tuple[List[ItemBatch], Decimal, Decimal]:
         """
         Get batches for the drawer display with warehouse-based filtering and sorting.
@@ -322,11 +387,17 @@ class BatchAllocationService:
         Early Stopping: For each warehouse, stops loading batches once cumulative quantity 
         meets or exceeds remaining_qty.
         
+        Important: When current_allocations is provided, those quantities are "released" from
+        reserved_qty when calculating available_qty. This allows LM to re-allocate freely
+        when editing existing package allocations.
+        
         Args:
             item_id: Item ID
             remaining_qty: Remaining quantity to fulfill
             required_uom: Required unit of measure
             allocated_batch_ids: List of batch IDs that are already allocated (for editing)
+            current_allocations: Dict mapping batch_id -> qty for current package's allocations
+                                 (these are "released" from reserved_qty when calculating available)
             
         Returns:
             Tuple of:
@@ -342,6 +413,13 @@ class BatchAllocationService:
         # Get all available batches (with available qty > 0)
         all_batches = BatchAllocationService.get_available_batches(item_id, required_uom=required_uom)
         allocated_batch_ids_set = set(allocated_batch_ids or [])
+        current_allocations = current_allocations or {}
+        
+        # Helper function to calculate effective available quantity
+        # This "releases" current package's allocations from reserved_qty
+        def calc_available_qty(batch):
+            released_qty = current_allocations.get(batch.batch_id, Decimal('0'))
+            return batch.usable_qty - (batch.reserved_qty - released_qty)
         
         # Group batches by warehouse first (before sorting)
         warehouse_groups = {}
@@ -353,14 +431,16 @@ class BatchAllocationService:
                     'total_available': Decimal('0')
                 }
             
-            available_qty = batch.usable_qty - batch.reserved_qty
+            available_qty = calc_available_qty(batch)
+            is_allocated = batch.batch_id in allocated_batch_ids_set
             
             # Skip batches with zero or negative available inventory
-            if available_qty <= 0:
+            # EXCEPT if they're already allocated (need to show them for editing)
+            if available_qty <= 0 and not is_allocated:
                 continue
             
             warehouse_groups[warehouse_id]['batches'].append(batch)
-            warehouse_groups[warehouse_id]['total_available'] += available_qty
+            warehouse_groups[warehouse_id]['total_available'] += max(Decimal('0'), available_qty)
         
         # Filter out warehouses with zero total available quantity
         warehouse_groups = {
@@ -369,9 +449,10 @@ class BatchAllocationService:
             if wh_data['total_available'] > 0
         }
         
-        # Sort batches WITHIN each warehouse using FEFO/FIFO rules
+        # Sort batches WITHIN each warehouse using drawer-specific FEFO/FIFO rules
+        # (ignores issuance_order, only uses can_expire_flag)
         for warehouse_id, wh_data in warehouse_groups.items():
-            wh_data['batches'] = BatchAllocationService.sort_batches_by_allocation_rule(
+            wh_data['batches'] = BatchAllocationService.sort_batches_for_drawer(
                 wh_data['batches'],
                 item
             )
@@ -385,7 +466,7 @@ class BatchAllocationService:
             
             for batch in wh_data['batches']:
                 is_allocated = batch.batch_id in allocated_batch_ids_set
-                available_qty = batch.usable_qty - batch.reserved_qty
+                available_qty = calc_available_qty(batch)
                 
                 # Always include allocated batches with available inventory (for editing)
                 if is_allocated:
@@ -410,7 +491,7 @@ class BatchAllocationService:
         # Calculate total available and shortfall
         cumulative_available = Decimal('0')
         for batch in limited_batches:
-            available_qty = batch.usable_qty - batch.reserved_qty
+            available_qty = calc_available_qty(batch)
             cumulative_available += available_qty
         
         shortfall = max(Decimal('0'), remaining_qty - cumulative_available)

@@ -1,0 +1,168 @@
+On the Approve Relief Package page, when the Logistics Manager (LM) clicks Select Batches to re-allocate items that were previously allocated by the LO, the front-end allocation logic is not consistent with the database logic and needs to be fixed.
+Current Issue
+
+
+Scenario:
+
+
+LO prepares allocations and submits to LM.
+
+
+LM opens Select Batches to adjust/re-allocate.
+
+
+
+
+In the UI / code inside the side drawer:
+
+
+The logic is treating LM re-allocation as if it is reducing usable_qty directly in code, as though stock is being consumed immediately.
+
+
+
+
+In the database:
+
+
+For the corresponding itembatch records:
+
+
+reserved_qty increases by the allocated amount.
+
+
+usable_qty stays the same at this stage.
+
+
+
+
+usable_qty is only actually reduced when the LM clicks Send to Dispatch / Approve Dispatch, where the system reconciles and applies:
+usable_qty = usable_qty - reserved_qty (or equivalent).
+
+
+
+
+This results in a mismatch:
+
+
+The code/UI logic assumes usable_qty has already dropped,
+
+
+While the database logic correctly only changes reserved_qty until dispatch.
+
+
+Required Behaviour
+
+
+Make LM re-allocation logic consistent with DB behaviour
+
+
+When LM opens Select Batches and adjusts allocations:
+
+
+The code must follow the same model as the database:
+
+
+While the package is still in approval / pre-dispatch:
+
+
+Only reserved_qty should change, not usable_qty.
+
+
+
+
+usable_qty should be treated as unchanged until the LM actually approves and sends to dispatch.
+
+
+
+
+
+
+Any in-memory or UI calculation of “remaining usable” must be derived from:
+
+
+usable_qty - reserved_qty (or equivalent)
+without directly decrementing usable_qty in code before dispatch.
+
+
+
+
+
+
+Do not double-consume usable quantity
+
+
+Ensure that when LM reallocates:
+
+
+The same stock is not “consumed twice” in logic:
+
+
+Once artificially when LM adjusts in code, and
+
+
+Again when Send to Dispatch runs the real reconciliation that reduces usable_qty in the database.
+
+
+
+
+
+
+The front-end and middle-tier logic must only manipulate reserved quantities before final dispatch, just like the database.
+
+
+
+
+Keep existing dispatch behaviour
+
+
+When LM finally clicks Send to Dispatch / Approve Dispatch:
+
+
+Keep the current behaviour where:
+
+
+usable_qty is reduced.
+
+
+reserved_qty is reconciled accordingly.
+
+
+
+
+Do not change that final dispatch reconciliation logic; just make sure pre-dispatch LM adjustments don’t prematurely “consume” usable_qty in code.
+
+
+
+
+
+
+Constraints
+
+
+Do not break any existing:
+
+
+Workflows (LO prepare, LM approve, Inventory Clerk dispatch, etc.).
+
+
+Status transitions or queues.
+
+
+Business rules around FEFO/FIFO, batch filtering, or validations.
+
+
+
+
+Do not modify any database schema (no new columns, no structural changes).
+
+
+Only adjust the allocation/side-drawer code for LM re-allocation so that:
+
+
+It mirrors the database pattern (reserved-only before dispatch),
+
+
+And the UI accurately reflects usable vs reserved in a way that is consistent with the stored data.
+
+
+

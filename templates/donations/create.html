@@ -156,14 +156,16 @@
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label for="new_uom_code" class="form-label">UOM *</label>
-                                            <select class="form-select" id="new_uom_code">
-                                                <option value="">Select...</option>
+                                            <select class="form-select" id="new_uom_code" disabled style="background-color: #e9ecef;">
+                                                <option value="">Select item first</option>
                                                 {% for uom in uoms %}
                                                 <option value="{{ uom.uom_code }}" data-desc="{{ uom.uom_desc }}">
                                                     {{ uom.uom_desc }}
                                                 </option>
                                                 {% endfor %}
                                             </select>
+                                            <input type="hidden" id="new_uom_code_hidden" value="">
+                                            <small class="text-muted">Auto-filled from Item Master</small>
                                         </div>
                                     </div>
                                     <div class="row">
@@ -219,15 +221,29 @@
 let itemCounter = 0;
 const donationItems = [];
 
-// Update UOM hint when item is selected
+// Auto-populate UOM from Item Master when item is selected
 document.getElementById('new_item_id').addEventListener('change', function() {
     const selectedOption = this.options[this.selectedIndex];
-    const uomCode = selectedOption.getAttribute('data-uom');
+    const defaultUomCode = selectedOption.getAttribute('data-uom');
+    const uomSelect = document.getElementById('new_uom_code');
+    const uomHidden = document.getElementById('new_uom_code_hidden');
     const uomHint = document.getElementById('selected_uom');
-    if (uomCode) {
-        uomHint.textContent = uomCode;
+    
+    if (defaultUomCode) {
+        // Auto-select the UOM from item's default_uom_code
+        uomSelect.value = defaultUomCode;
+        uomHidden.value = defaultUomCode;  // Store in hidden field for form submission
+        uomHint.textContent = defaultUomCode;
+        // Keep UOM field disabled (read-only)
+        uomSelect.disabled = true;
+        uomSelect.style.backgroundColor = '#e9ecef';
     } else {
+        // No item selected - reset UOM
+        uomSelect.value = '';
+        uomHidden.value = '';
         uomHint.textContent = '—';
+        uomSelect.disabled = true;
+        uomSelect.style.backgroundColor = '#e9ecef';
     }
 });
 
@@ -235,6 +251,7 @@ document.getElementById('new_item_id').addEventListener('change', function() {
 document.getElementById('addItemBtn').addEventListener('click', function() {
     const itemSelect = document.getElementById('new_item_id');
     const quantityInput = document.getElementById('new_quantity');
+    const uomHidden = document.getElementById('new_uom_code_hidden');
     const uomSelect = document.getElementById('new_uom_code');
     const commentsInput = document.getElementById('new_item_comments');
     
@@ -249,9 +266,10 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
         quantityInput.focus();
         return;
     }
-    if (!uomSelect.value) {
-        alert('Please select a unit of measure');
-        uomSelect.focus();
+    // Check hidden field value (since select is disabled)
+    if (!uomHidden.value) {
+        alert('Please select an item with a valid unit of measure');
+        itemSelect.focus();
         return;
     }
     
@@ -264,7 +282,7 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
         item_id: itemSelect.value,
         item_name: selectedItemOption.getAttribute('data-name'),
         quantity: parseFloat(quantityInput.value),
-        uom_code: uomSelect.value,
+        uom_code: uomHidden.value,  // Use hidden field value
         uom_desc: selectedUomOption.getAttribute('data-desc'),
         comments: commentsInput.value.trim().toUpperCase()
     };
@@ -276,6 +294,7 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
     itemSelect.value = '';
     quantityInput.value = '';
     uomSelect.value = '';
+    uomHidden.value = '';
     commentsInput.value = '';
     document.getElementById('selected_uom').textContent = '—';
     
