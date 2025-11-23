@@ -4,6 +4,7 @@ Main Flask Application
 """
 from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 from werkzeug.security import check_password_hash
 import os
 
@@ -15,6 +16,7 @@ from app.security.cache_control import init_cache_control
 from app.security.header_sanitization import init_header_sanitization
 from app.security.error_handling import init_error_handling
 from app.security.query_string_protection import init_query_string_protection
+from app.security.csrf_validation import init_csrf_origin_validation
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -25,6 +27,9 @@ init_cache_control(app)
 init_header_sanitization(app)
 init_error_handling(app)
 init_query_string_protection(app)
+
+csrf = CSRFProtect(app)
+init_csrf_origin_validation(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -74,6 +79,11 @@ def get_feature_details(feature_key):
             **FeatureRegistry.FEATURES[feature_key]
         }
     return None
+
+@app.context_processor
+def inject_csrf_token():
+    """Make CSRF token available to all templates."""
+    return dict(csrf_token=generate_csrf)
 
 app.jinja_env.globals.update(
     has_role=has_role,

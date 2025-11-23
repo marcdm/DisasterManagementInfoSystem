@@ -27,6 +27,7 @@
             <div class="card">
                 <div class="card-body p-4">
                     <form method="POST" action="{{ url_for('uom.edit_uom', uom_code=uom.uom_code) }}" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <!-- Hidden field for optimistic locking -->
                         <input type="hidden" name="version_nbr" value="{{ uom.version_nbr }}">
                         

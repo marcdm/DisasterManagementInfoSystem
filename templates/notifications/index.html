@@ -196,6 +196,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form method="POST" action="{{ url_for('notifications.clear_all') }}" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger" aria-label="Confirm clear all notifications">
                         <i class="bi bi-trash-fill" aria-hidden="true"></i>
                         Clear All Notifications
@@ -295,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (confirm('Delete this notification?')) {
                 const notificationId = this.dataset.notificationId;
-                fetch(`/notifications/api/delete/${notificationId}`, {
+                csrfFetch(`/notifications/api/delete/${notificationId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

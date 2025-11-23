@@ -156,6 +156,7 @@
             <div class="mt-4 d-flex gap-2">
                 {% if request.status_code == 0 %}
                 <form method="POST" action="{{ url_for('requests.submit_request', request_id=request.reliefrqst_id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn-relief-primary">
                         <i class="bi bi-send"></i>
                         Submit to ODPEM

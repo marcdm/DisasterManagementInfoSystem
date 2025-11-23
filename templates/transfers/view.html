@@ -7,6 +7,7 @@
     <div>
         {% if transfer.status_code == 'P' %}
         <form method="POST" action="{{ url_for('transfers.execute', transfer_id=transfer.transfer_id) }}" class="d-inline" id="executeTransferForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-success">
                 <i class="bi bi-check-circle"></i> Execute Transfer
             </button>

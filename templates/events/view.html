@@ -143,6 +143,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="{{ url_for('events.close_event', event_id=event.event_id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-body">
                     <p>Are you sure you want to close this event? <strong>This action cannot be undone.</strong></p>
                     <div class="mb-3">

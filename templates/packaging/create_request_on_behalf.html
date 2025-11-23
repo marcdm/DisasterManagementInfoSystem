@@ -54,6 +54,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('packaging.create_request_on_behalf') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="agency_id" class="form-label">Requesting Agency <span class="text-danger">*</span></label>

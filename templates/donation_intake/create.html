@@ -35,6 +35,7 @@
                 </div>
                 <div class="card-body p-4">
                     <form method="POST" action="{{ url_for('donation_intake.create_intake') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <!-- Donation Selection -->
                         <div class="mb-4">
                             <label for="donation_id" class="form-label fw-bold required">

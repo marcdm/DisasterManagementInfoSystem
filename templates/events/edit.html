@@ -36,6 +36,7 @@
             <div class="card">
                 <div class="card-body p-4">
                     <form method="POST" action="{{ url_for('events.edit_event', event_id=event.event_id) }}" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <!-- Hidden field for optimistic locking -->
                         <input type="hidden" name="version_nbr" value="{{ event.version_nbr }}">
                         

@@ -6,6 +6,7 @@ import logging
 import sys
 from flask import render_template, request
 from werkzeug.exceptions import HTTPException
+from flask_wtf.csrf import CSRFError
 
 
 def configure_logging(app):
@@ -87,6 +88,29 @@ def register_error_handlers(app):
         """Handle 405 Method Not Allowed errors"""
         app.logger.warning(f'Method Not Allowed: {request.method} {request.url}')
         return render_template('errors/405.html'), 405
+    
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(error):
+        """
+        Handle CSRF validation failures
+        
+        Logs security event with request context
+        Returns user-friendly 403 Forbidden page
+        
+        Args:
+            error: CSRFError instance from Flask-WTF
+            
+        Returns:
+            Tuple of (error template, 403 status code)
+        """
+        app.logger.warning(
+            f'CSRF validation failed: {request.url} - '
+            f'Method: {request.method} - '
+            f'IP: {request.remote_addr} - '
+            f'User-Agent: {request.headers.get("User-Agent", "Unknown")}'
+        )
+        return render_template('errors/403.html',
+                             error_message="Invalid or missing security token. Please try again."), 403
     
     @app.errorhandler(500)
     def internal_error(error):

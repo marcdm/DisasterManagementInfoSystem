@@ -8,6 +8,7 @@
 </a>
 
 <form method="POST" id="transferForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="card mb-3">
         <div class="card-header card-header-goj">
             <h5 class="mb-0">Transfer Details</h5>

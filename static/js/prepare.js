@@ -451,6 +451,14 @@ function handleCancelPackage() {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = window.DMIS_CANCEL_URL || '/packaging/pending_approval';
+        
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = getCSRFToken();
+        form.appendChild(csrfInput);
+        
         document.body.appendChild(form);
         form.submit();
     }

@@ -1,0 +1,219 @@
+Prompt: Fix all CSRF vulnerabilities without breaking any code, workflows, UI, or database schema
+
+You are an expert Flask security engineer working on an existing Disaster Management / Relief Inventory web application (DRIMS / DMIS) built with Python/Flask + Jinja templates + HTML/JS.
+
+A recent security scan (HCL AppScan) reports 17 Cross-Site Request Forgery (CSRF) issues and recommends using per-form nonces/tokens and Referer/Origin validation for state-changing requests.
+
+Your single task now is to:
+
+Implement robust, application-wide CSRF protection and eliminate all CSRF findings, without breaking any existing functionality, workflows, UI, or database schema, and without weakening any existing security fixes (e.g. CSP, auth, etc.).
+
+1. Hard Constraints
+
+DO NOT:
+
+Change or drop any database tables, columns, constraints, triggers, or schema.
+
+Change business rules, workflows, or permissions.
+
+Break any existing routes, URLs, query parameters, or request/response payloads.
+
+Remove or weaken existing security protections (authentication, role checks, input validation, CSP, etc.).
+
+YOU MAY:
+
+Add CSRF protection middleware / decorators.
+
+Add or modify template helpers (Jinja macros, base templates) to include CSRF tokens in forms.
+
+Add small, focused helper functions and config entries.
+
+Add headers validation (Origin/Referer) for state-changing requests.
+
+2. Discover Current CSRF Situation
+
+Search the entire codebase for:
+
+Any CSRF-related code: csrf, CSRFProtect, flask_wtf, wtforms, csrf_token, etc.
+
+Forms in templates: <form ...> tags and JavaScript that sends POST/PUT/PATCH/DELETE requests (e.g. fetch, XMLHttpRequest, Axios).
+
+APIs/endpoints that modify state but do not check any CSRF token.
+
+Document (via code comments only, not a report) what currently exists:
+
+If Flask-WTF or any CSRF extension is already used.
+
+Which endpoints are state-changing (create/update/delete) and likely flagged by the scanner.
+
+3. Choose / Implement a CSRF Mechanism
+
+Prefer using existing libraries already in the project. If none exist:
+
+If Flask-WTF / CSRFProtect is already installed:
+
+Integrate or extend it so that all state-changing routes are covered.
+
+If there is no CSRF library:
+
+Implement a lightweight CSRF system yourself:
+
+Generate a global secret key (from Flask app.config['SECRET_KEY']).
+
+For each user session:
+
+Create a CSRF token (e.g. random 32+ bytes, hex/base64) stored in the session.
+
+For each form or AJAX request:
+
+Include the CSRF token in a hidden field or custom header.
+
+On the server side:
+
+Validate that the submitted token matches the session token.
+
+Reject the request with a safe error if missing/invalid.
+
+Important: do this in a central place (e.g. a CSRF-protection decorator or before_request handler), not ad-hoc per route.
+
+4. Integrate CSRF Protection into Routes
+
+Identify all state-changing views:
+
+Any route that performs create/update/delete, typically using methods=['POST'] or including POST/PUT/PATCH/DELETE.
+
+Any GET endpoint that changes server state (if any); those also need CSRF or must be refactored to POST.
+
+Apply CSRF validation:
+
+Use a decorator (e.g. @csrf_protect) or a global before_request that:
+
+Only runs on unsafe methods: POST, PUT, PATCH, DELETE.
+
+Skips CSRF for safe methods (GET, HEAD, OPTIONS) unless they are misused to change state.
+
+Extracts token from:
+
+Form field (e.g. request.form['csrf_token']), or
+
+Custom header (e.g. X-CSRFToken) for AJAX.
+
+Compares against session token or secure server-side store.
+
+Provide a minimal, explicit way to:
+
+Mark certain internal or machine-only endpoints as CSRF-exempt (e.g. @csrf_exempt), but use this sparingly and only where justified.
+
+5. Inject CSRF Token into All Forms and AJAX Calls
+
+Create a Jinja helper:
+
+For example, a function generate_csrf_token() exposed to templates via app.context_processor.
+
+Or a macro in the base template:
+
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+
+Ensure all HTML forms that perform state changes include this hidden CSRF field:
+
+Search templates for <form tags.
+
+For each form that posts to a state-changing endpoint, add:
+
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+
+Prefer doing this via a reusable template snippet or macro so it’s not duplicated everywhere.
+
+For AJAX/fetch/XHR calls:
+
+Expose the token in the page (e.g. via a <meta name="csrf-token" content="{{ csrf_token }}"> or a JS variable).
+
+Update JS so that every state-changing AJAX call includes the token:
+
+For example, when using fetch:
+
+fetch(url, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRFToken': csrfTokenFromMeta
+  },
+  body: JSON.stringify(data)
+})
+
+
+Update server-side CSRF validator to accept the header source.
+
+Do this without changing the visual layout or user flow – just add hidden fields or headers.
+
+6. Add Origin/Referer Validation (Complementary)
+
+To align with the scanner’s recommendation:
+
+In your CSRF validation logic:
+
+For HTTPS endpoints, additionally check:
+
+request.headers['Origin'] or request.headers['Referer'] (whichever is available).
+
+Ensure it matches your own domain (or a small list of allowed origins).
+
+Only apply Origin/Referer validation to state-changing requests, and fail closed (reject) if:
+
+Origin/Referer is missing where it should be present, or
+
+It comes from an untrusted domain.
+
+Make this check robust but not over-aggressive (so legitimate same-site navigation is not blocked).
+
+7. Preserve and Respect Existing Security Features
+
+While adding CSRF protection:
+
+Do not remove or weaken:
+
+Existing authentication logic and session management.
+
+Existing role/permission checks and authorization.
+
+Existing CSP and other security headers.
+
+Ensure CSRF errors:
+
+Return a safe HTTP status (e.g. 400 or 403).
+
+Are handled gracefully with a user-friendly message where appropriate.
+
+8. Testing and Verification
+
+After implementation:
+
+Manually test key workflows:
+
+Login and logout.
+
+Creating, editing, and deleting entities (donations, relief requests, items, warehouses, users, etc.).
+
+Approvals, eligibility, packaging, dispatch, and other critical flows.
+
+Ensure no valid action fails due to CSRF when using the app normally.
+
+Try typical CSRF scenarios (in dev):
+
+Submit a POST request without a token → must be rejected.
+
+Submit with an invalid token → must be rejected.
+
+Confirm:
+
+Every state-changing request includes a CSRF token (form or header).
+
+Server validates the token and Origin/Referer according to the rules.
+
+There are no JavaScript console errors caused by these changes.
+
+The end result should be that when the security scan is re-run, all CSRF findings are resolved, with no regressions in functionality and no changes to the database schema or business workflows.
+
+Now, inspect and update this Replit project’s codebase to implement this CSRF protection comprehensively and safely.

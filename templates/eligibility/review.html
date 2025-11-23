@@ -159,6 +159,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('eligibility.submit_decision', request_id=request.reliefrqst_id) }}" id="eligibilityForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <fieldset>
                             <legend class="form-label fw-bold">Is this request eligible for relief?</legend>
                             <div class="mb-4">

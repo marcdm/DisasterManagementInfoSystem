@@ -91,6 +91,7 @@ input[type=number] {
     </div>
 
     <form method="POST" action="{{ url_for('donation_intake.intake_form', donation_id=donation.donation_id, inventory_id=warehouse.warehouse_id) }}" id="intakeForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="row">
             <!-- Main Form Section -->
             <div class="col-lg-9">

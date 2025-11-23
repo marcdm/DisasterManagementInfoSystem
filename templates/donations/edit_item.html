@@ -28,6 +28,7 @@
             <div class="card">
                 <div class="card-body p-4">
                     <form method="POST" action="{{ url_for('donations.edit_donation_item', donation_id=donation_item.donation_id, item_id=donation_item.item_id) }}" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="version_nbr" value="{{ donation_item.version_nbr }}">
                         
                         <!-- Item Information Section -->

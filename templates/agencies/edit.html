@@ -30,6 +30,7 @@
                     </div>
 
                     <form method="POST" action="{{ url_for('agencies.edit_agency', agency_id=agency.agency_id) }}" id="agencyForm" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <!-- Hidden version field for optimistic locking -->
                         <input type="hidden" name="version_nbr" value="{{ agency.version_nbr }}">
                         

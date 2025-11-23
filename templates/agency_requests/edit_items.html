@@ -34,6 +34,7 @@
     <div class="drims-card">
         <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Add New Item</h5>
         <form method="POST" action="{{ url_for('requests.edit_items', request_id=request.reliefrqst_id) }}" id="addItemForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="item_id" class="form-label">Item *</label>
@@ -94,6 +95,7 @@
             <h5 class="mb-0"><i class="bi bi-list-ul"></i> Current Items ({{ request.items|length }})</h5>
             {% if request.items|length > 0 %}
                 <form method="POST" action="{{ url_for('requests.submit_request', request_id=request.reliefrqst_id) }}" class="d-inline" id="submitRequestForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-goj">
                         <i class="bi bi-send"></i> Submit Request to ODPEM
                     </button>
@@ -149,6 +151,7 @@
                         </td>
                         <td class="text-end">
                             <form method="POST" action="{{ url_for('requests.delete_item', request_id=request.reliefrqst_id, item_id=item.item_id) }}" class="d-inline" data-confirm="Remove this item from the request?">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm btn-danger">
                                     <i class="bi bi-trash"></i> Remove
                                 </button>

@@ -31,6 +31,7 @@
                     </div>
 
                     <form method="POST" action="{{ url_for('account_requests.create_request') }}" class="needs-validation" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="mb-3">
                             <label for="agency_name" class="form-label">
                                 <i class="bi bi-building text-primary"></i> Agency Name <span class="text-danger">*</span>

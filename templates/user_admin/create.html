@@ -38,6 +38,7 @@
     {% endwith %}
 
     <form method="POST" class="needs-validation" novalidate id="createUserForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="row g-4">
             <!-- Main Form Column -->
             <div class="col-lg-8">

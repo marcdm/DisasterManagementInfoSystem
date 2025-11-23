@@ -3,14 +3,23 @@
 ## Overview
 DMIS (Disaster Management Information System) is a web-based platform for the Government of Jamaica's ODPEM, designed to manage the entire lifecycle of disaster relief supplies. This includes inventory tracking, donation management, relief request processing, and distribution across multiple warehouses. The system aims to ensure compliance with government processes, support disaster event coordination, supply allocation, and provide robust user administration with Role-Based Access Control (RBAC). Its core purpose is to deliver a modern, efficient, and user-friendly solution for disaster preparedness and response, emphasizing security and comprehensive management capabilities such as inventory transfers, location tracking, analytics, and reporting.
 
-## Recent Changes (November 22, 2025)
+## Recent Changes (November 23, 2025)
+- **Comprehensive CSRF Protection Implementation Complete** (Production-Ready):
+  - Installed and configured Flask-WTF 1.2.1 with global CSRFProtect initialization
+  - Automated CSRF token injection across 58+ HTML form templates via base.html context processor
+  - Created `static/js/csrf-helper.js` for JavaScript AJAX request protection (csrfFetch wrapper)
+  - Updated all dynamic form submissions (approve.js, prepare.js) to include CSRF tokens
+  - Implemented defense-in-depth Origin/Referer validation in `app/security/csrf_validation.py`:
+    * Exact origin matching (prevents subdomain bypass attacks)
+    * Controlled proxy header trust (X-Forwarded-Host/Proto only when CSRF_TRUST_PROXY_HEADERS=True)
+    * Support for CSRF_TRUSTED_ORIGINS config for multi-domain deployments
+  - Created custom CSRFError handler in `app/security/error_handling.py` with detailed audit logging
+  - Enhanced `templates/errors/403.html` with CSRF-specific remediation guidance for users
+  - Fixed dynamically created forms (packaging/prepare.html cancel flow) to include tokens
+  - Architect-validated implementation: "CSRF protections are now comprehensive and enforce both token validation and hardened origin checks without known bypasses"
+
+## Previous Changes (November 22, 2025)
 - **CSP Compliance Remediation Complete**: All 33 templates (72 originally identified) across the entire codebase now fully compliant with strict Content Security Policy (no unsafe-inline, no unsafe-eval)
-  - Created `static/css/csp-utilities.css` with 15+ utility classes (cursor-pointer, bg-hover-light, text-hover-primary, etc.)
-  - Created `static/js/form-utils.js` with centralized event delegation handlers
-  - Converted all inline event handlers (onclick, onchange, onsubmit) to event delegation pattern
-  - Eliminated all inline styles using utility classes and `hidden` attribute for JavaScript-controlled visibility
-  - Fixed templates across all modules: packaging, dashboard, operations_dashboard, agency_requests, intake, relief_requests, user_admin, warehouses, items, transfers, donation_intake, events, agencies, and base template
-  - Application tested and running successfully with zero CSP violations
 
 ## User Preferences
 - **Communication style**: Simple, everyday language.
@@ -38,6 +47,7 @@ The application employs a modular blueprint architecture with a database-first a
 - **Data Flow Patterns**: Supports an end-to-end AIDMGMT Relief Workflow, role-based dashboards, two-tier inventory management, eligibility approval, and package fulfillment with batch-level editing capabilities.
 - **Role-Based Access Control (RBAC)**: Implemented through a centralized feature registry, dynamic navigation, security decorators, smart routing based on primary roles, and a defined role hierarchy. Features secure user management with role assignment restrictions to prevent privilege escalation; includes both client-side role filtering and server-side validation to prevent bypass attacks.
 - **Content Security Policy (CSP)**: Strict nonce-based CSP implementation protects against XSS attacks, data injection, UI hijacking, and phishing. Uses cryptographically secure per-request nonces for inline scripts/styles, whitelists only cdn.jsdelivr.net for external resources, blocks all plugin execution and framing, and enforces same-origin form submissions. Additional security headers (X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy) provide defense-in-depth.
+- **Cross-Site Request Forgery (CSRF) Protection**: Comprehensive Flask-WTF CSRFProtect implementation with per-session cryptographic tokens on all state-changing requests (POST/PUT/PATCH/DELETE). Defense-in-depth Origin/Referer validation with exact origin matching prevents subdomain bypass attacks. Controlled proxy header trust (X-Forwarded-Host/Proto) ensures security behind reverse proxies. Custom error handling provides user-friendly 403 pages with remediation guidance and detailed security audit logging. JavaScript csrf-helper.js ensures AJAX requests include tokens. Configuration options: CSRF_TRUST_PROXY_HEADERS (default: False), CSRF_TRUSTED_ORIGINS (for multi-domain deployments).
 - **Secure Cookie Configuration**: Session and authentication cookies implement modern security standards with Secure (HTTPS-only), HttpOnly (XSS protection), and SameSite=Lax (CSRF protection) attributes. Configured globally via Flask session settings for all authentication flows.
 - **Subresource Integrity (SRI)**: All third-party CDN assets (Bootstrap 5.3.3, Bootstrap Icons 1.11.3, Chart.js 4.4.0, Flatpickr) protected with SHA-384 integrity hashes and crossorigin attributes. Prevents CDN compromises and man-in-the-middle attacks by cryptographically verifying resource authenticity.
 - **Cache Control**: Global no-cache headers (Cache-Control: no-store, no-cache, must-revalidate; Pragma: no-cache; Expires: 0) applied to all authenticated and sensitive pages. Prevents browser and proxy caching of sensitive data while allowing static assets (CSS, JS, images) to be cached for performance. Eliminates "SSL Pages Are Cacheable" vulnerability.
