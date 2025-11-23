@@ -286,12 +286,4 @@
             Password strength: {{ strength|title }}
         </small>
     </div>
-    <style nonce="{{ csp_nonce() }}">
-        .strength-bar {
-            height: 4px;
-            border-radius: 2px;
-            transition: background-color 0.3s;
-        }
-        .flex-1 { flex: 1; }
-    </style>
 {% endmacro %}
