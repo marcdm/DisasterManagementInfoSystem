@@ -1,0 +1,99 @@
+Update the Logistics Manager (LM) side drawer behaviour for batch selection so that, even if the Logistics Officer (LO) has allocated all usable quantity from an item_batch row and submitted the package for approval, the LM can still see and adjust that batch in the drawer — without breaking any existing code, workflows, UI, behaviour, database schema, or security fixes.
+
+Required Behaviour
+
+Always show LO-allocated batches to the LM, even when usable/available is 0
+
+For a given reliefpkg_id and item_id, if there is an allocation in the package for a specific (inventory_id, batch_id) (i.e. there is a row in the allocation table for that package and item):
+
+The LM must still see that batch in the side drawer, even if:
+
+usable_qty <= 0, and/or
+
+available = usable_qty - reserved_qty <= 0.
+
+In other words:
+
+The “allocated batches” set (Set A) must always be shown to the LM, regardless of the computed usable_qty or available values.
+
+Allow LM to overwrite/adjust LO’s allocation
+
+In the LM drawer, for any batch that was previously allocated by the LO:
+
+Show the batch row, including its quantities (allocated, usable/available).
+
+Allow the LM to reduce or overwrite the allocation (e.g. change the allocated quantity), even if available <= 0.
+
+This enables scenarios where:
+
+LO allocated all usable stock from a batch.
+
+LM later wants to reduce that allocation or move some quantity to another batch.
+
+Filtering rule (do not hide allocated batches)
+
+When building the LM drawer batch list:
+
+Continue filtering non-allocated batches by available > 0 (for Set B / “available batches”).
+
+But do NOT filter out any batch that has an existing allocation in this package (Set A) just because available <= 0.
+
+So the effective rules are:
+
+Show all batches that are currently allocated to this package/item (Set A), even if available <= 0.
+
+Show additional batches for this item where available > 0 (Set B).
+
+Only hide batches where:
+
+available <= 0 and
+
+there is no allocation for this package/item.
+
+No breaking changes
+
+Do NOT:
+
+Change any database schema, tables, columns, triggers, or constraints.
+
+Change any existing business logic or workflows for LO, LM, warehouse, agencies, approvals, dispatch, etc.
+
+Change any existing UI layouts, forms, or navigation patterns.
+
+Only adjust the batch-loading logic and drawer data filtering to satisfy the rule above.
+
+Preserve all existing security hardening
+
+Do not weaken, remove, or bypass any existing security fixes, including but not limited to:
+
+CSP and security headers
+
+TLS/cipher configuration
+
+Cookie flags (Secure, HttpOnly, SameSite)
+
+SRI on CDN assets
+
+Cache-control on sensitive pages
+
+Autocomplete settings
+
+Static directory protections
+
+Header sanitization
+
+Generic error handling (no debug info in production)
+
+Email obfuscation
+
+POST-only handling of sensitive parameters
+
+Expected Outcome
+
+When the LO has allocated all usable quantity from a batch and submitted for approval:
+
+The LM opens the side drawer for that item and still sees that batch, with its quantities, even if usable_qty/available is 0 or less.
+
+The LM can overwrite or reduce the allocation on that batch.
+
+No existing workflows, data, or security controls are broken or altered.
