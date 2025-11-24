@@ -3,10 +3,15 @@
 ## Overview
 DMIS (Disaster Management Information System) is a web-based platform for the Government of Jamaica's ODPEM, designed to manage the entire lifecycle of disaster relief supplies. This includes inventory tracking, donation management, relief request processing, and distribution across multiple warehouses. The system aims to ensure compliance with government processes, support disaster event coordination, supply allocation, and provide robust user administration with Role-Based Access Control (RBAC). Its core purpose is to deliver a modern, efficient, and user-friendly solution for disaster preparedness and response, emphasizing security and comprehensive management capabilities such as inventory transfers, location tracking, analytics, and reporting.
 
-## Recent Changes (November 23, 2025)
-- **Database Schema Cleanup**:
-  - Removed `currency` table and its foreign key constraint from `country` table
-  - Table was unused in the current system architecture
+## Recent Changes (November 24, 2025)
+- **Currency and Country Tables Migration**:
+  - Created `currency` table with 37 international currencies (JMD, USD, CAD, GBP, EUR, XCD, and 31 others)
+  - Added `currency_sign` field to support currency symbols (J$, $, £, €, etc.)
+  - Reseeded `country` table with 66 countries and currency references
+  - Added foreign key constraint `fk_country_currency` linking countries to their currencies
+  - Jamaica (country_id=388) correctly mapped to JMD (Jamaican dollar, J$)
+  - All existing functionality preserved; no code changes required
+  - Parish data (14 Jamaican parishes) verified and maintained
 
 - **CSRF Protocol Mismatch Fix for Replit Environment**:
   - Fixed CSRF Origin validation error that blocked user management operations
