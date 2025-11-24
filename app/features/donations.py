@@ -514,13 +514,16 @@ def add_donation_item(donation_id):
             if not location_name:
                 errors.append('Location is required')
             
+            # Check for duplicate item before attempting database insert
+            duplicate_item_id = None
             if item_id:
                 existing = DonationItem.query.filter_by(
                     donation_id=donation_id,
                     item_id=int(item_id)
                 ).first()
                 if existing:
-                    errors.append('This item is already in the donation. Edit the existing item instead.')
+                    errors.append('This item has already been added to the donation. Please edit the existing item instead.')
+                    duplicate_item_id = item_id
             
             if errors:
                 for error in errors:
@@ -531,7 +534,8 @@ def add_donation_item(donation_id):
                                      donation=donation,
                                      items=items,
                                      uoms=uoms,
-                                     form_data=request.form)
+                                     form_data=request.form,
+                                     duplicate_item_id=duplicate_item_id)
             
             donation_item = DonationItem()
             donation_item.donation_id = donation_id
