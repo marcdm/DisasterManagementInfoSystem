@@ -80,6 +80,9 @@ def get_workflow_steps(status_code: int) -> Dict:
         return {'current_step': 4, 'step_name': 'Goods Dispatched', 'status': 'active'}
     elif status_code == STATUS_FILLED:
         return {'current_step': 5, 'step_name': 'Goods Received', 'status': 'completed'}
+    elif status_code in [STATUS_CANCELLED, STATUS_DENIED, STATUS_INELIGIBLE]:
+        # Terminal states where the request will not proceed further
+        return {'current_step': 2, 'step_name': 'Request Closed', 'status': 'terminated'}
     else:
         return {'current_step': 1, 'step_name': 'Unknown', 'status': 'active'}
 
