@@ -5,18 +5,29 @@ DMIS (Disaster Management Information System) is a web-based platform for the Go
 
 ## Recent Changes (November 24, 2025)
 
-### Database Purge - All Data Cleared
+### Database Purge - All Data Cleared + Reference Tables Restored
 - Safely purged all data from 48 database tables using TRUNCATE CASCADE
 - Reset all 25 sequences to start from 1
 - Complete database schema preserved:
   - All 48 tables intact with structure
   - All 109 foreign key constraints preserved
   - All indexes, columns, and constraints maintained
-- Application verified working after purge:
+- **Reference/Lookup Tables Restored** (159 total reference records):
+  - **currency**: 37 currencies (JMD, USD, CAD, GBP, EUR, etc.)
+  - **country**: 66 countries (Jamaica, Caribbean nations, Americas, Europe, Asia)
+  - **parish**: 14 Jamaican parishes (Kingston, St. Andrew, etc.)
+  - **unitofmeasure**: 9 units (UNIT, KG, LITRE, BOX, SACK, BOTTLE, GALLON, METRE, SHEET)
+  - **itemcatg**: 9 categories (FOOD, WATER, HYGIENE, MEDICAL, SHELTER, CLOTHING, CONSTRUCTION, TOOLS, OTHER)
+  - **custodian**: 1 default (OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT - ODPEM)
+  - **reliefrqst_status**: 8 status codes (Pending, In Review, Approved, Partial, Fulfilled, Rejected, Cancelled, Closed)
+  - **reliefrqstitem_status**: 7 status codes (Requested, Unavailable, Waiting, Denied, Partial, Limited, Fulfilled)
+  - **role**: 8 roles (SYSTEM_ADMINISTRATOR, LOGISTICS_MANAGER, LOGISTICS_OFFICER, MAIN_HUB_WAREHOUSE, SUB_HUB_WAREHOUSE, AGENCY_HUB, INVENTORY_CLERK, AUDITOR)
+- Application verified working after purge and restoration:
   - All workflows running correctly
   - All security features intact (CSP, CSRF, cookies, headers)
   - No schema changes or regressions
-  - Ready for fresh data entry
+  - All lookup tables populated with reference data
+  - Ready for operational data entry
 
 ### Login Page - Agency Registration Hidden
 - Removed Agency Registration section from login page
