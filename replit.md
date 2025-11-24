@@ -31,6 +31,25 @@ DMIS (Disaster Management Information System) is a web-based platform for the Go
   - Zero functional regression: All existing donation workflows work unchanged
   - Architect reviewed: Compatible with current application behavior, no security issues
 
+- **Donation Intake Item Table Schema Migration**:
+  - Changed primary key from autoincrement intake_item_id to composite PK (donation_id, inventory_id, item_id, batch_no)
+  - Made batch_no, batch_date, expiry_date NOT NULL (all donation intake items must have batch tracking)
+  - Removed intake_item_id autoincrement column (no longer needed with composite PK)
+  - Enforced strict check constraints without NULL allowances:
+    - c_dnintake_item_1a: batch_no = UPPER(batch_no)
+    - c_dnintake_item_1b: batch_date <= CURRENT_DATE
+    - c_dnintake_item_1c: expiry_date >= CURRENT_DATE
+    - c_dnintake_item_1d: avg_unit_value > 0.00
+    - c_dnintake_item_2: usable_qty >= 0.00
+    - c_dnintake_item_3: defective_qty >= 0.00
+    - c_dnintake_item_4: expired_qty >= 0.00 (fixed from checking defective_qty)
+    - c_dnintake_item_5: status_code IN ('P', 'V')
+  - Created indexes dk_dnintake_item_1 (inventory_id, item_id) and dk_dnintake_item_2 (item_id)
+  - All foreign key relationships maintained: fk_dnintake_item_intake, fk_dnintake_item_donation_item, fk_dnintake_item_unitofmeasure
+  - Updated DonationIntakeItem model to reflect composite PK and strict NOT NULL constraints
+  - Zero security regression: All CSP, CSRF, cache-control, cookies, SRI protections maintained
+  - Architect reviewed: Schema matches target structure, no breaking changes, all referential integrity intact
+
 - **Master Records Disappearing Fix**:
   - Fixed intermittent issue where newly created warehouses/users appeared briefly then disappeared from list views
   - **Warehouse Fix**: After creation, now redirects to list with `filter='all'` instead of detail view, ensuring new records are immediately visible regardless of previous filter state
