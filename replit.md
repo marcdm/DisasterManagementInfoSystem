@@ -42,6 +42,19 @@ DMIS (Disaster Management Information System) is a web-based platform for the Go
 - All FUNDS items use 'UNIT' as unit of measure
 - FUNDS items configured for non-batched, non-expiring tracking (appropriate for monetary donations)
 
+### Dynamic GOODS/FUNDS Donation Workflow Implemented
+- **Category-Driven Behavior**: Donation form dynamically adapts based on item category type (GOODS/FUNDS)
+- **API Endpoint**: New `/donations/api/item/<item_id>/category` endpoint fetches item category information via AJAX
+- **Auto-Set Donation Type**: JavaScript automatically sets donation_type field (read-only) based on selected item's category
+- **Dynamic Field Control**:
+  - **GOODS items**: All cost fields editable (item_cost >= 0, addon_cost >= 0, quantity >= 0)
+  - **FUNDS items**: addon_cost field disabled and forced to 0.00 (item_cost > 0, addon_cost = 0, quantity >= 0)
+- **Help Text Integration**: Cost definition tooltips displayed from `itemcostdef` table without inline styles
+- **Aligned Validations**: Frontend, backend, and database constraints synchronized (quantity >= 0 for both types)
+- **Clean Payload Handling**: Hidden form inputs use explicit numeric formatting (Number().toFixed(2)) to prevent Decimal parsing errors
+- **Security Maintained**: All enterprise security features preserved (CSP with nonces, CSRF protection, no inline styles/handlers)
+- **User Experience**: Seamless category-type switching with instant field toggling and validation feedback
+
 ## User Preferences
 - **Communication style**: Simple, everyday language.
 - **UI/UX Requirements**:
