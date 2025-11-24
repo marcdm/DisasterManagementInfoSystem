@@ -1,0 +1,156 @@
+GOAL
+Implement and wire the full donation workflow in the UI and backend so that:
+1.	The “Accept Donation” flow:
+o	Captures donation header data in donation
+o	Captures donation line items in donation_item
+o	Captures donation documents metadata in donation_doc
+o	Uses country + currency with automatic default from country and user override of currency
+o	Uses the itemcostdef table to drive the understanding and UI for purchase vs additional costs (item_cost vs addon_cost), consistent with the comments.
+
+All of this must be done without breaking any:
+•	Existing UI
+•	Workflow or logic
+•	Behaviour
+•	Database schema
+•	Security fixes
+ABSOLUTE CONSTRAINTS (DO NOT VIOLATE)
+1.	No schema changes
+o	Do not add, drop, or alter any tables, columns, constraints, indexes, or triggers.
+•  No breaking of existing behaviour
+•	All existing donation, logistics, inventory, and notification flows must continue to behave as they do now.
+•	Do not change existing status workflows or role-based access; only extend UI and backend logic to use the existing schema.
+•  No security regressions
+•	Preserve all existing:
+o	CSP headers
+o	Security headers
+o	Cookie flags (Secure, HttpOnly, SameSite)
+o	CSRF protection
+o	Authentication & authorization (RBAC)
+•	All new or updated forms must integrate with the current CSRF and auth patterns.
+•  Reuse existing patterns
+•	Reuse existing:
+o	Blueprints and route structure
+o	Form patterns (WTForms or equivalent)
+o	Templates and layout blocks
+o	Flash messages and error rendering
+o	File upload mechanism and validation
+•  Follow the SQL comments
+•	For each table involved (itemcostdef, donation, donation_item, dnintake, dnintake_item, etc.), read the comments in the SQL file and make sure:
+o	Field meanings
+o	Default behaviours
+o	Business rules (e.g., for FUNDS vs GOODS)
+o	Validation rules
+are reflected in the UI and backend logic.
+WORKFLOW A: ACCEPT DONATION
+A.1 Navigation & Layout
+•	Use the existing “Accept Donation / Create Donation” route and template.
+•	Structure the page into 3 sections (matching current UI style):
+1.	Donation Header (donation)
+2.	Donation Items Grid (donation_item)
+3.	Supporting Documents (donation_doc)
+________________________________________
+A.2 Donation Header → donation (Country + Currency Override)
+Fields to include (respecting existing schema & comments):
+•	donor_id
+•	donation_desc (text area)
+•	origin_country_id
+o	Dropdown from country.country_id, country.country_name
+•	currency_code
+o	Dropdown from currency.currency_code, currency.currency_name
+o	Behaviour driven by comments on FUNDS in donation_item:
+	For FUNDS, “unit of measure should default to the currency of the donor’s country with ability to select another currency (e.g. USD)” – implement this logic via currency_code.
+•	origin_address1_text, origin_address2_text
+•	event_id (from event)
+•	custodian_id (from custodian)
+•	received_date
+•	comments_text (optional)
+Currency default + override logic (must follow comments):
+•	When user selects origin_country_id:
+o	Look up the country record from country.
+o	Automatically default currency_code to country.currency_code.
+•	Allow the user to override currency_code and select any other valid currency from currency.
+•	On submit:
+o	Validate that origin_country_id exists in country.
+o	Validate that the chosen currency_code exists in currency.
+o	Persist currency_code using the already-existing field in donation (do not add new columns).
+o	Respect existing logic for:
+	status_code
+	Audit fields (create_by_id, create_dtime, update_by_id, update_dtime, version_nbr)
+Do not change any other donation header behaviour or status workflows.
+________________________________________
+A.3 Donation Items Grid → donation_item (Using itemcostdef)
+Under the header, display a grid of donation items. The behaviour must honour the comments on donation_item and itemcostdef.
+Per row (edit/create):
+•	item_id (dropdown/search from item)
+•	donation_type (GOODS or FUNDS)
+o	Must obey the constraint and comments:
+	For FUNDS:
+	item_qty = number of instances (default 1)
+	item_cost = average value of each instance
+	Ideally, multiple funds should be separate items.
+	For GOODS:
+	item_qty = quantity of goods
+	item_cost = purchase cost per item (per comments)
+•	item_qty
+o	Default 1.00
+o	Must be ≥ 0.00 (check constraint)
+•	item_cost
+o	Purchase cost (if GOODS) or donated value (if FUNDS)
+o	Must be ≥ 0.00
+•	addon_cost
+o	Total additional cost per item (e.g. CIF, storage, transport) – see comments.
+o	Must follow the check:
+	For FUNDS: addon_cost must be 0.00
+	For GOODS: addon_cost >= 0.00
+o	Use itemcostdef here for semantics:
+	Treat item_cost as representing PURCHASE costs (itemcostdef.cost_type = 'PURCHASE').
+	Treat addon_cost as aggregating ADDITIONAL costs (itemcostdef.cost_type = 'ADDITIONAL').
+	In the UI, provide:
+	A labelled section or tooltip “Cost breakdown (definition)” that lists active (status_code = 'A') itemcostdef records:
+	Grouped by cost_type (PURCHASE vs ADDITIONAL).
+	Showing cost_name and cost_desc.
+	This gives users clarity on what should go into item_cost vs addon_cost, without changing the schema.
+	You can optionally provide a non-persistent breakdown UI (e.g. checkboxes or notes) tied to these cost names, but the only values persisted are item_cost and addon_cost as defined in the schema.
+•	uom_code
+o	Must follow the comments:
+	For GOODS, units come from unitofmeasure.
+	For FUNDS, should default to the currency code/symbol of donor’s country with ability to select another currency.
+o	Ensure validation respects fk_donation_item_unitofmeasure.
+•	location_name (mandatory, per comments)
+•	status_code (P/V)
+o	Use existing defaults and rules.
+•	comments_text (optional)
+Validation & constraints (must match SQL comments and checks):
+•	Enforce:
+o	donation_type in ('GOODS','FUNDS')
+o	item_qty >= 0.00
+o	item_cost >= 0.00
+o	addon_cost rule for FUNDS vs GOODS
+o	Final constraint: item_cost + addon_cost > 0.00
+•	On submit:
+o	Upsert donation_item rows for the given donation_id, respecting the primary key (donation_id, item_id).
+o	If a row already exists, update instead of inserting a duplicate.
+o	Preserve the existing verification and status flow.
+Do not add new columns or constraints; all business rules should reflect the existing comments and constraints.
+________________________________________
+A.4 Supporting Documents → donation_doc
+On the Accept Donation page, add a “Supporting Documents” section for donation_doc:
+Per document:
+•	document_type (e.g. Receipt, Manifest, Bill of Materials, Delivery Notice – static list is fine)
+•	document_desc
+•	File upload:
+o	Use the existing secure file upload mechanism (directory, file size limits, MIME-type checking).
+o	Derive:
+	file_name (original)
+	file_type (MIME type; must match allowed values enforced in the schema/check)
+	file_size (string representation, e.g. “5MB”)
+On submit:
+•	Insert into donation_doc:
+o	donation_id
+o	document_type
+o	document_desc
+o	file_name
+o	file_type
+o	file_size
+o	Audit fields as per app convention
+Show a list/table of attached documents. Any delete/download behaviour must follow existing security and permission patterns.
