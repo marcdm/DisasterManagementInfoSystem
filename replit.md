@@ -5,6 +5,29 @@ DMIS (Disaster Management Information System) is a web-based platform for the Go
 
 ## Recent Changes (November 24, 2025)
 
+### SQLAlchemy Relationship Warning Fixed
+- Fixed SQLAlchemy warning about `Item.batches` and `Inventory.batches` relationships
+- Added proper `overlaps` parameter to backref definitions in ItemBatch model
+- Imported `backref` from `sqlalchemy.orm` for proper configuration
+- Warning completely eliminated from application logs
+- No functional changes - purely cleanup of relationship declarations
+
+### Relief Request Status Schema Update
+- Updated `reliefrqst_status` table with new status descriptions:
+  - 0: DRAFT, 1: AWAITING APPROVAL, 2: CANCELLED, 3: SUBMITTED
+  - 4: DENIED (reason required), 5: PART FILLED, 6: CLOSED (reason required)
+  - 7: FILLED, 8: INELIGIBLE (reason required)
+- Updated `app/core/status.py` to match new status descriptions
+- Fixed database view `v_status4reliefrqst_processed` to filter on codes 4, 6, 7, 8
+- All business logic, templates, and badge classes aligned with new statuses
+
+### Relief Request Item Status Schema Verification
+- Verified `reliefrqstitem_status` table has `item_qty_rule` field (char(2))
+- Updated values: R='EZ', U='EZ', W='EZ', D='EZ', P='GZ', L='GZ', F='ER'
+- Rule meanings: EZ=Equal to Zero, GZ=Greater than Zero, ER=Equal to Requested qty
+- CHECK constraint enforces valid values ('EZ', 'GZ', 'ER')
+- Service layer (`item_status_service.py`) already loads rules from database dynamically
+
 ### Database Purge - All Data Cleared + Reference Tables Restored
 - Safely purged all data from 48 database tables using TRUNCATE CASCADE
 - Reset all 25 sequences to start from 1

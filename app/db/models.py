@@ -6,6 +6,7 @@ from app.db import db
 from flask_login import UserMixin
 from datetime import datetime
 from sqlalchemy import CheckConstraint
+from sqlalchemy.orm import backref
 from app.utils.timezone import now as jamaica_now
 
 class User(UserMixin, db.Model):
@@ -448,10 +449,10 @@ class ItemBatch(db.Model):
     inventory = db.relationship('Inventory', 
         foreign_keys=[inventory_id, item_id],
         primaryjoin='and_(ItemBatch.inventory_id==Inventory.inventory_id, ItemBatch.item_id==Inventory.item_id)',
-        backref='batches',
+        backref=backref('batches', overlaps='batches,item'),
         overlaps='batches,item')
     item = db.relationship('Item', 
-        backref='batches',
+        backref=backref('batches', overlaps='batches,inventory'),
         overlaps='batches,inventory')
     uom = db.relationship('UnitOfMeasure', backref='batches')
     
