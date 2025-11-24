@@ -5,6 +5,18 @@ DMIS (Disaster Management Information System) is a web-based platform for the Go
 
 ## Recent Changes (November 24, 2025)
 
+### Donation Document Table Added
+- Added new `donation_doc` table to support attaching documents to donations
+- Supports document types: Receipt, Manifest, Bill of materials, Delivery notice, etc.
+- File format validation: application/pdf, image/jpeg only (CHECK constraint)
+- Schema includes: document_id (PK), donation_id (FK), document_type, document_desc, file_name, file_type, file_size
+- Optimistic locking enabled via version_nbr column
+- Indexes created on donation_id (foreign key) and document_type (filtering)
+- SQLAlchemy model `DonationDoc` added to app/db/models.py
+- Migration script: `scripts/add_donation_doc_table.sql`
+- Total tables: 49 (was 48)
+- No breaking changes to existing tables, workflows, or security features
+
 ### SQLAlchemy Relationship Warning Fixed
 - Fixed SQLAlchemy warning about `Item.batches` and `Inventory.batches` relationships
 - Added proper `overlaps` parameter to backref definitions in ItemBatch model

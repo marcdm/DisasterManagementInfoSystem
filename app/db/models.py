@@ -607,6 +607,37 @@ class DonationItem(db.Model):
         'version_id_col': version_nbr
     }
 
+class DonationDoc(db.Model):
+    """Donation Document - Attachments for donations
+    
+    Tracks documents attached to donations (receipts, manifests, delivery notices).
+    Supports PDF and JPEG file formats.
+    """
+    __tablename__ = 'donation_doc'
+    
+    document_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    donation_id = db.Column(db.Integer, db.ForeignKey('donation.donation_id'), nullable=False)
+    document_type = db.Column(db.String(40), nullable=False)
+    document_desc = db.Column(db.String(255), nullable=False)
+    file_name = db.Column(db.String(80), nullable=False)
+    file_type = db.Column(db.String(30), nullable=False)
+    file_size = db.Column(db.String(20))
+    create_by_id = db.Column(db.String(20), nullable=False)
+    create_dtime = db.Column(db.DateTime, nullable=False)
+    update_by_id = db.Column(db.String(20), nullable=False)
+    update_dtime = db.Column(db.DateTime, nullable=False)
+    version_nbr = db.Column(db.Integer, nullable=False, default=1)
+    
+    __table_args__ = (
+        db.CheckConstraint("file_type IN ('application/pdf', 'image/jpeg')", name='c_donation_doc_1'),
+    )
+    
+    donation = db.relationship('Donation', backref='documents')
+    
+    __mapper_args__ = {
+        'version_id_col': version_nbr
+    }
+
 class ReliefRqstStatus(db.Model):
     """Relief Request Status Lookup Table
     
