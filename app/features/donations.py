@@ -113,6 +113,7 @@ def create_donation():
                     errors.append('Received date cannot be in the future')
             
             item_data = []
+            item_ids_seen = set()
             for key in request.form.keys():
                 if key.startswith('item_id_'):
                     item_num = key.split('_')[-1]
@@ -122,6 +123,12 @@ def create_donation():
                     item_comments = request.form.get(f'item_comments_{item_num}', '').strip()
                     
                     if item_id:
+                        # Check for duplicate items in the same donation
+                        if item_id in item_ids_seen:
+                            errors.append(f'Duplicate item detected in row #{item_num}. Each item can only be added once per donation.')
+                            continue
+                        item_ids_seen.add(item_id)
+                        
                         quantity_value = None
                         if not quantity_str:
                             errors.append(f'Quantity is required for item #{item_num}')
@@ -232,7 +239,16 @@ def create_donation():
                                  form_data=request.form)
         except IntegrityError as e:
             db.session.rollback()
-            flash(f'Database error: {str(e)}', 'danger')
+            error_message = str(e.orig) if hasattr(e, 'orig') else str(e)
+            
+            # Check if it's a duplicate donation item error
+            if ('pk_donation_item' in error_message or 
+                'duplicate key' in error_message.lower() or 
+                'UNIQUE constraint failed' in error_message):
+                flash('Duplicate item detected. Each item can only be added once per donation. Please check your items and try again.', 'danger')
+            else:
+                flash('Unable to create donation due to a database constraint. Please check your input and try again.', 'danger')
+            
             donors = Donor.query.order_by(Donor.donor_name).all()
             events = Event.query.filter_by(status_code='A').order_by(Event.event_name).all()
             custodians = Custodian.query.order_by(Custodian.custodian_name).all()
