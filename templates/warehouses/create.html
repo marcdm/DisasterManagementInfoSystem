@@ -20,7 +20,7 @@
                 <h1 class="page-title-text">Create New Warehouse</h1>
             </div>
         </div>
-        <a href="{{ url_for('warehouses.list_warehouses') }}" class="btn-relief-secondary">
+        <a href="{{ url_for('warehouses.list_warehouses', filter='all') }}" class="btn-relief-secondary">
             <i class="bi bi-arrow-left"></i> Back to List
         </a>
     </div>
@@ -242,7 +242,7 @@
 
                         <!-- Form Actions -->
                         <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                            <a href="{{ url_for('warehouses.list_warehouses') }}" class="btn-relief-secondary">
+                            <a href="{{ url_for('warehouses.list_warehouses', filter='all') }}" class="btn-relief-secondary">
                                 <i class="bi bi-x-circle"></i> Cancel
                             </a>
                             <button type="submit" class="btn-relief-primary">
