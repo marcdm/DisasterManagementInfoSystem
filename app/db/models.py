@@ -1143,12 +1143,6 @@ class DonationIntakeItem(db.Model):
         db.CheckConstraint("status_code IN ('P', 'V')", name='c_dnintake_item_5'),
         db.Index('dk_dnintake_item_1', 'inventory_id', 'item_id'),
         db.Index('dk_dnintake_item_2', 'item_id'),
-        db.UniqueConstraint('donation_id', 'inventory_id', 'item_id', 'batch_no', 
-                          name='uk_dnintake_item_batch',
-                          postgresql_where=db.text('batch_no IS NOT NULL')),
-        db.UniqueConstraint('donation_id', 'inventory_id', 'item_id',
-                          name='uk_dnintake_item_null_batch',
-                          postgresql_where=db.text('batch_no IS NULL')),
     )
     
     intake = db.relationship('DonationIntake', backref='items')
