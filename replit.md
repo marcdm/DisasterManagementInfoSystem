@@ -12,7 +12,7 @@ DMIS (Disaster Management Information System) is a web-based platform for the Go
   - All 48 tables intact with structure
   - All 109 foreign key constraints preserved
   - All indexes, columns, and constraints maintained
-- **Reference/Lookup Tables Restored** (164 total reference records):
+- **Reference/Lookup Tables Restored** (165 total reference records):
   - **currency**: 37 currencies (JMD, USD, CAD, GBP, EUR, etc.)
   - **country**: 66 countries (Jamaica, Caribbean nations, Americas, Europe, Asia)
   - **parish**: 14 Jamaican parishes (Kingston, St. Andrew, etc.)
@@ -21,7 +21,7 @@ DMIS (Disaster Management Information System) is a web-based platform for the Go
   - **custodian**: 1 default (OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT - ODPEM)
   - **reliefrqst_status**: 8 status codes (Pending, In Review, Approved, Partial, Fulfilled, Rejected, Cancelled, Closed)
   - **reliefrqstitem_status**: 7 status codes (Requested, Unavailable, Waiting, Denied, Partial, Limited, Fulfilled)
-  - **role**: 8 roles (SYSTEM_ADMINISTRATOR, LOGISTICS_MANAGER, LOGISTICS_OFFICER, MAIN_HUB_WAREHOUSE, SUB_HUB_WAREHOUSE, AGENCY_HUB, INVENTORY_CLERK, AUDITOR)
+  - **role**: 9 roles (SYSTEM_ADMINISTRATOR, LOGISTICS_MANAGER, LOGISTICS_OFFICER, MAIN_HUB_WAREHOUSE, SUB_HUB_WAREHOUSE, AGENCY_HUB, INVENTORY_CLERK, AUDITOR, CUSTODIAN)
   - **permission**: 5 event permissions (EVENT.VIEW, EVENT.CREATE, EVENT.UPDATE, EVENT.CLOSE, EVENT.DELETE)
 - **System Administrator User Created**:
   - Email: admin@odpem.gov.jm
