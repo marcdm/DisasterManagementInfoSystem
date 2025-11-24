@@ -37,7 +37,10 @@ login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.get(User, int(user_id))
+    user = db.session.get(User, int(user_id))
+    if user and user.is_active and user.status_code == 'A' and not user.is_locked:
+        return user
+    return None
 
 from app.features.events import events_bp
 from app.features.warehouses import warehouses_bp
@@ -196,9 +199,14 @@ def login():
         user = User.query.filter_by(email=email).first()
         
         if user and password and check_password_hash(user.password_hash, password):
-            login_user(user)
-            next_page = request.args.get('next')
-            return redirect(next_page if next_page else url_for('dashboard.index'))
+            if not user.is_active or user.status_code != 'A':
+                flash('Your account is inactive. Please contact your administrator.', 'warning')
+            elif user.is_locked:
+                flash('Your account is temporarily locked. Please contact your administrator.', 'warning')
+            else:
+                login_user(user)
+                next_page = request.args.get('next')
+                return redirect(next_page if next_page else url_for('dashboard.index'))
         else:
             flash('Invalid email or password', 'danger')
     
