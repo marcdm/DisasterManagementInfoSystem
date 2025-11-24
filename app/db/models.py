@@ -1096,25 +1096,22 @@ class DonationIntakeItem(db.Model):
     """Donation Intake Item - Batch-level intake tracking for donations
     
     Tracks each batch of items received in a donation with batch numbers,
-    dates, expiry, and quantities. If batch doesn't exist in itembatch table,
-    create it with batch_id and zero quantities, then update with intake amounts.
-    
-    CRITICAL: batch_no and batch_date are nullable to support items without batch tracking.
-    When both are NULL, items are tracked without specific batch identification.
+    dates, expiry, and quantities. Each item must have batch tracking information.
+    If batch doesn't exist in itembatch table, create it with batch_id and zero 
+    quantities, then update with intake amounts.
     
     Status Codes:
-        P = Processed
+        P = Pending verification
         V = Verified
     """
     __tablename__ = 'dnintake_item'
     
-    intake_item_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    donation_id = db.Column(db.Integer, nullable=False)
-    inventory_id = db.Column(db.Integer, nullable=False)
-    item_id = db.Column(db.Integer, nullable=False)
-    batch_no = db.Column(db.String(20), nullable=True)  # Nullable - supports items without batch tracking
-    batch_date = db.Column(db.Date, nullable=True)  # Nullable - supports items without batch tracking
-    expiry_date = db.Column(db.Date)
+    donation_id = db.Column(db.Integer, primary_key=True, nullable=False)
+    inventory_id = db.Column(db.Integer, primary_key=True, nullable=False)
+    item_id = db.Column(db.Integer, primary_key=True, nullable=False)
+    batch_no = db.Column(db.String(20), primary_key=True, nullable=False)
+    batch_date = db.Column(db.Date, nullable=False)
+    expiry_date = db.Column(db.Date, nullable=False)
     uom_code = db.Column(db.String(25), db.ForeignKey('unitofmeasure.uom_code'), nullable=False)
     avg_unit_value = db.Column(db.Numeric(10, 2), nullable=False)
     usable_qty = db.Column(db.Numeric(12, 2), nullable=False)
@@ -1131,9 +1128,9 @@ class DonationIntakeItem(db.Model):
     __table_args__ = (
         db.ForeignKeyConstraint(['donation_id', 'inventory_id'], ['dnintake.donation_id', 'dnintake.inventory_id'], name='fk_dnintake_item_intake'),
         db.ForeignKeyConstraint(['donation_id', 'item_id'], ['donation_item.donation_id', 'donation_item.item_id'], name='fk_dnintake_item_donation_item'),
-        db.CheckConstraint("batch_no IS NULL OR batch_no = UPPER(batch_no)", name='c_dnintake_item_1a'),
-        db.CheckConstraint("batch_date IS NULL OR batch_date <= CURRENT_DATE", name='c_dnintake_item_1b'),
-        db.CheckConstraint("expiry_date >= CURRENT_DATE OR expiry_date IS NULL", name='c_dnintake_item_1c'),
+        db.CheckConstraint("batch_no = UPPER(batch_no)", name='c_dnintake_item_1a'),
+        db.CheckConstraint("batch_date <= CURRENT_DATE", name='c_dnintake_item_1b'),
+        db.CheckConstraint("expiry_date >= CURRENT_DATE", name='c_dnintake_item_1c'),
         db.CheckConstraint("avg_unit_value > 0.00", name='c_dnintake_item_1d'),
         db.CheckConstraint("usable_qty >= 0.00", name='c_dnintake_item_2'),
         db.CheckConstraint("defective_qty >= 0.00", name='c_dnintake_item_3'),
