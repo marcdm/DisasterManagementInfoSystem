@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}DMIS{% endblock %} - Disaster Management Information System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" integrity="sha384-tViUnnbYAV00FLIhhi3v/dWt3Jxw4gZQcNoSCxCIFNJVCx7/D55/wXsrNIRANwdD" crossorigin="anonymous">
     <!-- DMIS Modern UI Design System -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-ui.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/workflow-sidebar.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications-ui.css') }}">
-    <style>
+    <style nonce="{{ csp_nonce() }}">
         :root {
             --goj-green: #009639;
             --goj-gold: #FDB913;
@@ -607,6 +607,10 @@
             font-size: 0.875rem;
         }
     </style>
+    
+    <!-- CSP-compliant utilities -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/csp-utilities.css') }}">
+    
     {% block extra_styles %}{% endblock %}
 </head>
 <body>
@@ -629,14 +633,14 @@
         <div class="header-right">
             <button class="notification-bell" id="notificationBell" data-bs-toggle="offcanvas" data-bs-target="#notificationPanel">
                 <i class="bi bi-bell"></i>
-                <span class="notification-badge" id="notificationCount" style="display: none;">0</span>
+                <span class="notification-badge" id="notificationCount" hidden>0</span>
             </button>
             <div class="dropdown">
                 <a class="user-profile-dropdown d-flex align-items-center" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown">
-                    <i class="bi bi-person-circle me-2" style="font-size: 1.5rem;"></i>
+                    <i class="bi bi-person-circle me-2 icon-lg"></i>
                     <div class="d-flex flex-column align-items-start">
                         <span class="fw-bold">{{ current_user.full_name }}</span>
-                        <small style="font-size: 0.75rem; opacity: 0.9;">{{ current_user.email }}</small>
+                        <small class="small opacity-90">{{ current_user.email }}</small>
                     </div>
                     <i class="bi bi-chevron-down ms-2"></i>
                 </a>
@@ -660,16 +664,16 @@
         {{ render_dynamic_nav(current_user, active_page) }}
     </div>
 
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="notificationPanel" style="width: 400px;">
-        <div class="offcanvas-header border-bottom" style="padding: 1rem 1.5rem;">
+    <div class="offcanvas offcanvas-end offcanvas-width-400" tabindex="-1" id="notificationPanel">
+        <div class="offcanvas-header border-bottom p-3">
             <h5 class="offcanvas-title mb-0">
                 <i class="bi bi-bell-fill me-2" aria-hidden="true"></i>Notifications
             </h5>
             <div class="d-flex align-items-center gap-2 ms-auto">
                 <button type="button" 
-                        class="btn btn-sm btn-outline-danger rounded-pill px-3" 
+                        class="btn btn-sm btn-outline-danger rounded-pill px-3 small fw-medium" 
                         id="clearAllNotifications" 
-                        style="display: none; font-size: 0.85rem; font-weight: 500;" 
+                        hidden 
                         data-bs-toggle="modal" 
                         data-bs-target="#clearAllBellModal"
                         aria-label="Clear all notifications">
@@ -709,7 +713,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-danger" onclick="confirmClearAllNotifications()" aria-label="Confirm clear all notifications">
+                    <button type="button" class="btn btn-danger" data-action="confirm-clear-all-notifications" aria-label="Confirm clear all notifications">
                         <i class="bi bi-trash-fill" aria-hidden="true"></i>
                         Clear All Notifications
                     </button>
@@ -761,8 +765,8 @@
     </footer>
     {% endif %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+    <script  nonce="{{ csp_nonce() }}" src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script nonce="{{ csp_nonce() }}">
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.getElementById('sidebar');
             const sidebarToggle = document.getElementById('sidebarToggle');
@@ -794,9 +798,9 @@
                 .then(data => {
                     if (data.count > 0) {
                         badge.textContent = data.count;
-                        badge.style.display = 'block';
+                        badge.hidden = false;
                     } else {
-                        badge.style.display = 'none';
+                        badge.hidden = true;
                     }
                 })
                 .catch(error => console.error('Error loading notifications:', error));
@@ -811,7 +815,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.notifications && data.notifications.length > 0) {
-                        clearAllBtn.style.display = 'block';
+                        clearAllBtn.hidden = false;
                         
                         // Update the count in the modal
                         const bellClearCount = document.getElementById('bellClearCount');
@@ -849,7 +853,7 @@
                                         </div>
                                     </a>
                                     <button class="btn-notification-bell-delete" 
-                                            onclick="deleteNotification(${notif.id}, event)" 
+                                            data-action="delete-notification" data-notification-id="${notif.id}" 
                                             title="Delete notification"
                                             aria-label="Delete notification">
                                         <i class="bi bi-trash"></i>
@@ -869,7 +873,7 @@
                         // Add click handlers to notification links to mark as read
                         attachNotificationClickHandlers();
                     } else {
-                        clearAllBtn.style.display = 'none';
+                        clearAllBtn.hidden = true;
                         notificationList.innerHTML = `
                             <div class="notification-bell-empty">
                                 <i class="bi bi-check-circle-fill"></i>
@@ -881,7 +885,7 @@
                 })
                 .catch(error => {
                     console.error('Error loading notification list:', error);
-                    clearAllBtn.style.display = 'none';
+                    clearAllBtn.hidden = true;
                     notificationList.innerHTML = '<div class="notification-bell-empty text-danger"><i class="bi bi-exclamation-circle"></i><p>Failed to load notifications</p></div>';
                 });
         }
@@ -926,7 +930,7 @@
                         if (newCount > 0) {
                             badge.textContent = newCount;
                         } else {
-                            badge.style.display = 'none';
+                            badge.hidden = true;
                         }
                     }
                     
@@ -963,7 +967,11 @@
             notificationList._notificationClickHandler = clickHandler;
         }
         
-        function confirmClearAllNotifications() {
+        // Event delegation for clear all notifications
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('[data-action="confirm-clear-all-notifications"]');
+            if (!btn) return;
+            
             // Close the modal first
             const modal = bootstrap.Modal.getInstance(document.getElementById('clearAllBellModal'));
             if (modal) {
@@ -1002,13 +1010,17 @@
                 clearAllBtn.disabled = false;
                 clearAllBtn.innerHTML = originalContent;
             });
-        }
+        });
         
-        function deleteNotification(notificationId, event) {
-            if (event) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
+        // Event delegation for delete notification
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('[data-action="delete-notification"]');
+            if (!btn) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const notificationId = btn.dataset.notificationId;
             
             if (!confirm('Delete this notification?')) {
                 return;
@@ -1031,7 +1043,7 @@
                 console.error('Error deleting notification:', error);
                 alert('Failed to delete notification. Please try again.');
             });
-        }
+        });
         
         function escapeHtml(text) {
             const div = document.createElement('div');
@@ -1131,6 +1143,13 @@
             });
         });
     </script>
+    
+    <!-- Global scripts that MUST load on every page -->
+    {% block global_scripts %}
+    {% if current_user.is_authenticated %}
+    <script src="{{ url_for('static', filename='js/form-utils.js') }}" nonce="{{ csp_nonce() }}" defer></script>
+    {% endif %}
+    {% endblock %}
     
     <!-- Page-specific scripts -->
     {% block scripts %}

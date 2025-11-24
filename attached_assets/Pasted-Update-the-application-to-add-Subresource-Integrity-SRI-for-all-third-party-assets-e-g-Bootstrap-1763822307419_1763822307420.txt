@@ -1,0 +1,85 @@
+Update the application to add Subresource Integrity (SRI) for all third-party assets (e.g. Bootstrap, icons, other libraries) loaded from a CDN, without breaking any existing code, logic, workflow, behaviour, UI, or database schema.
+
+Scope
+
+Identify all external CDN assets
+
+Search all templates/layouts (e.g. base HTML, Jinja, etc.) for:
+
+<script src="https://...">
+
+<link rel="stylesheet" href="https://...">
+
+Especially:
+
+Bootstrap CSS/JS
+
+Icon libraries (e.g. Bootstrap Icons, Font Awesome, etc.)
+
+Any other third-party JS/CSS loaded from a CDN.
+
+Add SRI attributes
+
+For each external CDN <script> or <link> tag:
+
+Add a correct integrity attribute with the exact hash for the exact version being used.
+
+Add crossorigin="anonymous".
+
+Example structure (adjust to actual versions and correct hashes):
+
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+  integrity="sha384-<correct-hash-here>"
+  crossorigin="anonymous"
+>
+
+<script
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+  integrity="sha384-<correct-hash-here>"
+  crossorigin="anonymous"
+></script>
+
+
+Do NOT use placeholder hashes; generate or copy the official hashes for the exact CDN URLs currently used.
+
+No breaking changes
+
+Do not:
+
+Change any JavaScript logic or functions.
+
+Change any CSS classes or layout structure.
+
+Change any routes, views, controllers, or backend logic.
+
+Modify any database schema, tables, columns, triggers, or data.
+
+The only changes should be:
+
+Adding integrity="..." and crossorigin="anonymous" to external CDN resource tags.
+
+Version safety
+
+Do not upgrade or downgrade any library versions just to match sample SRI hashes.
+
+Keep the exact existing CDN URLs and versions, and compute/find the matching SRI hash for each one.
+
+Validation / Outcome
+
+After the change:
+
+Security scans must show:
+
+No external Bootstrap / icon / third-party scripts/styles are loaded without SRI.
+
+The DMIS/DRIMS application must:
+
+Look the same.
+
+Function the same (all pages, buttons, forms, modals, icons, dashboards).
+
+Have no new console errors related to loading resources.
+
+Use this to refactor the templates so all CDN assets are protected with SRI while keeping the app’s behaviour 100% unchanged.

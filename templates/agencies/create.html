@@ -2,7 +2,7 @@
 
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
-<style>
+<style nonce="{{ csp_nonce() }}">
     .warehouse-field-disabled {
         background-color: #f8f9fa;
         opacity: 0.6;
@@ -51,7 +51,7 @@
                                            value="{{ form_data.get('agency_name', '') }}"
                                            required 
                                            placeholder="Enter agency name (will be converted to UPPERCASE)"
-                                           style="text-transform: uppercase;">
+                                           class="text-uppercase-input">
                                     <small class="form-text text-muted">Max 120 characters, auto-converted to UPPERCASE, must be unique</small>
                                     {% if errors and errors.get('agency_name') %}
                                     <div class="invalid-feedback d-block">{{ errors.get('agency_name') }}</div>
@@ -104,7 +104,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label for="warehouse_id" class="form-label">
-                                        Warehouse <span class="warehouse-required text-danger" style="display:none;">*</span>
+                                        Warehouse <span class="warehouse-required text-danger d-none">*</span>
                                     </label>
                                     <select class="form-select {% if errors and errors.get('warehouse_id') %}is-invalid{% endif %}" 
                                             id="warehouse_id" 
@@ -203,7 +203,7 @@
                                            value="{{ form_data.get('contact_name', '') }}"
                                            required 
                                            placeholder="Full name"
-                                           style="text-transform: uppercase;">
+                                           class="text-uppercase-input">
                                     <small class="form-text text-muted">Max 50 characters, auto-converted to UPPERCASE</small>
                                     {% if errors and errors.get('contact_name') %}
                                     <div class="invalid-feedback d-block">{{ errors.get('contact_name') }}</div>
@@ -293,8 +293,8 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{{ url_for('static', filename='js/phone-mask.js') }}"></script>
-<script>
+<script  nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/phone-mask.js') }}"></script>
+<script nonce="{{ csp_nonce() }}">
 // Handle agency type and warehouse relationship
 document.addEventListener('DOMContentLoaded', function() {
     const agencyTypeSelect = document.getElementById('agency_type');

@@ -2,7 +2,7 @@
 
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" integrity="sha384-RkASv+6KfBMW9eknReJIJ6b3UnjKOKC5bOUaNgIY778NFbQ8MtWq9Lr/khUgqtTt" crossorigin="anonymous">
 {% endblock %}
 
 {% block title %}Create Event{% endblock %}
@@ -63,7 +63,7 @@
                                                value="{{ form_data.get('start_date') if form_data else '' }}"
                                                required
                                                readonly>
-                                        <span class="input-group-text" id="calendar-icon" style="cursor: pointer;">
+                                        <span class="input-group-text cursor-pointer" id="calendar-icon">
                                             <i class="bi bi-calendar3"></i>
                                         </span>
                                     </div>
@@ -93,7 +93,7 @@
                                            value="{{ form_data.get('event_name') if form_data else '' }}"
                                            required 
                                            placeholder="e.g., Hurricane Gilbert 1988"
-                                           style="text-transform: uppercase;">
+                                           class="text-uppercase-input">
                                     <small class="form-text text-muted"><span id="event_name_count">0</span>/60 characters, auto-converted to uppercase</small>
                                     {% if errors and errors.get('event_name') %}
                                     <div class="text-danger small mt-1">{{ errors.get('event_name') }}</div>
@@ -158,8 +158,8 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script>
+<script  nonce="{{ csp_nonce() }}" src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js" integrity="sha384-5JqMv4L/Xa0hfvtF06qboNdhvuYXUku9ZrhZh3bSk8VXF0A/RuSLHpLsSV9Zqhl6" crossorigin="anonymous"></script>
+<script nonce="{{ csp_nonce() }}">
 // Character counter function
 function updateCharCount(fieldId, counterId, maxLength) {
     const field = document.getElementById(fieldId);

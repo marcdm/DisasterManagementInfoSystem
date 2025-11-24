@@ -185,7 +185,7 @@
         </div>
 
         <!-- Tab Content: Roles & Privileges -->
-        <div class="profile-tab-content" id="roles-panel" role="tabpanel" style="display: none;">
+        <div class="profile-tab-content" id="roles-panel" role="tabpanel" class="d-none">
             <div class="row g-4">
                 <div class="col-md-6">
                     <div class="info-card">
@@ -209,7 +209,7 @@
                             {% endfor %}
                         {% else %}
                             <p class="text-muted text-center py-4">
-                                <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: 1rem;"></i>
+                                <i class="bi bi-inbox icon-lg d-block mb-3"></i>
                                 No roles assigned to this user
                             </p>
                         {% endif %}
@@ -236,7 +236,7 @@
                             {% endfor %}
                         {% else %}
                             <p class="text-muted text-center py-4">
-                                <i class="bi bi-building-check" style="font-size: 2rem; display: block; margin-bottom: 1rem; color: #28a745;"></i>
+                                <i class="bi bi-building-check icon-lg d-block mb-3 text-success"></i>
                                 Access to all warehouses
                             </p>
                         {% endif %}
@@ -246,7 +246,7 @@
         </div>
 
         <!-- Tab Content: Security Controls -->
-        <div class="profile-tab-content" id="security-panel" role="tabpanel" style="display: none;">
+        <div class="profile-tab-content" id="security-panel" role="tabpanel" class="d-none">
             <div class="row g-4">
                 <div class="col-md-6">
                     <div class="info-card">
@@ -282,7 +282,7 @@
         </div>
 
         <!-- Tab Content: Activity Timeline -->
-        <div class="profile-tab-content" id="activity-panel" role="tabpanel" style="display: none;">
+        <div class="profile-tab-content" id="activity-panel" role="tabpanel" class="d-none">
             <div class="info-card">
                 <div class="info-card-header">
                     <h3 class="info-card-title">Recent Activity</h3>
@@ -355,7 +355,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 // Tab switching functionality
 document.addEventListener('DOMContentLoaded', function() {
     const tabs = document.querySelectorAll('.profile-tab');
@@ -471,7 +471,7 @@ function confirmActivateUser() {
                     <i class="bi bi-x-circle"></i>
                     Cancel
                 </button>
-                <button type="button" class="btn btn-danger" onclick="confirmDeactivateUser()">
+                <button type="button" class="btn btn-danger" data-action="confirm-deactivate-user">
                     <i class="bi bi-person-x"></i>
                     Yes, Deactivate Account
                 </button>
@@ -505,7 +505,7 @@ function confirmActivateUser() {
                     <i class="bi bi-x-circle"></i>
                     Cancel
                 </button>
-                <button type="button" class="btn btn-success" onclick="confirmActivateUser()">
+                <button type="button" class="btn btn-success" data-action="confirm-activate-user">
                     <i class="bi bi-person-check"></i>
                     Yes, Activate Account
                 </button>

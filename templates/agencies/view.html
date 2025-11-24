@@ -208,7 +208,7 @@
                 <div class="card-body">
                     {% if agency.status_code == 'A' %}
                     <form method="POST" action="{{ url_for('agencies.deactivate_agency', agency_id=agency.agency_id) }}" 
-                          onsubmit="return confirm('Are you sure you want to deactivate this agency? This agency will no longer appear in dropdowns for new operations.');">
+                          data-confirm="Are you sure you want to deactivate this agency? This agency will no longer appear in dropdowns for new operations.">
                         <button type="submit" class="btn btn-warning w-100">
                             <i class="bi bi-x-circle"></i> Deactivate Agency
                         </button>

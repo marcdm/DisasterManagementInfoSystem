@@ -2,7 +2,7 @@
 
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" integrity="sha384-RkASv+6KfBMW9eknReJIJ6b3UnjKOKC5bOUaNgIY778NFbQ8MtWq9Lr/khUgqtTt" crossorigin="anonymous">
 {% endblock %}
 
 {% block title %}Edit Event - {{ event.event_name }}{% endblock %}
@@ -71,7 +71,7 @@
                                                required 
                                                readonly
                                                {% if event.status_code == 'C' %}disabled{% endif %}>
-                                        <span class="input-group-text" id="calendar-icon" style="cursor: {% if event.status_code == 'C' %}not-allowed{% else %}pointer{% endif %}; {% if event.status_code == 'C' %}opacity: 0.5;{% endif %}">
+                                        <span class="input-group-text {% if event.status_code == 'C' %}cursor-conditional-disabled{% else %}cursor-pointer{% endif %}" id="calendar-icon">
                                             <i class="bi bi-calendar3"></i>
                                         </span>
                                     </div>
@@ -97,7 +97,7 @@
                                            value="{{ event.event_name }}" 
                                            maxlength="60" 
                                            required 
-                                           style="text-transform: uppercase;"
+                                           class="text-uppercase-input"
                                            {% if event.status_code == 'C' %}disabled{% endif %}>
                                     <small class="form-text text-muted"><span id="event_name_count">0</span>/60 characters, auto-converted to uppercase</small>
                                 </div>
@@ -156,8 +156,8 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script>
+<script  nonce="{{ csp_nonce() }}" src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js" integrity="sha384-5JqMv4L/Xa0hfvtF06qboNdhvuYXUku9ZrhZh3bSk8VXF0A/RuSLHpLsSV9Zqhl6" crossorigin="anonymous"></script>
+<script nonce="{{ csp_nonce() }}">
 // Character counter function
 function updateCharCount(fieldId, counterId, maxLength) {
     const field = document.getElementById(fieldId);

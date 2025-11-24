@@ -4,7 +4,7 @@
 
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
-<style>
+<style nonce="{{ csp_nonce() }}">
 .page-header {
     margin-bottom: 1.5rem;
 }
@@ -269,11 +269,11 @@
                     <table class="table relief-requests-table">
                         <thead>
                             <tr>
-                                <th style="width: 35%;">Item</th>
-                                <th style="width: 12%;" class="text-center">Requested</th>
-                                <th style="width: 12%;" class="text-center">Allocated</th>
-                                <th style="width: 15%;" class="text-center">Status</th>
-                                <th style="width: 26%;">Warehouse Allocations</th>
+                                <th class="w-35">Item</th>
+                                <th class="w-12 text-center">Requested</th>
+                                <th class="w-12 text-center">Allocated</th>
+                                <th class="w-15 text-center">Status</th>
+                                <th class="w-26">Warehouse Allocations</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -304,7 +304,7 @@
                                     <div class="d-flex align-items-center justify-content-center gap-1">
                                         {{ status_badge('limit', 'Limit Allowed') }}
                                         {% if item.status_reason_desc %}
-                                        <i class="bi bi-info-circle text-primary" style="cursor: help; font-size: 1rem;" 
+                                        <i class="bi bi-info-circle text-primary cursor-help fs-6" 
                                            title="Reason: {{ item.status_reason_desc }}"></i>
                                         {% endif %}
                                     </div>
@@ -312,7 +312,7 @@
                                     <div class="d-flex align-items-center justify-content-center gap-1">
                                         {{ status_badge('denied', 'Denied') }}
                                         {% if item.status_reason_desc %}
-                                        <i class="bi bi-info-circle text-danger" style="cursor: help; font-size: 1rem;" 
+                                        <i class="bi bi-info-circle text-danger cursor-help fs-6" 
                                            title="Reason: {{ item.status_reason_desc }}"></i>
                                         {% endif %}
                                     </div>
@@ -326,7 +326,7 @@
                                 </td>
                                 <td>
                                     {% if item.item_id in allocations and allocations[item.item_id] %}
-                                    <ul class="mb-0 ps-3" style="font-size: 0.875rem;">
+                                    <ul class="mb-0 ps-3 fs-small">
                                         {% for warehouse_id, qty in allocations[item.item_id].items() %}
                                         {% set warehouse = warehouses|selectattr('warehouse_id', 'equalto', warehouse_id)|first %}
                                         <li>
@@ -336,7 +336,7 @@
                                         {% endfor %}
                                     </ul>
                                     {% else %}
-                                    <span class="text-muted" style="font-size: 0.875rem;">No allocations</span>
+                                    <span class="text-muted fs-small">No allocations</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -350,7 +350,7 @@
                     <a href="{{ url_for('packaging.pending_approval') }}" class="btn btn-secondary">
                         <i class="bi bi-x-circle"></i> Cancel
                     </a>
-                    <form method="POST" action="{{ url_for('packaging.review_approval', reliefrqst_id=relief_request.reliefrqst_id) }}" style="display: inline;">
+                    <form method="POST" action="{{ url_for('packaging.review_approval', reliefrqst_id=relief_request.reliefrqst_id) }}" class="d-inline">
                         <button type="submit" name="action" value="approve_and_dispatch" class="btn-relief-primary">
                             <i class="bi bi-check-circle"></i> Approve & Dispatch to Inventory Clerk
                         </button>

@@ -5,13 +5,54 @@ Supports First Expired First Out (FEFO) for expirable items and
 First In First Out (FIFO) for non-expirable items based on item configuration.
 """
 from datetime import date, datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import List, Dict, Tuple, Optional
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import joinedload
 
 from app.db import db
 from app.db.models import Item, ItemBatch, Inventory, Warehouse
+
+
+def safe_decimal(value, default=Decimal("0")):
+    """
+    Safely convert a value to Decimal, handling None, empty strings, NaN, and invalid values.
+    
+    Args:
+        value: The value to convert (can be None, Decimal, int, float, str)
+        default: The default value to return if conversion fails (default: Decimal("0"))
+        
+    Returns:
+        Decimal value or the default if conversion fails
+    """
+    if value is None:
+        return default
+    if isinstance(value, Decimal):
+        # Check if Decimal is NaN or Infinite
+        if value.is_nan() or value.is_infinite():
+            return default
+        return value
+    # Check for float NaN
+    if isinstance(value, float):
+        import math
+        if math.isnan(value) or math.isinf(value):
+            return default
+    # Check for string "nan" or "inf"
+    if isinstance(value, str):
+        lower_val = value.lower().strip()
+        if lower_val in ('nan', 'inf', '-inf', 'infinity', '-infinity'):
+            return default
+    try:
+        result = Decimal(str(value))
+        # Double-check the result isn't NaN or Inf
+        if result.is_nan() or result.is_infinite():
+            return default
+        return result
+    except (InvalidOperation, ValueError, TypeError):
+        # Log for debugging if needed
+        # import logging
+        # logging.warning(f"safe_decimal: Invalid value '{value}', using default {default}")
+        return default
 
 
 class BatchAllocationService:
@@ -60,7 +101,7 @@ class BatchAllocationService:
         return query.all()
     
     @staticmethod
-    def sort_batches_for_drawer(batches: List[ItemBatch], item: Item) -> List[ItemBatch]:
+    def sort_batches_for_drawer(batches: List[ItemBatch], item: Item, allocated_batch_ids: set = None) -> List[ItemBatch]:
         """
         Sort batches for drawer display based ONLY on can_expire_flag.
         Ignores item.issuance_order field to ensure consistent FEFO/FIFO behavior.
@@ -72,11 +113,13 @@ class BatchAllocationService:
         Args:
             batches: List of batches to sort (already filtered for available qty > 0)
             item: Item object with can_expire_flag
+            allocated_batch_ids: Set of batch IDs that are allocated (must be preserved even if available <= 0)
             
         Returns:
             Sorted list of batches
         """
         today = date.today()
+        allocated_batch_ids = allocated_batch_ids or set()
         
         # Filter out expired batches if item can expire
         # NULL expiry dates are treated as "never expires" and are allowed
@@ -89,9 +132,11 @@ class BatchAllocationService:
             active_batches = batches
         
         # Filter out batches with zero available quantity
+        # EXCEPT allocated batches which MUST be shown to LM for editing
         active_batches = [
             b for b in active_batches 
-            if (b.usable_qty - b.reserved_qty) > 0
+            if (safe_decimal(b.usable_qty) - safe_decimal(b.reserved_qty)) > 0 
+            or b.batch_id in allocated_batch_ids
         ]
         
         # Sort based ONLY on can_expire_flag (ignore issuance_order)
@@ -143,7 +188,7 @@ class BatchAllocationService:
         # Only show warehouses/batches that have actual usable stock
         active_batches = [
             b for b in active_batches 
-            if (b.usable_qty - b.reserved_qty) > 0
+            if (safe_decimal(b.usable_qty) - safe_decimal(b.reserved_qty)) > 0
         ]
         
         # Sort based on issuance order with tie-breakers
@@ -155,7 +200,7 @@ class BatchAllocationService:
                     b.expiry_date is None, 
                     b.expiry_date if b.expiry_date else date.max, 
                     b.batch_date if b.batch_date else date.max,
-                    -(b.usable_qty - b.reserved_qty)  # Negative for DESC
+                    -(safe_decimal(b.usable_qty) - safe_decimal(b.reserved_qty))  # Negative for DESC
                 )
             )
         elif item.issuance_order == 'LIFO':
@@ -164,7 +209,7 @@ class BatchAllocationService:
                 active_batches, 
                 key=lambda b: (
                     -(b.batch_date.toordinal() if b.batch_date else 0),
-                    -(b.usable_qty - b.reserved_qty)
+                    -(safe_decimal(b.usable_qty) - safe_decimal(b.reserved_qty))
                 )
             )
         else:  # FIFO (default)
@@ -173,7 +218,7 @@ class BatchAllocationService:
                 active_batches, 
                 key=lambda b: (
                     b.batch_date if b.batch_date else date.min,
-                    -(b.usable_qty - b.reserved_qty)
+                    -(safe_decimal(b.usable_qty) - safe_decimal(b.reserved_qty))
                 )
             )
     
@@ -217,13 +262,13 @@ class BatchAllocationService:
         
         # Allocate quantities
         allocations = []
-        remaining_qty = Decimal(str(requested_qty))
+        remaining_qty = safe_decimal(requested_qty)
         
         for batch in sorted_batches:
             if remaining_qty <= 0:
                 break
             
-            available_qty = batch.usable_qty - batch.reserved_qty
+            available_qty = safe_decimal(batch.usable_qty) - safe_decimal(batch.reserved_qty)
             allocated_qty = min(available_qty, remaining_qty)
             
             if allocated_qty > 0:
@@ -264,7 +309,7 @@ class BatchAllocationService:
         if not batch:
             return None
         
-        available_qty = batch.usable_qty - batch.reserved_qty
+        available_qty = safe_decimal(batch.usable_qty) - safe_decimal(batch.reserved_qty)
         is_expired = batch.expiry_date and batch.expiry_date < date.today() if batch.expiry_date else False
         
         return {
@@ -277,11 +322,11 @@ class BatchAllocationService:
             'item_name': batch.item.item_name,
             'batch_date': batch.batch_date,
             'expiry_date': batch.expiry_date,
-            'usable_qty': float(batch.usable_qty),
-            'reserved_qty': float(batch.reserved_qty),
+            'usable_qty': float(safe_decimal(batch.usable_qty)),
+            'reserved_qty': float(safe_decimal(batch.reserved_qty)),
             'available_qty': float(available_qty),
-            'defective_qty': float(batch.defective_qty),
-            'expired_qty': float(batch.expired_qty),
+            'defective_qty': float(safe_decimal(batch.defective_qty)),
+            'expired_qty': float(safe_decimal(batch.expired_qty)),
             'uom_code': batch.uom_code,
             'size_spec': batch.size_spec,
             'status_code': batch.status_code,
@@ -330,10 +375,10 @@ class BatchAllocationService:
         # Check quantity
         # CRITICAL: "Release" current package's allocation when calculating availability
         # This prevents false "no inventory" errors when re-allocating from existing packages
-        available_qty = batch.usable_qty - (batch.reserved_qty - current_allocated_qty)
+        available_qty = safe_decimal(batch.usable_qty) - (safe_decimal(batch.reserved_qty) - current_allocated_qty)
         if allocated_qty > available_qty:
             if available_qty <= 0:
-                return False, (f'Batch {batch.batch_no} has no available inventory (all {batch.usable_qty} units are reserved or allocated). '
+                return False, (f'Batch {batch.batch_no} has no available inventory (all {safe_decimal(batch.usable_qty)} units are reserved or allocated). '
                              f'This may occur if another user allocated from this batch while you were working. '
                              f'Please refresh the page and select a different batch with available stock.')
             else:
@@ -415,11 +460,41 @@ class BatchAllocationService:
         allocated_batch_ids_set = set(allocated_batch_ids or [])
         current_allocations = current_allocations or {}
         
+        # CRITICAL FIX: Also fetch allocated batches that might have zero available quantity
+        # These batches were filtered out by get_available_batches() but MUST be shown to LM
+        if allocated_batch_ids_set:
+            allocated_batches = ItemBatch.query.options(
+                joinedload(ItemBatch.inventory).joinedload(Inventory.warehouse),
+                joinedload(ItemBatch.item),
+                joinedload(ItemBatch.uom)
+            ).join(
+                Inventory,
+                and_(
+                    ItemBatch.inventory_id == Inventory.inventory_id,
+                    ItemBatch.item_id == Inventory.item_id
+                )
+            ).join(
+                Warehouse,
+                Inventory.inventory_id == Warehouse.warehouse_id
+            ).filter(
+                ItemBatch.batch_id.in_(list(allocated_batch_ids_set)),
+                ItemBatch.item_id == item_id,
+                ItemBatch.status_code == 'A',
+                Inventory.status_code == 'A',
+                Warehouse.status_code == 'A'
+            ).all()
+            
+            # Merge allocated batches with available batches (avoid duplicates)
+            existing_batch_ids = {b.batch_id for b in all_batches}
+            for allocated_batch in allocated_batches:
+                if allocated_batch.batch_id not in existing_batch_ids:
+                    all_batches.append(allocated_batch)
+        
         # Helper function to calculate effective available quantity
         # This "releases" current package's allocations from reserved_qty
         def calc_available_qty(batch):
             released_qty = current_allocations.get(batch.batch_id, Decimal('0'))
-            return batch.usable_qty - (batch.reserved_qty - released_qty)
+            return safe_decimal(batch.usable_qty) - (safe_decimal(batch.reserved_qty) - released_qty)
         
         # Group batches by warehouse first (before sorting)
         warehouse_groups = {}
@@ -428,7 +503,8 @@ class BatchAllocationService:
             if warehouse_id not in warehouse_groups:
                 warehouse_groups[warehouse_id] = {
                     'batches': [],
-                    'total_available': Decimal('0')
+                    'total_available': Decimal('0'),
+                    'has_allocated_batches': False
                 }
             
             available_qty = calc_available_qty(batch)
@@ -441,20 +517,25 @@ class BatchAllocationService:
             
             warehouse_groups[warehouse_id]['batches'].append(batch)
             warehouse_groups[warehouse_id]['total_available'] += max(Decimal('0'), available_qty)
+            if is_allocated:
+                warehouse_groups[warehouse_id]['has_allocated_batches'] = True
         
         # Filter out warehouses with zero total available quantity
+        # UNLESS they have allocated batches (Set A) which must always be shown to LM
         warehouse_groups = {
             wh_id: wh_data 
             for wh_id, wh_data in warehouse_groups.items() 
-            if wh_data['total_available'] > 0
+            if wh_data['total_available'] > 0 or wh_data['has_allocated_batches']
         }
         
         # Sort batches WITHIN each warehouse using drawer-specific FEFO/FIFO rules
         # (ignores issuance_order, only uses can_expire_flag)
+        # Pass allocated_batch_ids to preserve them even if available <= 0
         for warehouse_id, wh_data in warehouse_groups.items():
             wh_data['batches'] = BatchAllocationService.sort_batches_for_drawer(
                 wh_data['batches'],
-                item
+                item,
+                allocated_batch_ids_set
             )
         
         # Build limited batch list with per-warehouse early stopping

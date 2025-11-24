@@ -1,0 +1,159 @@
+You are an expert full-stack security engineer working on an existing Python/Flask + HTML/JS web application for a Disaster Relief Inventory Management System (DRIMS/DIMS).
+
+Your single, focused task is to identify and fix all Content Security Policy (CSP) issues in the entire codebase without breaking any existing behavior, workflows, logic, or database schema, and without undoing or weakening any existing security fixes.
+
+Context & Constraints
+
+This is an existing production-grade app with multiple user roles and complex workflows (donations, relief requests, fulfillment, logistics, dashboards, etc.).
+
+Do NOT:
+
+Change or drop any database tables, columns, constraints, triggers, or schema.
+
+Change business logic, workflows, or role permissions.
+
+Remove or weaken any existing security features (authentication, authorization, CSRF, parameter validation, etc.).
+
+Introduce breaking changes to routes, APIs, or template variables.
+
+You may:
+
+Add or update CSP headers/middleware.
+
+Refactor templates and static assets to comply with CSP.
+
+Introduce new static JS/CSS files or move inline code into them.
+
+Add nonces / hashes where appropriate, as long as behavior is preserved.
+
+Your Tasks
+
+Discover all current CSP issues
+
+Search the entire codebase (Python, HTML/Jinja templates, JS, CSS, config files) for:
+
+Inline <script> or <style> tags.
+
+onclick, onchange, onsubmit, and other inline event handlers.
+
+style attributes using inline CSS.
+
+Any existing CSP headers or meta tags.
+
+Identify where the current CSP (if any) is too permissive (e.g. default-src * or script-src 'unsafe-inline') or too restrictive (blocking legitimate resources).
+
+Define/Update a secure but non-breaking CSP
+
+Implement a CSP header that:
+
+Uses default-src 'self' as the basis.
+
+Explicitly configures:
+
+script-src
+
+style-src
+
+img-src
+
+font-src
+
+connect-src
+
+frame-ancestors
+
+object-src (set to 'none' unless required).
+
+Allows only required domains (e.g. same origin for app assets; specific external domains only if actually used, like CDNs or analytics).
+
+Use Flask-level middleware / response hooks to apply CSP consistently across all routes.
+
+Prefer nonces or hashes for any scripts/styles that must remain inline and cannot be moved.
+
+Refactor templates to be CSP-compliant
+
+For each template that uses inline JavaScript:
+
+Move inline JS logic into a dedicated static JS file under the existing static folder.
+
+Replace inline <script> blocks with <script src="..."></script> references.
+
+For inline event handlers (onclick, onchange, etc.):
+
+Replace them with JS that binds events via addEventListener in the external JS files.
+
+For inline styles:
+
+Move them into CSS files or, if strictly necessary, ensure CSP allows them in the safest way (e.g. style-src 'self' and avoid 'unsafe-inline' unless absolutely impossible to avoid).
+
+Ensure no functional behavior is changed on any page: forms, buttons, modals, dropdowns, table filters, side drawers, dashboards, etc. must continue to behave exactly as before.
+
+Integrate CSP in Flask correctly
+
+Implement a single, central CSP configuration (e.g. via:
+
+A Flask after_request handler that sets Content-Security-Policy header, or
+
+A security middleware/extension already in the project.
+
+Make sure:
+
+CSP is sent on all HTML responses.
+
+API/JSON responses are not broken (CSP is harmless there but still consistent).
+
+If a CSP already exists:
+
+Update/refine it instead of removing it.
+
+Preserve any existing secure directives and only tighten or adjust as needed.
+
+Preserve all existing security fixes
+
+Do not remove or weaken:
+
+CSRF protection.
+
+X-Frame-Options / frame-ancestors equivalents.
+
+X-Content-Type-Options, HSTS, Referrer-Policy or other security headers if present.
+
+If you see gaps in security headers that can be added without breaking anything, you may add them, but CSP fixes remain the primary goal.
+
+Testing & Verification
+
+After changes, run the app and verify:
+
+No console CSP errors for expected resources.
+
+All pages load correctly (login, dashboards, donations, relief requests, packaging, approvals, reports, etc.).
+
+All buttons, forms and navigation elements still work.
+
+Where you must relax CSP to allow a resource, use the smallest possible exception (e.g. allow a specific domain, not *; avoid 'unsafe-inline' if you can use nonces/hashes/external files).
+
+Implementation Style
+
+Refactor in small, clear steps:
+
+First, implement the CSP header and adjust it as you fix violations.
+
+Then iteratively migrate inline scripts/styles to external files.
+
+Keep the code clean and readable; add short comments where needed to clarify CSP decisions.
+
+Do not add unnecessary dependencies or frameworks; use the project’s existing structure.
+
+Acceptance Criteria
+
+A change is acceptable only if:
+
+All CSP violations are resolved or handled correctly (no blocking of legitimate scripts/styles/images/fonts).
+
+All application features and workflows function exactly as before.
+
+The database schema and data remain untouched.
+
+Existing security features are preserved or improved, never weakened.
+
+The CSP is reasonably strict (no wildcard * where it can be avoided, no unnecessary 'unsafe-inline' or 'unsafe-eval').

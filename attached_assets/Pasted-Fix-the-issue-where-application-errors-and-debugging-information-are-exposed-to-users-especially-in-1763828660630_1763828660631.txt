@@ -1,0 +1,99 @@
+Fix the issue where application errors and debugging information are exposed to users, especially in production, without breaking any existing code, logic, workflows, behaviour, UI, or database schema.
+
+Goal
+
+In production, users must never see raw stack traces, framework debug pages, or low-level error messages.
+
+Instead, they should see a generic, user-friendly error page, while detailed error info is logged server-side only.
+
+Requirements
+
+Disable debug mode in production
+
+Ensure the application is not running in debug mode in any production environment.
+
+Use a proper configuration flag or environment variable (e.g. DEBUG = False or equivalent).
+
+Confirm there is a clear separation between:
+
+Development (debug allowed)
+
+Production (debug strictly disabled)
+
+Use generic error pages for users
+
+Implement global error handling for at least:
+
+HTTP 500 (Internal Server Error)
+
+Optionally 404, 403, etc. if applicable
+
+For these errors:
+
+Show a generic, friendly error message/page:
+
+No stack traces
+
+No internal file paths
+
+No database details
+
+No framework/version info
+
+Example message (adapt to app tone):
+
+“An unexpected error occurred. Our team has been notified.”
+
+Log detailed errors internally
+
+Ensure full error details (stack traces, context) are:
+
+Logged to a server log, logging service, or monitoring tool.
+
+Do not expose these details in the browser.
+
+Logging should not change any existing business logic or workflows.
+
+No breaking changes
+
+Do NOT:
+
+Change any existing routes or controller logic.
+
+Modify any business rules or workflows (donations, relief requests, dispatch, approvals, etc.).
+
+Change any database tables, columns, triggers, or data.
+
+Only adjust:
+
+Environment configuration (debug flags)
+
+Global error handling / error pages
+
+Logging configuration (if needed)
+
+Environment-aware behaviour
+
+Use environment variables or config profiles so that:
+
+In development: detailed errors can still be shown to developers.
+
+In production: detailed errors are never shown to users.
+
+Validation / Outcome
+
+After implementation:
+
+Security scans and manual tests must confirm:
+
+No raw stack traces or debug pages are visible from any public URL.
+
+When an error is intentionally triggered in production mode:
+
+User sees only a generic error page.
+
+Detailed error information is available only in server logs.
+
+All existing features, pages, and workflows continue to function exactly as before.
+
+Use this to harden error handling and hide debug info in production without breaking anything in the DMIS/DRIMS application.

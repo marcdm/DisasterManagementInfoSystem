@@ -80,11 +80,11 @@
                         </td>
                         <td class="text-end">
                             {% if request.status_code == 10 %}
-                                <a href="{{ url_for('requests.edit_items', request_id=request.reliefrqst_id) }}" class="btn btn-sm btn-warning" onclick="event.stopPropagation();">
+                                <a href="{{ url_for('requests.edit_items', request_id=request.reliefrqst_id) }}" class="btn btn-sm btn-warning" data-action="stop-propagation">
                                     <i class="bi bi-pencil"></i> Edit
                                 </a>
                             {% else %}
-                                <a href="{{ url_for('requests.view_request', request_id=request.reliefrqst_id) }}" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();">
+                                <a href="{{ url_for('requests.view_request', request_id=request.reliefrqst_id) }}" class="btn btn-sm btn-outline-primary" data-action="stop-propagation">
                                     <i class="bi bi-eye"></i> View
                                 </a>
                             {% endif %}
@@ -97,7 +97,7 @@
     </div>
     {% else %}
     <div class="text-center py-5">
-        <i class="bi bi-inbox" style="font-size: 4rem; color: #dee2e6;"></i>
+        <i class="bi bi-inbox text-muted icon-xxl"></i>
         <h4 class="text-muted mt-3">No Relief Requests</h4>
         <p class="text-muted">Click "New Request" to submit your first relief request to ODPEM.</p>
         <a href="{{ url_for('requests.create_request') }}" class="btn btn-goj mt-2">

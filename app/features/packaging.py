@@ -21,7 +21,7 @@ from app.core.rbac import has_permission, permission_required
 from app.services import relief_request_service as rr_service
 from app.services import item_status_service
 from app.services import inventory_reservation_service as reservation_service
-from app.services.batch_allocation_service import BatchAllocationService
+from app.services.batch_allocation_service import BatchAllocationService, safe_decimal
 from app.core.audit import add_audit_fields
 from app.core.exceptions import OptimisticLockError
 
@@ -377,7 +377,7 @@ def approve_package(reliefrqst_id):
             total_allocated = Decimal('0')
             if item.item_id in existing_batch_allocations:
                 for batch_allocation in existing_batch_allocations[item.item_id]:
-                    total_allocated += Decimal(str(batch_allocation['qty']))
+                    total_allocated += safe_decimal(batch_allocation['qty'])
             
             # Check if item has allocation activity (drawer opened/saved)
             # An item has activity if a ReliefPkgItem record exists, even with qty=0
@@ -1392,7 +1392,7 @@ def _submit_for_approval(relief_request, relief_request_version, package_version
                 import logging
                 logger = logging.getLogger(__name__)
                 
-                lm_users = NotificationService.get_active_users_by_role_codes(['LM'])
+                lm_users = NotificationService.get_active_users_by_role_codes(['LOGISTICS_MANAGER'])
                 logger.info(f'Found {len(lm_users)} Logistics Manager(s) to notify for relief request #{relief_request.reliefrqst_id}')
                 
                 if lm_users:
@@ -1871,7 +1871,7 @@ def get_item_batches(item_id):
                 import json
                 current_allocations = json.loads(current_allocations_str)
                 # Convert keys to int and values to Decimal (JSON keys are strings)
-                current_allocations = {int(k): Decimal(str(v)) for k, v in current_allocations.items()}
+                current_allocations = {int(k): safe_decimal(v) for k, v in current_allocations.items()}
             except (ValueError, json.JSONDecodeError):
                 pass  # Ignore invalid JSON
         
@@ -1885,7 +1885,7 @@ def get_item_batches(item_id):
         if remaining_qty is not None:
             limited_batches, total_available, shortfall = BatchAllocationService.get_limited_batches_for_drawer(
                 item_id,
-                Decimal(str(remaining_qty)),
+                safe_decimal(remaining_qty),
                 required_uom,
                 allocated_batch_ids,
                 current_allocations
@@ -1905,7 +1905,7 @@ def get_item_batches(item_id):
             for batch, priority_group in batch_groups:
                 # Calculate available_qty: release current package's allocations from reserved_qty
                 released_qty = current_allocations.get(batch.batch_id, Decimal('0'))
-                available_qty = batch.usable_qty - (batch.reserved_qty - released_qty)
+                available_qty = safe_decimal(batch.usable_qty) - (safe_decimal(batch.reserved_qty) - released_qty)
                 batch_info = {
                     'batch_id': batch.batch_id,
                     'batch_no': batch.batch_no,
@@ -1914,11 +1914,11 @@ def get_item_batches(item_id):
                     'warehouse_id': batch.inventory.inventory_id,
                     'warehouse_name': batch.inventory.warehouse.warehouse_name,
                     'inventory_id': batch.inventory_id,
-                    'usable_qty': float(batch.usable_qty),
-                    'reserved_qty': float(batch.reserved_qty),
+                    'usable_qty': float(safe_decimal(batch.usable_qty)),
+                    'reserved_qty': float(safe_decimal(batch.reserved_qty)),
                     'available_qty': float(available_qty),
-                    'defective_qty': float(batch.defective_qty),
-                    'expired_qty': float(batch.expired_qty),
+                    'defective_qty': float(safe_decimal(batch.defective_qty)),
+                    'expired_qty': float(safe_decimal(batch.expired_qty)),
                     'uom_code': batch.uom_code,
                     'size_spec': batch.size_spec,
                     'is_expired': batch.is_expired,
@@ -1935,9 +1935,9 @@ def get_item_batches(item_id):
                 'can_expire': item.can_expire_flag,
                 'issuance_order': item.issuance_order,
                 'batches': result,
-                'total_available': float(total_available),
-                'shortfall': float(shortfall),
-                'can_fulfill': shortfall == 0
+                'total_available': float(safe_decimal(total_available)),
+                'shortfall': float(safe_decimal(shortfall)),
+                'can_fulfill': safe_decimal(shortfall) == 0
             })
         else:
             # Legacy mode: return all batches grouped by warehouse (for backward compatibility)
@@ -1947,7 +1947,7 @@ def get_item_batches(item_id):
             for wh_id, batch_list in warehouse_batches.items():
                 result[wh_id] = []
                 for batch in batch_list:
-                    available_qty = batch.usable_qty - batch.reserved_qty
+                    available_qty = safe_decimal(batch.usable_qty) - safe_decimal(batch.reserved_qty)
                     result[wh_id].append({
                         'batch_id': batch.batch_id,
                         'batch_no': batch.batch_no,
@@ -1956,11 +1956,11 @@ def get_item_batches(item_id):
                         'warehouse_id': batch.inventory.inventory_id,
                         'warehouse_name': batch.inventory.warehouse.warehouse_name,
                         'inventory_id': batch.inventory_id,
-                        'usable_qty': float(batch.usable_qty),
-                        'reserved_qty': float(batch.reserved_qty),
+                        'usable_qty': float(safe_decimal(batch.usable_qty)),
+                        'reserved_qty': float(safe_decimal(batch.reserved_qty)),
                         'available_qty': float(available_qty),
-                        'defective_qty': float(batch.defective_qty),
-                        'expired_qty': float(batch.expired_qty),
+                        'defective_qty': float(safe_decimal(batch.defective_qty)),
+                        'expired_qty': float(safe_decimal(batch.expired_qty)),
                         'uom_code': batch.uom_code,
                         'size_spec': batch.size_spec,
                         'is_expired': batch.is_expired,
@@ -1994,7 +1994,7 @@ def auto_allocate_item(item_id):
     """
     try:
         data = request.get_json()
-        requested_qty = Decimal(str(data.get('requested_qty', 0)))
+        requested_qty = safe_decimal(data.get('requested_qty', 0))
         warehouse_id = data.get('warehouse_id')
         
         if requested_qty <= 0:
@@ -2008,7 +2008,7 @@ def auto_allocate_item(item_id):
         )
         
         # Calculate totals
-        total_allocated = sum(Decimal(str(a['allocated_qty'])) for a in allocations)
+        total_allocated = sum(safe_decimal(a['allocated_qty']) for a in allocations)
         shortage = requested_qty - total_allocated if total_allocated < requested_qty else Decimal('0')
         
         return jsonify({

@@ -19,7 +19,7 @@
                         <a href="{{ url_for('requests.edit_items', request_id=request.reliefrqst_id) }}" class="btn btn-warning">
                             <i class="bi bi-pencil"></i> Edit Items
                         </a>
-                        <form method="POST" action="{{ url_for('requests.submit_request', request_id=request.reliefrqst_id) }}" style="display: inline;" id="submitRequestForm">
+                        <form method="POST" action="{{ url_for('requests.submit_request', request_id=request.reliefrqst_id) }}" class="d-inline" id="submitRequestForm">
                             <button type="submit" class="btn btn-goj">
                                 <i class="bi bi-send"></i> Submit to ODPEM
                             </button>
@@ -172,7 +172,7 @@
         </div>
         {% else %}
         <div class="text-center py-4">
-            <i class="bi bi-inbox" style="font-size: 3rem; color: #dee2e6;"></i>
+            <i class="bi bi-inbox text-muted icon-lg"></i>
             <p class="text-muted mt-2 mb-3">No items added yet</p>
             {% if request.status_code == 10 %}
                 <a href="{{ url_for('requests.edit_items', request_id=request.reliefrqst_id) }}" class="btn btn-goj btn-sm">
@@ -256,7 +256,7 @@
                     <i class="bi bi-x-circle"></i>
                     Cancel
                 </button>
-                <button type="button" class="btn btn-success" onclick="confirmSubmitRequest()">
+                <button type="button" class="btn btn-success" id="confirmSubmitBtn">
                     <i class="bi bi-send-fill"></i>
                     Yes, Submit Request
                 </button>
@@ -267,25 +267,30 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-// Submit form confirmation modal
+<script nonce="{{ csp_nonce() }}">
+// Submit form confirmation modal - proper handling without preventDefault issues
+let submitHandler;
 const submitRequestForm = document.getElementById('submitRequestForm');
 if (submitRequestForm) {
-    submitRequestForm.addEventListener('submit', function(e) {
+    submitHandler = function(e) {
         e.preventDefault();
         const modal = new bootstrap.Modal(document.getElementById('submitRequestModal'));
         modal.show();
         return false;
-    });
+    };
+    submitRequestForm.addEventListener('submit', submitHandler);
 }
 
-function confirmSubmitRequest() {
-    console.log('Confirming submit request');
-    const form = document.getElementById('submitRequestForm');
-    if (form) {
-        form.removeEventListener('submit', arguments.callee);
-        form.submit();
-    }
+// Confirmation button handler - properly removes handler and submits
+const confirmBtn = document.getElementById('confirmSubmitBtn');
+if (confirmBtn) {
+    confirmBtn.addEventListener('click', function() {
+        const form = document.getElementById('submitRequestForm');
+        if (form && submitHandler) {
+            form.removeEventListener('submit', submitHandler);
+            form.submit();
+        }
+    });
 }
 </script>
 {% endblock %}

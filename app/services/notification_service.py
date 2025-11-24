@@ -256,7 +256,7 @@ class NotificationService:
     ) -> List[Notification]:
         """
         Create notifications for Logistics Managers when a package is ready for approval.
-        Deep-links to the LM review/approval page.
+        Deep-links to the LM approval page with full editing capability.
         
         Args:
             relief_pkg: The relief package ready for review
@@ -270,8 +270,8 @@ class NotificationService:
         tracking_no = f"RR-{relief_request.reliefrqst_id:06d}"
         agency_name = relief_request.agency.agency_name if relief_request.agency else "Unknown"
         
-        # Deep-link to LM review/approval page
-        link_url = url_for('packaging.review_approval', reliefrqst_id=relief_request.reliefrqst_id, _external=False)
+        # Deep-link to LM approval page (with full editing capability and batch drawer)
+        link_url = url_for('packaging.approve_package', reliefrqst_id=relief_request.reliefrqst_id, _external=False)
         
         notifications = []
         for user in recipient_users:

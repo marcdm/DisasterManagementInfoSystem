@@ -2,7 +2,7 @@
 
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
-<style>
+<style nonce="{{ csp_nonce() }}">
     /* Print Styles */
     @media print {
         .no-print { display: none !important; }
@@ -286,14 +286,14 @@
             <a href="{{ url_for('packaging.awaiting_dispatch') }}" class="btn btn-outline-secondary btn-modern">
                 <i class="bi bi-arrow-left"></i> Back to Dispatch Queue
             </a>
-            <div style="display: flex; gap: 1rem;">
-                <button onclick="window.print()" class="btn-modern btn-print">
+            <div class="d-flex gap-3">
+                <button data-action="print" class="btn-modern btn-print">
                     <i class="bi bi-printer"></i> Print Dispatch Slip
                 </button>
                 {% if not relief_pkg.received_dtime %}
                 <form method="POST" action="{{ url_for('packaging.mark_handover', reliefpkg_id=relief_pkg.reliefpkg_id) }}" 
-                      style="display: inline;" 
-                      onsubmit="return confirm('Confirm that this package has been handed over to the agency representative?');">
+                      class="d-inline-block" 
+                      data-confirm="Confirm that this package has been handed over to the agency representative?">
                     <button type="submit" class="btn-modern btn-handover">
                         <i class="bi bi-check-circle"></i> Mark as Handed Over
                     </button>
@@ -404,12 +404,12 @@
                 <table class="table items-table mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 30%;">Item Name</th>
-                            <th style="width: 15%;">Batch/Lot No.</th>
-                            <th style="width: 12%;">Expiry Date</th>
-                            <th style="width: 12%;" class="text-end">Requested Qty</th>
-                            <th style="width: 12%;" class="text-end">Issued Qty</th>
-                            <th style="width: 10%;">UOM</th>
+                            <th class="w-30">Item Name</th>
+                            <th class="w-15">Batch/Lot No.</th>
+                            <th class="w-12">Expiry Date</th>
+                            <th class="w-12 text-end">Requested Qty</th>
+                            <th class="w-12 text-end">Issued Qty</th>
+                            <th class="w-10">UOM</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -505,12 +505,12 @@
             <p><strong>Office of Disaster Preparedness and Emergency Management (ODPEM)</strong></p>
             <p>Government of Jamaica</p>
             <p>Disaster Relief Inventory Management System (DRIMS)</p>
-            <p style="margin-top: 1rem;">Document printed on {{ now.strftime('%d %B %Y at %I:%M %p') if now else '' }}</p>
+            <p class="mt-3">Document printed on {{ now.strftime('%d %B %Y at %I:%M %p') if now else '' }}</p>
         </div>
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
 // Set current date/time for print footer
 const now = new Date();
 </script>

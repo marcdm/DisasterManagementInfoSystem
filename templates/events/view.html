@@ -41,7 +41,7 @@
             <a href="{{ url_for('events.edit_event', event_id=event.event_id) }}" class="btn-relief-secondary">
                 <i class="bi bi-pencil"></i> Edit
             </a>
-            <button type="button" class="btn-relief-secondary" data-bs-toggle="modal" data-bs-target="#closeEventModal" style="background-color: #ffc107; color: #000;">
+            <button type="button" class="btn-relief-secondary btn-warning-custom" data-bs-toggle="modal" data-bs-target="#closeEventModal">
                 <i class="bi bi-lock"></i> Close Event
             </button>
             {% endif %}
@@ -94,7 +94,7 @@
                     <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Impact Assessment</h5>
                 </div>
                 <div class="card-body">
-                    <div class="event-impact-content" style="white-space: pre-wrap;">{{ event.impact_desc }}</div>
+                    <div class="event-impact-content ws-pre-wrap">{{ event.impact_desc }}</div>
                 </div>
             </div>
         </div>
@@ -160,7 +160,7 @@
                     <button type="button" class="btn-relief-secondary" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle"></i> Cancel
                     </button>
-                    <button type="submit" class="btn-relief-primary" style="background-color: #ffc107; color: #000;">
+                    <button type="submit" class="btn-relief-primary btn-warning-custom">
                         <i class="bi bi-lock"></i> Close Event
                     </button>
                 </div>

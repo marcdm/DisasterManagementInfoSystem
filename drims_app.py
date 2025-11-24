@@ -11,11 +11,21 @@ from werkzeug.security import check_password_hash
 from app.db import db, init_db
 from app.db.models import User, Role, Event, Warehouse, Item, Inventory, Agency, ReliefRqst
 from settings import Config
+from app.security.csp import init_csp
+from app.security.cache_control import init_cache_control
+from app.security.header_sanitization import init_header_sanitization
+from app.security.error_handling import init_error_handling
+from app.security.query_string_protection import init_query_string_protection
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
 init_db(app)
+init_csp(app)
+init_cache_control(app)
+init_header_sanitization(app)
+init_error_handling(app)
+init_query_string_protection(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -154,6 +164,17 @@ def to_jamaica_filter(dt):
     """Convert datetime to Jamaica timezone"""
     return datetime_to_jamaica(dt)
 
+@app.route('/static/')
+@app.route('/static')
+def block_static_directory():
+    """
+    Prevent directory browsing of /static/ folder
+    Returns 404 to hide directory existence for security
+    Individual static files are still accessible via Flask's built-in static serving
+    """
+    from flask import abort
+    abort(404)
+
 @app.route('/')
 @login_required
 def index():
@@ -210,4 +231,4 @@ def logout():
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=app.config['DEBUG'])

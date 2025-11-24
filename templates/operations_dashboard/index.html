@@ -10,7 +10,7 @@
             <p class="text-muted mb-0">System-wide operational performance metrics</p>
         </div>
         <div>
-            <select class="form-select" id="periodSelector" onchange="location.href='?period='+this.value">
+            <select class="form-select" id="periodSelector" data-action="navigate" data-param="period">
                 <option value="7" {% if period_days == 7 %}selected{% endif %}>Last 7 Days</option>
                 <option value="30" {% if period_days == 30 %}selected{% endif %}>Last 30 Days</option>
                 <option value="90" {% if period_days == 90 %}selected{% endif %}>Last 90 Days</option>
@@ -115,7 +115,7 @@
     <!-- Current Operational Status -->
     <h5 class="mb-3">Current Operational Status (All Time)</h5>
     <div class="row g-3 mb-4">
-        <div class="col-md-2">
+        <div class="col-md-3">
             <div class="card border-0 bg-warning bg-opacity-10 h-100">
                 <div class="card-body text-center">
                     <h3 class="mb-1 text-warning">{{ current_counts.awaiting_filling }}</h3>
@@ -123,19 +123,11 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-3">
             <div class="card border-0 bg-info bg-opacity-10 h-100">
                 <div class="card-body text-center">
                     <h3 class="mb-1 text-info">{{ current_counts.being_prepared }}</h3>
                     <p class="mb-0 small">Being Prepared</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 bg-primary bg-opacity-10 h-100">
-                <div class="card-body text-center">
-                    <h3 class="mb-1 text-primary">{{ current_counts.awaiting_approval }}</h3>
-                    <p class="mb-0 small">Awaiting Approval</p>
                 </div>
             </div>
         </div>
@@ -147,7 +139,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-3">
             <div class="card border-0 bg-secondary bg-opacity-10 h-100">
                 <div class="card-body text-center">
                     <h3 class="mb-1 text-secondary">{{ current_counts.completed }}</h3>
@@ -163,7 +155,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <h6 class="card-title">Donations Over Time</h6>
-                    <div style="position: relative; height: 300px;">
+                    <div class="chart-container">
                         <canvas id="donationsTimelineChart"></canvas>
                     </div>
                 </div>
@@ -173,7 +165,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <h6 class="card-title">Relief Requests & Fulfillment Over Time</h6>
-                    <div style="position: relative; height: 300px;">
+                    <div class="chart-container">
                         <canvas id="requestsTimelineChart"></canvas>
                     </div>
                 </div>
@@ -187,7 +179,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <h6 class="card-title">Relief Request Status Breakdown</h6>
-                    <div style="position: relative; height: 300px;">
+                    <div class="chart-container">
                         <canvas id="statusBreakdownChart"></canvas>
                     </div>
                 </div>
@@ -197,7 +189,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <h6 class="card-title">Top Requesting Agencies</h6>
-                    <div style="position: relative; height: 300px;">
+                    <div class="chart-container">
                         <canvas id="topAgenciesChart"></canvas>
                     </div>
                 </div>
@@ -207,9 +199,9 @@
 </div>
 
 <!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script  nonce="{{ csp_nonce() }}" src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
 document.addEventListener('DOMContentLoaded', function() {
     // Common chart options
     const commonOptions = {
