@@ -1189,8 +1189,9 @@ class DonationIntake(db.Model):
     donation = db.relationship('Donation', backref='intakes')
     inventory = db.relationship('Inventory', backref='donation_intakes')
     warehouse = db.relationship('Warehouse', 
-                                primaryjoin='DonationIntake.inventory_id==foreign(Warehouse.warehouse_id)',
-                                viewonly=True)
+                                primaryjoin='foreign(DonationIntake.inventory_id)==Warehouse.warehouse_id',
+                                viewonly=True,
+                                uselist=False)
 
 class DonationIntakeItem(db.Model):
     """Donation Intake Item - Batch-level intake tracking for donations
