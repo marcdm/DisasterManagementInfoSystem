@@ -1,0 +1,46 @@
+diff --git a/docs/reviews/donation_codex_review.md b/docs/reviews/donation_codex_review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..d3ee64f8b95ff4f77ab5e606c2c919b33d96e827
+--- /dev/null
++++ b/docs/reviews/donation_codex_review.md
+@@ -0,0 +1,40 @@
++# Codex Review: Donation Feature
++
++## Findings
++
++1. **Uploaded documents are never persisted to storage**
++   - In both create and verify flows, `DonationDoc` rows are created with generated filenames, but no call writes the uploaded
++     content to disk or cloud storage. The metadata points to files that do not exist, so downloads will 404 or error. Add a
++     deterministic save step after generating the unique filename so the record and stored asset stay in sync. 【F:app/features/donations.py†L387-L440】【F:app/features/donations.py†L1418-L1465】
++   - Suggested test: create and verify donations with attachments and assert the files land in the configured storage path and
++     remain downloadable via the UI.
++
++2. **Document validation errors do not block creation**
++   - During creation, invalid file types or missing descriptions append messages to `errors` but the function never re-checks
++     `errors` before committing the transaction. A donation and its items will be saved even when documents failed validation,
++     leaving the user without feedback and the database referencing missing docs. Add an `if errors:` rollback branch after the
++     upload loop. 【F:app/features/donations.py†L387-L445】
++   - Suggested test: submit an unsupported file type and verify the request fails without persisting a donation.
++
++3. **Header totals are not reconciled with calculated item totals**
++   - Both create and verify flows compute `total_value` from the line items but immediately write the user-supplied
++     `tot_item_cost_value` to the header without comparing or replacing it. The stored header total can diverge from the sum of
++     items, breaking analytics and downstream processing. Reconcile by enforcing equality or overwriting the header with the
++     computed total. 【F:app/features/donations.py†L323-L385】【F:app/features/donations.py†L1368-L1416】
++   - Suggested test: send mismatched header and line totals during create and verify and assert the request is rejected or the
++     header value is corrected to the computed sum.
++
++4. **Item edits and deletes never update the donation header total**
++   - Inline item edit/delete routes adjust rows but do not recalculate or persist the donation header total, so `tot_item_cost`
++     can become stale after modifying quantities or removing items. Consider recalculating the header total after any item-level
++     mutation to keep financial data consistent. 【F:app/features/donations.py†L1008-L1109】
++   - Suggested test: edit an item quantity or delete an item and confirm the header total refreshes to match the remaining lines.
++
++## Recommendations
++
++- Add unit tests around `create_donation`, verification, and item mutations to cover attachment persistence, validation failures,
++  and header/item total reconciliation, so regressions are caught automatically.
++- Ensure the document storage path (local or cloud) is configurable through environment settings and validated during startup to
++  avoid silent failures when the path is missing.
++- Re-run total reconciliation after any item-level edit or delete to keep header amounts aligned with stored lines.
++
