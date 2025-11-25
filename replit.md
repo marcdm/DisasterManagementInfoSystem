@@ -3,7 +3,20 @@
 ## Overview
 DMIS (Disaster Management Information System) is a web-based platform for the Government of Jamaica's ODPEM, designed to manage the entire lifecycle of disaster relief supplies. Its core purpose is to provide a modern, efficient, and user-friendly solution for disaster preparedness and response. Key capabilities include inventory tracking, donation management, relief request processing, and distribution across multiple warehouses, all while ensuring compliance with government processes and supporting disaster event coordination and supply allocation. The system emphasizes security, robust user administration with Role-Based Access Control (RBAC), inventory transfers, location tracking, analytics, and reporting.
 
-## Recent Changes (November 24, 2025)
+## Recent Changes (November 25, 2025)
+
+### Workflow A – Accept Donation Entry Implementation Complete
+- **Cost Breakdown UI**: Added storage_cost, haulage_cost, other_cost, other_cost_desc fields to donation creation form
+- **Dynamic Other Cost Description**: Field enables only when other_cost > 0 (CSP-compliant JavaScript)
+- **Backend Validation**: All cost fields validated (>= 0), other_cost_desc required when other_cost > 0
+- **Status Workflow Established**:
+  - Donation: Created with status_code 'E' (Entry) instead of 'V' (Verified)
+  - DonationItem: Created with status_code 'P' (Pending) instead of 'V' (Verified)
+- **User-Provided Costs**: Cost breakdown values saved from form input (removed hardcoded 0.01 defaults)
+- **Security Maintained**: All changes CSP-compliant with nonce-based scripts, no inline styles/handlers
+- **Architect Review**: Passed - implementation meets functional requirements with no security regressions
+
+## Previous Changes (November 24, 2025)
 
 ### Donation Intake Item Table Rebuild (Migration 017)
 - **Table Rebuilt**: Dropped and recreated dnintake_item table to match exact target DDL structure
