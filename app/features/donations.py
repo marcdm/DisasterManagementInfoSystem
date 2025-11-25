@@ -4,7 +4,7 @@ Accept and process donations from donors with full item tracking.
 
 Access: LOGISTICS_MANAGER, LOGISTICS_OFFICER only
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_required, current_user
 from datetime import datetime, date
 from decimal import Decimal
@@ -384,60 +384,98 @@ def create_donation():
             # Set cost breakdown on donation header (user-entered value)
             donation.tot_item_cost = tot_item_cost_value
             
-            # Handle document uploads
+            # Handle document uploads - validate all first, then save
             document_count = 0
+            doc_errors = []
+            validated_docs = []
             uploaded_files = request.files.getlist('document_files')
             document_types = request.form.getlist('document_type')
             document_descs = request.form.getlist('document_desc')
+            
+            upload_folder = current_app.config.get('UPLOAD_FOLDER')
             
             for idx, uploaded_file in enumerate(uploaded_files):
                 if uploaded_file and uploaded_file.filename and uploaded_file.filename.strip():
                     original_filename = uploaded_file.filename.strip()
                     
-                    # Validate file type
                     mime_type = mimetypes.guess_type(original_filename)[0]
                     if mime_type not in ['application/pdf', 'image/jpeg']:
-                        errors.append(f'Invalid file type for document {idx + 1}. Only PDF and JPEG files are allowed.')
+                        doc_errors.append(f'Invalid file type for document {idx + 1}. Only PDF and JPEG files are allowed.')
                         continue
                     
-                    # Get document metadata
                     doc_type = document_types[idx] if idx < len(document_types) else 'Other'
                     doc_desc = document_descs[idx] if idx < len(document_descs) else ''
                     
                     if not doc_desc.strip():
-                        errors.append(f'Document description is required for document {idx + 1}.')
+                        doc_errors.append(f'Document description is required for document {idx + 1}.')
                         continue
                     
-                    # Generate unique safe filename to prevent collisions
                     import uuid
                     safe_base_name = secure_filename(original_filename)
-                    file_ext = os.path.splitext(safe_base_name)[1]
                     unique_filename = f"{uuid.uuid4().hex[:8]}_{safe_base_name}"
                     
-                    # Create DonationDoc record
-                    donation_doc = DonationDoc()
-                    donation_doc.donation_id = donation.donation_id
-                    donation_doc.document_type = doc_type.upper()
-                    donation_doc.document_desc = doc_desc.strip().upper()
-                    donation_doc.file_name = unique_filename
-                    donation_doc.file_type = mime_type
-                    
-                    # Calculate file size
                     uploaded_file.seek(0, os.SEEK_END)
                     file_size_bytes = uploaded_file.tell()
                     uploaded_file.seek(0)
                     
-                    if file_size_bytes < 1024:
-                        donation_doc.file_size = f'{file_size_bytes}B'
-                    elif file_size_bytes < 1024 * 1024:
-                        donation_doc.file_size = f'{file_size_bytes / 1024:.1f}KB'
-                    else:
-                        donation_doc.file_size = f'{file_size_bytes / (1024 * 1024):.1f}MB'
-                    
-                    add_audit_fields(donation_doc, current_user, is_new=True)
-                    
-                    db.session.add(donation_doc)
-                    document_count += 1
+                    validated_docs.append({
+                        'file': uploaded_file,
+                        'unique_filename': unique_filename,
+                        'doc_type': doc_type.upper(),
+                        'doc_desc': doc_desc.strip().upper(),
+                        'mime_type': mime_type,
+                        'file_size_bytes': file_size_bytes,
+                        'idx': idx
+                    })
+            
+            if doc_errors:
+                db.session.rollback()
+                for error in doc_errors:
+                    flash(error, 'danger')
+                form_data = _get_donation_form_data()
+                form_data['form_data'] = request.form
+                return render_template('donations/create.html', **form_data)
+            
+            if validated_docs and upload_folder:
+                if not os.path.exists(upload_folder):
+                    os.makedirs(upload_folder, exist_ok=True)
+                
+                saved_files = []
+                try:
+                    for doc_info in validated_docs:
+                        file_path = os.path.join(upload_folder, doc_info['unique_filename'])
+                        doc_info['file'].save(file_path)
+                        saved_files.append(file_path)
+                        
+                        donation_doc = DonationDoc()
+                        donation_doc.donation_id = donation.donation_id
+                        donation_doc.document_type = doc_info['doc_type']
+                        donation_doc.document_desc = doc_info['doc_desc']
+                        donation_doc.file_name = doc_info['unique_filename']
+                        donation_doc.file_type = doc_info['mime_type']
+                        
+                        file_size_bytes = doc_info['file_size_bytes']
+                        if file_size_bytes < 1024:
+                            donation_doc.file_size = f'{file_size_bytes}B'
+                        elif file_size_bytes < 1024 * 1024:
+                            donation_doc.file_size = f'{file_size_bytes / 1024:.1f}KB'
+                        else:
+                            donation_doc.file_size = f'{file_size_bytes / (1024 * 1024):.1f}MB'
+                        
+                        add_audit_fields(donation_doc, current_user, is_new=True)
+                        db.session.add(donation_doc)
+                        document_count += 1
+                except Exception as save_error:
+                    for saved_path in saved_files:
+                        try:
+                            os.remove(saved_path)
+                        except OSError:
+                            pass
+                    db.session.rollback()
+                    flash(f'Failed to save document: {str(save_error)}', 'danger')
+                    form_data = _get_donation_form_data()
+                    form_data['form_data'] = request.form
+                    return render_template('donations/create.html', **form_data)
             
             db.session.commit()
             
@@ -1415,10 +1453,15 @@ def verify_donation_detail(donation_id):
             # Set total donation value from user input (user-entered value)
             donation.tot_item_cost = tot_item_cost_value
             
+            # Handle document uploads - validate all first, then save
             document_count = 0
+            doc_errors = []
+            validated_docs = []
             uploaded_files = request.files.getlist('document_files')
             document_types = request.form.getlist('document_type')
             document_descs = request.form.getlist('document_desc')
+            
+            upload_folder = current_app.config.get('UPLOAD_FOLDER')
             
             for idx, uploaded_file in enumerate(uploaded_files):
                 if uploaded_file and uploaded_file.filename and uploaded_file.filename.strip():
@@ -1426,42 +1469,84 @@ def verify_donation_detail(donation_id):
                     
                     mime_type = mimetypes.guess_type(original_filename)[0]
                     if mime_type not in ['application/pdf', 'image/jpeg']:
-                        flash(f'Invalid file type for document {idx + 1}. Only PDF and JPEG files are allowed.', 'warning')
+                        doc_errors.append(f'Invalid file type for document {idx + 1}. Only PDF and JPEG files are allowed.')
                         continue
                     
                     doc_type = document_types[idx] if idx < len(document_types) else 'Other'
                     doc_desc = document_descs[idx] if idx < len(document_descs) else ''
                     
                     if not doc_desc.strip():
-                        flash(f'Document description is required for document {idx + 1}.', 'warning')
+                        doc_errors.append(f'Document description is required for document {idx + 1}.')
                         continue
                     
                     import uuid
                     safe_base_name = secure_filename(original_filename)
                     unique_filename = f"{uuid.uuid4().hex[:8]}_{safe_base_name}"
                     
-                    donation_doc = DonationDoc()
-                    donation_doc.donation_id = donation_id
-                    donation_doc.document_type = doc_type.upper()
-                    donation_doc.document_desc = doc_desc.strip().upper()
-                    donation_doc.file_name = unique_filename
-                    donation_doc.file_type = mime_type
-                    
                     uploaded_file.seek(0, os.SEEK_END)
                     file_size_bytes = uploaded_file.tell()
                     uploaded_file.seek(0)
                     
-                    if file_size_bytes < 1024:
-                        donation_doc.file_size = f'{file_size_bytes}B'
-                    elif file_size_bytes < 1024 * 1024:
-                        donation_doc.file_size = f'{file_size_bytes / 1024:.1f}KB'
-                    else:
-                        donation_doc.file_size = f'{file_size_bytes / (1024 * 1024):.1f}MB'
-                    
-                    add_audit_fields(donation_doc, current_user, is_new=True)
-                    
-                    db.session.add(donation_doc)
-                    document_count += 1
+                    validated_docs.append({
+                        'file': uploaded_file,
+                        'unique_filename': unique_filename,
+                        'doc_type': doc_type.upper(),
+                        'doc_desc': doc_desc.strip().upper(),
+                        'mime_type': mime_type,
+                        'file_size_bytes': file_size_bytes,
+                        'idx': idx
+                    })
+            
+            if doc_errors:
+                db.session.rollback()
+                for error in doc_errors:
+                    flash(error, 'danger')
+                form_data = _get_donation_form_data()
+                form_data['donation'] = donation
+                form_data['form_data'] = request.form
+                return render_template('donations/verify.html', **form_data)
+            
+            if validated_docs and upload_folder:
+                if not os.path.exists(upload_folder):
+                    os.makedirs(upload_folder, exist_ok=True)
+                
+                saved_files = []
+                try:
+                    for doc_info in validated_docs:
+                        file_path = os.path.join(upload_folder, doc_info['unique_filename'])
+                        doc_info['file'].save(file_path)
+                        saved_files.append(file_path)
+                        
+                        donation_doc = DonationDoc()
+                        donation_doc.donation_id = donation_id
+                        donation_doc.document_type = doc_info['doc_type']
+                        donation_doc.document_desc = doc_info['doc_desc']
+                        donation_doc.file_name = doc_info['unique_filename']
+                        donation_doc.file_type = doc_info['mime_type']
+                        
+                        file_size_bytes = doc_info['file_size_bytes']
+                        if file_size_bytes < 1024:
+                            donation_doc.file_size = f'{file_size_bytes}B'
+                        elif file_size_bytes < 1024 * 1024:
+                            donation_doc.file_size = f'{file_size_bytes / 1024:.1f}KB'
+                        else:
+                            donation_doc.file_size = f'{file_size_bytes / (1024 * 1024):.1f}MB'
+                        
+                        add_audit_fields(donation_doc, current_user, is_new=True)
+                        db.session.add(donation_doc)
+                        document_count += 1
+                except Exception as save_error:
+                    for saved_path in saved_files:
+                        try:
+                            os.remove(saved_path)
+                        except OSError:
+                            pass
+                    db.session.rollback()
+                    flash(f'Failed to save document: {str(save_error)}', 'danger')
+                    form_data = _get_donation_form_data()
+                    form_data['donation'] = donation
+                    form_data['form_data'] = request.form
+                    return render_template('donations/verify.html', **form_data)
             
             db.session.commit()
             

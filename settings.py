@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -20,6 +22,9 @@ class Config:
     GOJ_GOLD = '#FFD100'
     
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024
+    
+    UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or os.path.join(BASE_DIR, 'uploads', 'donations')
+    ALLOWED_EXTENSIONS = {'pdf', 'jpg', 'jpeg'}
     
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
