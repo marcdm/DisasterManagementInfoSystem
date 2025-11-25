@@ -107,13 +107,8 @@
 
             <!-- Donation Items Card -->
             <div class="card">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <div class="card-header bg-light">
                     <h5 class="mb-0"><i class="bi bi-box-seam"></i> Donation Items ({{ donation.items|length }})</h5>
-                    {% if donation.status_code == 'E' %}
-                    <a href="{{ url_for('donations.add_donation_item', donation_id=donation.donation_id) }}" class="btn-relief-primary btn-sm">
-                        <i class="bi bi-plus-circle"></i> Add Item
-                    </a>
-                    {% endif %}
                 </div>
                 <div class="card-body {% if donation.items %}p-0{% endif %}">
                     {% if donation.items %}
@@ -124,9 +119,9 @@
                                     <th scope="col">Item</th>
                                     <th scope="col" class="text-end">Quantity</th>
                                     <th scope="col">UOM</th>
+                                    <th scope="col">Currency</th>
                                     <th scope="col">Location</th>
                                     <th scope="col" class="text-center">Status</th>
-                                    <th scope="col" class="text-end">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -139,7 +134,20 @@
                                         {% endif %}
                                     </td>
                                     <td class="text-end"><strong>{{ item.item_qty }}</strong></td>
-                                    <td><span class="code-pill">{{ item.uom_code }}</span></td>
+                                    <td>
+                                        {% if item.uom_code %}
+                                        <span class="code-pill">{{ item.uom_code }}</span>
+                                        {% else %}
+                                        <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.currency_code and not item.uom_code %}
+                                        <span class="code-pill">{{ item.currency_code }}</span>
+                                        {% else %}
+                                        <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
                                     <td>{{ item.location_name }}</td>
                                     <td class="text-center">
                                         {% if item.status_code == 'P' %}
@@ -149,20 +157,6 @@
                                         {% elif item.status_code == 'V' %}
                                         <span class="status-badge status-badge-success">
                                             <i class="bi bi-check-circle"></i> Verified
-                                        </span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-end">
-                                        {% if donation.status_code == 'E' %}
-                                        <a href="{{ url_for('donations.edit_donation_item', donation_id=donation.donation_id, item_id=item.item_id) }}" 
-                                           class="btn btn-sm btn-outline-secondary"
-                                           title="Edit item"
-                                           aria-label="Edit item">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        {% else %}
-                                        <span class="text-muted" title="Locked">
-                                            <i class="bi bi-lock"></i>
                                         </span>
                                         {% endif %}
                                     </td>
@@ -181,12 +175,7 @@
                     {% else %}
                     <div class="text-center py-5">
                         <i class="bi bi-box-seam text-muted fs-3rem"></i>
-                        <p class="text-muted mt-3">No items added yet. {% if donation.status_code == 'E' %}Add items to complete the donation record.{% elif donation.status_code == 'V' %}This verified donation has no items.{% else %}This processed donation has no items.{% endif %}</p>
-                        {% if donation.status_code == 'E' %}
-                        <a href="{{ url_for('donations.add_donation_item', donation_id=donation.donation_id) }}" class="btn-relief-primary">
-                            <i class="bi bi-plus-circle"></i> Add First Item
-                        </a>
-                        {% endif %}
+                        <p class="text-muted mt-3">No items added yet. {% if donation.status_code == 'E' %}Use the Edit button to add items to this donation.{% elif donation.status_code == 'V' %}This verified donation has no items.{% else %}This processed donation has no items.{% endif %}</p>
                     </div>
                     {% endif %}
                 </div>
