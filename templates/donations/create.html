@@ -679,7 +679,7 @@ function updateItemsTable() {
 function updateTotalItemCost() {
     let total = 0;
     donationItems.forEach(item => {
-        total += (item.item_cost + item.addon_cost) * item.quantity;
+        total += item.item_cost * item.quantity;
     });
     document.getElementById('tot_item_cost').value = total.toFixed(2);
 }

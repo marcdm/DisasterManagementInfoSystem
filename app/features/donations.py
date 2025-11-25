@@ -364,8 +364,8 @@ def create_donation():
                 # If item passed validation, add to validated list
                 validated_items.append(item_info)
                 
-                # Add to total value (item_cost + addon_cost) * quantity
-                total_value += (Decimal(str(item_cost)) + Decimal(str(addon_cost))) * Decimal(str(quantity))
+                # Add to total value (item_cost * quantity) - addon_cost excluded from total
+                total_value += Decimal(str(item_cost)) * Decimal(str(quantity))
             
             # Check if there were any validation errors
             if errors:
@@ -1212,7 +1212,8 @@ def verify_donation_detail(donation_id):
                 addon_cost = item_info['addon_cost']
                 quantity = item_info['quantity']
                 
-                total_value += (Decimal(str(item_cost)) + Decimal(str(addon_cost))) * Decimal(str(quantity))
+                # Add to total value (item_cost * quantity) - addon_cost excluded from total
+                total_value += Decimal(str(item_cost)) * Decimal(str(quantity))
                 
                 existing_item = DonationItem.query.get((donation_id, item_info['item_id']))
                 
