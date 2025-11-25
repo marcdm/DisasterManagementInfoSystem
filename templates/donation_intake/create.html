@@ -52,8 +52,7 @@
                                 <option value="{{ donation.donation_id }}"
                                         data-donor="{{ donation.donor.donor_name }}"
                                         data-desc="{{ donation.donation_desc }}"
-                                        data-date="{{ donation.received_date|format_date }}"
-                                        data-items='{% for item in donation.items %}{{ item.item.item_name }}: {{ item.item_qty }} {{ item.uom_code }}{% if not loop.last %}|{% endif %}{% endfor %}'>
+                                        data-date="{{ donation.received_date|format_date }}">
                                     #{{ donation.donation_id }} - {{ donation.donation_desc|truncate(60) }} ({{ donation.donor.donor_name }})
                                 </option>
                                 {% endfor %}
@@ -83,15 +82,9 @@
                                                 <strong id="detail-date"></strong>
                                             </div>
                                         </div>
-                                        <div class="mb-3">
+                                        <div class="mb-0">
                                             <small class="text-muted d-block">Description</small>
                                             <strong id="detail-desc"></strong>
-                                        </div>
-                                        <div>
-                                            <small class="text-muted d-block mb-2">
-                                                <i class="bi bi-box-seam"></i> Items to be Intaken
-                                            </small>
-                                            <div id="detail-items" class="d-flex flex-column gap-2"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -168,34 +161,6 @@ function showDonationDetails() {
         document.getElementById('detail-donor').textContent = option.dataset.donor;
         document.getElementById('detail-desc').textContent = option.dataset.desc;
         document.getElementById('detail-date').textContent = option.dataset.date;
-        
-        // Parse and display items with quantities in modern badge format
-        const itemsData = option.dataset.items;
-        const itemsList = document.getElementById('detail-items');
-        itemsList.innerHTML = '';
-        
-        if (itemsData) {
-            const items = itemsData.split('|');
-            items.forEach((item, index) => {
-                // Parse item format: "Item Name: Quantity UOM"
-                const parts = item.split(':');
-                if (parts.length === 2) {
-                    const itemName = parts[0].trim();
-                    const qtyUom = parts[1].trim();
-                    
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'd-flex justify-content-between align-items-center p-2 border rounded bg-light';
-                    itemDiv.innerHTML = `
-                        <span>
-                            <i class="bi bi-box text-success"></i>
-                            <strong>${itemName}</strong>
-                        </span>
-                        <span class="badge bg-primary">${qtyUom}</span>
-                    `;
-                    itemsList.appendChild(itemDiv);
-                }
-            });
-        }
         
         document.getElementById('donation-details').classList.remove('d-none');
         document.getElementById('donation-details').classList.add('d-block');
