@@ -216,12 +216,18 @@
                                         <i class="bi bi-clipboard-check"></i>
                                     </a>
                                     {% endif %}
+                                    {% if donation.status_code == 'E' %}
                                     <a href="{{ url_for('donations.edit_donation', donation_id=donation.donation_id) }}"
                                        class="btn btn-sm btn-outline-secondary"
                                        title="Edit donation"
                                        aria-label="Edit donation #{{ donation.donation_id }}">
                                         <i class="bi bi-pencil"></i>
                                     </a>
+                                    {% else %}
+                                    <span class="btn btn-sm btn-outline-secondary disabled" title="Editing locked">
+                                        <i class="bi bi-lock"></i>
+                                    </span>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
