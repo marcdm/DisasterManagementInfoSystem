@@ -489,6 +489,7 @@ document.getElementById('new_item_id').addEventListener('change', async function
 function enableFieldsForGoods() {
     const itemCostHint = document.getElementById('item_cost_hint');
     const quantityHint = document.getElementById('quantity_hint');
+    const quantityInput = document.getElementById('new_quantity');
     const uomSelect = document.getElementById('new_uom_code');
     const currencySelect = document.getElementById('new_currency_code');
     const uomCurrencyLabel = document.getElementById('uom_currency_label');
@@ -499,6 +500,10 @@ function enableFieldsForGoods() {
     quantityHint.textContent = 'Quantity of goods';
     uomCurrencyLabel.textContent = 'UOM *';
     uomCurrencyHintText.textContent = 'Unit:';
+    
+    // GOODS: Quantity is fully editable
+    quantityInput.readOnly = false;
+    quantityInput.classList.remove('field-disabled-visual');
     
     uomSelect.classList.remove('d-none');
     uomSelect.disabled = false;
@@ -511,6 +516,7 @@ function enableFieldsForGoods() {
 function enableFieldsForFunds() {
     const itemCostHint = document.getElementById('item_cost_hint');
     const quantityHint = document.getElementById('quantity_hint');
+    const quantityInput = document.getElementById('new_quantity');
     const uomSelect = document.getElementById('new_uom_code');
     const currencySelect = document.getElementById('new_currency_code');
     const uomHidden = document.getElementById('new_uom_code_hidden');
@@ -519,10 +525,15 @@ function enableFieldsForFunds() {
     const uomCurrencyLabel = document.getElementById('uom_currency_label');
     const uomCurrencyHintText = document.getElementById('uom_currency_hint_text');
     
-    itemCostHint.textContent = 'Donated value per instance';
-    quantityHint.textContent = 'Number of fund instances';
+    itemCostHint.textContent = 'Donated value';
+    quantityHint.textContent = 'Fixed at 1.00 for FUNDS';
     uomCurrencyLabel.textContent = 'Currency *';
     uomCurrencyHintText.textContent = 'Currency:';
+    
+    // FUNDS: Quantity is fixed at 1.00 and non-editable
+    quantityInput.value = '1.00';
+    quantityInput.readOnly = true;
+    quantityInput.classList.add('field-disabled-visual');
     
     uomSelect.classList.add('d-none');
     uomSelect.value = '';
@@ -537,6 +548,7 @@ function resetFormFields() {
     currentCategoryType = null;
     const donationTypeInput = document.getElementById('new_donation_type');
     const categoryHint = document.getElementById('category_hint');
+    const quantityInput = document.getElementById('new_quantity');
     const uomSelect = document.getElementById('new_uom_code');
     const currencySelect = document.getElementById('new_currency_code');
     const uomHidden = document.getElementById('new_uom_code_hidden');
@@ -549,6 +561,11 @@ function resetFormFields() {
     categoryHint.textContent = 'Auto-set';
     uomCurrencyLabel.textContent = 'UOM *';
     uomCurrencyHintText.textContent = 'Unit:';
+    
+    // Reset quantity field to editable state
+    quantityInput.value = '1.00';
+    quantityInput.readOnly = false;
+    quantityInput.classList.remove('field-disabled-visual');
     
     uomSelect.value = '';
     uomSelect.classList.remove('d-none');
