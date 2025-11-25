@@ -321,8 +321,10 @@ def create_donation():
             
             add_audit_fields(donation, current_user, is_new=True)
             
-            donation.verify_by_id = current_user.user_name
-            donation.verify_dtime = current_timestamp
+            # Verify fields remain NULL for status 'E' (Entry/Pending verification)
+            # They will be populated only when donation is verified (status='V')
+            donation.verify_by_id = None
+            donation.verify_dtime = None
             
             db.session.add(donation)
             db.session.flush()
@@ -386,8 +388,10 @@ def create_donation():
                 
                 add_audit_fields(donation_item, current_user, is_new=True)
                 
-                donation_item.verify_by_id = current_user.user_name
-                donation_item.verify_dtime = current_timestamp
+                # Verify fields remain NULL for status 'P' (Pending verification)
+                # They will be populated only when item is verified (status='V')
+                donation_item.verify_by_id = None
+                donation_item.verify_dtime = None
                 
                 db.session.add(donation_item)
             
@@ -989,16 +993,22 @@ def add_donation_item(donation_id):
             donation_item.item_qty = Decimal(item_qty)
             donation_item.uom_code = uom_code
             donation_item.location_name = location_name.upper()
-            donation_item.status_code = 'V'
+            # Set status based on parent donation status
+            # Items added to unverified donations (status='E') should be pending
+            donation_item.status_code = 'P' if donation.status_code == 'E' else 'V'
             donation_item.comments_text = comments_text.upper() if comments_text else None
-            
-            current_timestamp = jamaica_now()
             
             add_audit_fields(donation_item, current_user, is_new=True)
             
-            # MVP: Auto-verify on creation - same user and timestamp as creation
-            donation_item.verify_by_id = current_user.user_name
-            donation_item.verify_dtime = current_timestamp
+            # Verify fields remain NULL for pending items (status='P')
+            # They will be populated only when item is verified (status='V')
+            if donation_item.status_code == 'P':
+                donation_item.verify_by_id = None
+                donation_item.verify_dtime = None
+            else:
+                current_timestamp = jamaica_now()
+                donation_item.verify_by_id = current_user.user_name
+                donation_item.verify_dtime = current_timestamp
             
             db.session.add(donation_item)
             db.session.commit()
@@ -1115,11 +1125,15 @@ def edit_donation_item(donation_id, item_id):
             
             add_audit_fields(donation_item, current_user, is_new=False)
             
-            # MVP: Any successful update is treated as verified
-            # Status remains 'V' and verify fields are updated
+            # Verify fields are only populated for verified items (status='V')
+            # They remain/become NULL for pending items (status='P')
             if status_code == 'V':
                 donation_item.verify_by_id = current_user.user_name
                 donation_item.verify_dtime = jamaica_now()
+            else:
+                # Clear verify fields when status is 'P' (Pending)
+                donation_item.verify_by_id = None
+                donation_item.verify_dtime = None
             
             db.session.commit()
             
