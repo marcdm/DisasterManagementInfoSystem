@@ -484,7 +484,8 @@ function validateUnitCost(input) {
     // Remove invalid indicator first
     input.classList.remove('is-invalid');
     if (errorDiv) {
-        errorDiv.style.display = 'none';
+        errorDiv.classList.add('d-none');
+        errorDiv.classList.remove('d-block');
         errorDiv.textContent = '';
     }
     
@@ -498,7 +499,8 @@ function validateUnitCost(input) {
         input.classList.add('is-invalid');
         if (errorDiv) {
             errorDiv.textContent = 'Unit cost cannot exceed 99,999,999.99';
-            errorDiv.style.display = 'block';
+            errorDiv.classList.remove('d-none');
+            errorDiv.classList.add('d-block');
         }
         return;
     }
@@ -514,7 +516,8 @@ function validateUnitCost(input) {
         input.classList.add('is-invalid');
         if (errorDiv) {
             errorDiv.textContent = 'Unit cost cannot have more than 8 digits before decimal';
-            errorDiv.style.display = 'block';
+            errorDiv.classList.remove('d-none');
+            errorDiv.classList.add('d-block');
         }
     }
 }
@@ -544,7 +547,8 @@ function validateQuantities(itemId) {
         // Show inline error message
         if (errorDiv && errorText) {
             errorText.textContent = 'Usable quantity cannot be zero. At least some portion of the donation must be usable.';
-            errorDiv.style.display = 'block';
+            errorDiv.classList.remove('d-none');
+            errorDiv.classList.add('d-block');
         }
     }
     // Use tolerance of 0.01 since we're now limited to 2 decimal places
@@ -557,7 +561,8 @@ function validateQuantities(itemId) {
         // Show inline error message for total mismatch
         if (errorDiv && errorText) {
             errorText.textContent = 'Total quantities (Usable + Defective + Expired) must equal donated quantity.';
-            errorDiv.style.display = 'block';
+            errorDiv.classList.remove('d-none');
+            errorDiv.classList.add('d-block');
         }
     } else {
         usableInput.classList.remove('is-invalid');
@@ -568,7 +573,8 @@ function validateQuantities(itemId) {
         // Hide inline error message
         if (errorDiv && errorText) {
             errorText.textContent = '';
-            errorDiv.style.display = 'none';
+            errorDiv.classList.add('d-none');
+            errorDiv.classList.remove('d-block');
         }
     }
 }
@@ -587,7 +593,8 @@ function validateBatchPairing(itemId) {
     batchDateInput.classList.remove('is-invalid');
     if (errorDiv && errorText) {
         errorText.textContent = '';
-        errorDiv.style.display = 'none';
+        errorDiv.classList.add('d-none');
+        errorDiv.classList.remove('d-block');
     }
     
     // Step 2: Read current values
@@ -604,7 +611,8 @@ function validateBatchPairing(itemId) {
             batchDateInput.classList.add('is-invalid');
             if (errorDiv && errorText) {
                 errorText.textContent = 'Batch number and date are required for batched items.';
-                errorDiv.style.display = 'block';
+                errorDiv.classList.remove('d-none');
+                errorDiv.classList.add('d-block');
             }
             return false;
         } else if (!batchNo) {
@@ -612,7 +620,8 @@ function validateBatchPairing(itemId) {
             batchNoInput.classList.add('is-invalid');
             if (errorDiv && errorText) {
                 errorText.textContent = 'Batch number is required for batched items.';
-                errorDiv.style.display = 'block';
+                errorDiv.classList.remove('d-none');
+                errorDiv.classList.add('d-block');
             }
             return false;
         } else if (!batchDate) {
@@ -620,7 +629,8 @@ function validateBatchPairing(itemId) {
             batchDateInput.classList.add('is-invalid');
             if (errorDiv && errorText) {
                 errorText.textContent = 'Batch date is required for batched items.';
-                errorDiv.style.display = 'block';
+                errorDiv.classList.remove('d-none');
+                errorDiv.classList.add('d-block');
             }
             return false;
         }
@@ -636,7 +646,8 @@ function validateBatchPairing(itemId) {
             batchDateInput.classList.add('is-invalid');
             if (errorDiv && errorText) {
                 errorText.textContent = 'Please enter a Batch Date when a Batch No is provided.';
-                errorDiv.style.display = 'block';
+                errorDiv.classList.remove('d-none');
+                errorDiv.classList.add('d-block');
             }
             return false;
         } else if (!hasBatchNo && hasBatchDate) {
@@ -644,7 +655,8 @@ function validateBatchPairing(itemId) {
             batchNoInput.classList.add('is-invalid');
             if (errorDiv && errorText) {
                 errorText.textContent = 'Please enter a Batch No when a Batch Date is provided.';
-                errorDiv.style.display = 'block';
+                errorDiv.classList.remove('d-none');
+                errorDiv.classList.add('d-block');
             }
             return false;
         }
@@ -666,7 +678,8 @@ function validateExpiryDate(itemId) {
     expiryInput.classList.remove('is-invalid');
     if (errorDiv && errorText) {
         errorText.textContent = '';
-        errorDiv.style.display = 'none';
+        errorDiv.classList.add('d-none');
+        errorDiv.classList.remove('d-block');
     }
     
     const canExpire = expiryInput.dataset.canExpire === 'true';
@@ -677,7 +690,8 @@ function validateExpiryDate(itemId) {
         expiryInput.classList.add('is-invalid');
         if (errorDiv && errorText) {
             errorText.textContent = 'Expiry Date is required for items that can expire.';
-            errorDiv.style.display = 'block';
+            errorDiv.classList.remove('d-none');
+            errorDiv.classList.add('d-block');
         }
         return false;
     }

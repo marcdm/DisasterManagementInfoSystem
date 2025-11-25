@@ -179,12 +179,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (agencyType === 'DISTRIBUTOR') {
             warehouseSelect.disabled = false;
             warehouseSelect.required = true;
-            warehouseRequired.style.display = 'inline';
+            warehouseRequired.classList.remove('d-none');
+            warehouseRequired.classList.add('d-inline');
         } else if (agencyType === 'SHELTER') {
             warehouseSelect.disabled = true;
             warehouseSelect.required = false;
             warehouseSelect.value = '';
-            warehouseRequired.style.display = 'none';
+            warehouseRequired.classList.remove('d-inline');
+            warehouseRequired.classList.add('d-none');
         }
     }
     

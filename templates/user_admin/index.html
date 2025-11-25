@@ -290,10 +290,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Show/hide row
             if (matchesSearch && matchesTab && matchesRole) {
-                row.style.display = '';
+                row.classList.remove('d-none');
                 visibleCount++;
             } else {
-                row.style.display = 'none';
+                row.classList.add('d-none');
             }
         });
         

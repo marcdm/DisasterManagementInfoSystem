@@ -407,13 +407,15 @@ if (urgencySelect) {
         
         if (this.value === 'H') {
             justificationField.setAttribute('required', 'required');
-            requiredIndicator.style.display = 'inline';
+            requiredIndicator.classList.remove('d-none');
+            requiredIndicator.classList.add('d-inline');
             hint.textContent = 'Required for High urgency items';
             hint.classList.remove('text-muted');
             hint.classList.add('text-danger');
         } else {
             justificationField.removeAttribute('required');
-            requiredIndicator.style.display = 'none';
+            requiredIndicator.classList.remove('d-inline');
+            requiredIndicator.classList.add('d-none');
             hint.textContent = 'Optional for Medium/Low urgency items';
             hint.classList.remove('text-danger');
             hint.classList.add('text-muted');

@@ -294,11 +294,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateReasonVisibility() {
         if (decisionNo.checked) {
-            reasonContainer.style.display = 'block';
+            reasonContainer.classList.remove('d-none');
+            reasonContainer.classList.add('d-block');
             reasonField.required = true;
             setTimeout(() => reasonField.focus(), 100);
         } else {
-            reasonContainer.style.display = 'none';
+            reasonContainer.classList.remove('d-block');
+            reasonContainer.classList.add('d-none');
             reasonField.required = false;
             reasonField.value = '';
             reasonField.classList.remove('is-invalid');

@@ -253,10 +253,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (show) {
-                card.style.display = '';
+                card.classList.remove('d-none');
                 visibleCount++;
             } else {
-                card.style.display = 'none';
+                card.classList.add('d-none');
             }
         });
         
@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!document.querySelector('.empty-state-inline')) {
                 const emptyState = `
                     <div class="empty-state-inline">
-                        <i class="bi bi-inbox" style="font-size: 3rem; color: #6c757d;"></i>
+                        <i class="bi bi-inbox empty-state-icon"></i>
                         <h5 class="mt-3">No notifications found</h5>
                         <p class="text-muted">No notifications match the selected filter.</p>
                     </div>
@@ -307,9 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.success) {
                         // Remove the card with animation
                         const card = this.closest('.notification-card');
-                        card.style.transition = 'all 0.3s ease';
-                        card.style.opacity = '0';
-                        card.style.transform = 'translateX(20px)';
+                        card.classList.add('transition-all', 'opacity-0', 'translate-x-20');
                         setTimeout(() => {
                             card.remove();
                             // Reload page if no notifications left

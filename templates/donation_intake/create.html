@@ -197,9 +197,11 @@ function showDonationDetails() {
             });
         }
         
-        document.getElementById('donation-details').style.display = 'block';
+        document.getElementById('donation-details').classList.remove('d-none');
+        document.getElementById('donation-details').classList.add('d-block');
     } else {
-        document.getElementById('donation-details').style.display = 'none';
+        document.getElementById('donation-details').classList.remove('d-block');
+        document.getElementById('donation-details').classList.add('d-none');
     }
 }
 </script>

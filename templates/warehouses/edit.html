@@ -256,10 +256,12 @@ function toggleReasonField() {
     const reasonInput = document.getElementById('reason_desc');
     
     if (status === 'I') {
-        reasonContainer.style.display = 'block';
+        reasonContainer.classList.remove('d-none');
+        reasonContainer.classList.add('d-block');
         reasonInput.required = true;
     } else {
-        reasonContainer.style.display = 'none';
+        reasonContainer.classList.remove('d-block');
+        reasonContainer.classList.add('d-none');
         reasonInput.required = false;
         reasonInput.value = '';
     }

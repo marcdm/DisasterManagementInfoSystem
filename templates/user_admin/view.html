@@ -377,11 +377,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Update panel visibility
             panels.forEach(panel => {
-                panel.style.display = 'none';
+                panel.classList.add('d-none');
+                panel.classList.remove('d-block');
             });
             const targetPanel = document.getElementById(`${targetTab}-panel`);
             if (targetPanel) {
-                targetPanel.style.display = 'block';
+                targetPanel.classList.remove('d-none');
+                targetPanel.classList.add('d-block');
             }
         });
     });

@@ -169,12 +169,13 @@ function updateCharCount(fieldId, counterId, maxLength) {
     counter.textContent = currentLength;
     
     // Change color when approaching limit
+    counter.classList.remove('char-count-danger', 'char-count-warning', 'char-count-normal');
     if (currentLength > maxLength * 0.9) {
-        counter.style.color = '#dc3545'; // Red
+        counter.classList.add('char-count-danger');
     } else if (currentLength > maxLength * 0.75) {
-        counter.style.color = '#ffc107'; // Yellow
+        counter.classList.add('char-count-warning');
     } else {
-        counter.style.color = '#6c757d'; // Gray
+        counter.classList.add('char-count-normal');
     }
 }
 

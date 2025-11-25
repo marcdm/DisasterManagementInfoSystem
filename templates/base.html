@@ -1087,7 +1087,7 @@
             sidebarOverlay.classList.add('active');
             sidebarToggle.setAttribute('aria-expanded', 'true');
             sidebarOverlay.setAttribute('aria-hidden', 'false');
-            document.body.style.overflow = 'hidden'; // Prevent scrolling when sidebar is open
+            document.body.classList.add('body-no-scroll');
         }
         
         function closeSidebar() {
@@ -1095,7 +1095,7 @@
             sidebarOverlay.classList.remove('active');
             sidebarToggle.setAttribute('aria-expanded', 'false');
             sidebarOverlay.setAttribute('aria-hidden', 'true');
-            document.body.style.overflow = ''; // Restore scrolling
+            document.body.classList.remove('body-no-scroll');
         }
         
         // Toggle sidebar on button click
