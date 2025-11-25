@@ -782,14 +782,14 @@ document.getElementById('addDocumentBtn').addEventListener('click', function() {
                 </div>
                 <div class="col-md-5 mb-2">
                     <label class="form-label small">Description *</label>
-                    <input type="text" class="form-control form-control-sm" name="document_desc" placeholder="e.g., Invoice #12345" style="text-transform: uppercase;">
+                    <input type="text" class="form-control form-control-sm" name="document_desc" placeholder="e.g., Invoice #12345" class="text-uppercase-input">
                 </div>
                 <div class="col-md-3 mb-2">
                     <label class="form-label small">File (PDF/JPEG) *</label>
                     <input type="file" class="form-control form-control-sm" name="document_files" accept=".pdf,.jpg,.jpeg" required>
                 </div>
                 <div class="col-md-1 mb-2">
-                    <button type="button" class="btn btn-sm btn-danger w-100" onclick="document.getElementById('doc-row-${documentCounter}').remove()">
+                    <button type="button" class="btn btn-sm btn-danger w-100" data-action="remove-document" data-doc-id="${documentCounter}">
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
@@ -798,6 +798,17 @@ document.getElementById('addDocumentBtn').addEventListener('click', function() {
     `;
     
     documentsContainer.appendChild(docRow);
+});
+
+document.addEventListener('click', function(e) {
+    const removeDocBtn = e.target.closest('[data-action="remove-document"]');
+    if (removeDocBtn) {
+        const docId = removeDocBtn.dataset.docId;
+        const docRow = document.getElementById(`doc-row-${docId}`);
+        if (docRow) {
+            docRow.remove();
+        }
+    }
 });
 </script>
 {% endblock %}
