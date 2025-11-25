@@ -139,8 +139,8 @@
                                     <td>{{ item.location_name }}</td>
                                     <td class="text-center">
                                         {% if item.status_code == 'P' %}
-                                        <span class="status-badge status-badge-info">
-                                            <i class="bi bi-inbox"></i> Processed
+                                        <span class="status-badge status-badge-warning">
+                                            <i class="bi bi-hourglass-split"></i> Pending
                                         </span>
                                         {% elif item.status_code == 'V' %}
                                         <span class="status-badge status-badge-success">

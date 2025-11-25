@@ -78,7 +78,7 @@
                                         Status <span class="text-danger">*</span>
                                     </label>
                                     <select class="form-select" id="status_code" name="status_code" required>
-                                        <option value="P" {% if donation_item.status_code == 'P' %}selected{% endif %}>Processed</option>
+                                        <option value="P" {% if donation_item.status_code == 'P' %}selected{% endif %}>Pending</option>
                                         <option value="V" {% if donation_item.status_code == 'V' %}selected{% endif %}>Verified</option>
                                     </select>
                                 </div>
