@@ -322,7 +322,7 @@
                                         <small class="text-muted" id="quantity_hint">Default: 1.00</small>
                                     </div>
                                     <div class="col-6 col-sm-4 col-md-4 mb-3">
-                                        <label for="new_uom_code" class="form-label">UOM *</label>
+                                        <label class="form-label" id="uom_currency_label">UOM *</label>
                                         <select class="form-select field-disabled-visual" id="new_uom_code" disabled>
                                             <option value="">Select item first</option>
                                             {% for uom in uoms %}
@@ -340,7 +340,8 @@
                                             {% endfor %}
                                         </select>
                                         <input type="hidden" id="new_uom_code_hidden" value="">
-                                        <small class="text-muted" id="uom_hint">Unit: <span id="selected_uom">—</span></small>
+                                        <input type="hidden" id="new_currency_code_hidden" value="">
+                                        <small class="text-muted" id="uom_hint"><span id="uom_currency_hint_text">Unit:</span> <span id="selected_uom">—</span></small>
                                     </div>
                                 </div>
                                 <!-- Row 3: Item Comments -->
@@ -518,14 +519,21 @@ function enableFieldsForGoods() {
     const quantityHint = document.getElementById('quantity_hint');
     const uomSelect = document.getElementById('new_uom_code');
     const currencySelect = document.getElementById('new_currency_code');
+    const uomCurrencyLabel = document.getElementById('uom_currency_label');
+    const uomCurrencyHintText = document.getElementById('uom_currency_hint_text');
+    const currencyHidden = document.getElementById('new_currency_code_hidden');
     
     itemCostHint.textContent = 'Cost per unit';
     quantityHint.textContent = 'Quantity of goods';
+    uomCurrencyLabel.textContent = 'UOM *';
+    uomCurrencyHintText.textContent = 'Unit:';
     
     uomSelect.classList.remove('d-none');
     uomSelect.disabled = false;
     uomSelect.classList.remove('field-disabled-visual');
     currencySelect.classList.add('d-none');
+    currencySelect.value = '';
+    currencyHidden.value = '';
 }
 
 function enableFieldsForFunds() {
@@ -534,16 +542,23 @@ function enableFieldsForFunds() {
     const uomSelect = document.getElementById('new_uom_code');
     const currencySelect = document.getElementById('new_currency_code');
     const uomHidden = document.getElementById('new_uom_code_hidden');
+    const currencyHidden = document.getElementById('new_currency_code_hidden');
     const uomHint = document.getElementById('selected_uom');
+    const uomCurrencyLabel = document.getElementById('uom_currency_label');
+    const uomCurrencyHintText = document.getElementById('uom_currency_hint_text');
     
     itemCostHint.textContent = 'Donated value per instance';
     quantityHint.textContent = 'Number of fund instances';
+    uomCurrencyLabel.textContent = 'Currency *';
+    uomCurrencyHintText.textContent = 'Currency:';
     
     uomSelect.classList.add('d-none');
+    uomSelect.value = '';
+    uomHidden.value = '';
     currencySelect.classList.remove('d-none');
     currencySelect.value = '';
-    uomHidden.value = '';
-    uomHint.textContent = 'Select currency';
+    currencyHidden.value = '';
+    uomHint.textContent = 'Select currency...';
 }
 
 function resetFormFields() {
@@ -553,10 +568,15 @@ function resetFormFields() {
     const uomSelect = document.getElementById('new_uom_code');
     const currencySelect = document.getElementById('new_currency_code');
     const uomHidden = document.getElementById('new_uom_code_hidden');
+    const currencyHidden = document.getElementById('new_currency_code_hidden');
     const uomHint = document.getElementById('selected_uom');
+    const uomCurrencyLabel = document.getElementById('uom_currency_label');
+    const uomCurrencyHintText = document.getElementById('uom_currency_hint_text');
     
     donationTypeInput.value = '';
     categoryHint.textContent = 'Auto-set';
+    uomCurrencyLabel.textContent = 'UOM *';
+    uomCurrencyHintText.textContent = 'Unit:';
     
     uomSelect.value = '';
     uomSelect.classList.remove('d-none');
@@ -565,17 +585,27 @@ function resetFormFields() {
     currencySelect.classList.add('d-none');
     currencySelect.value = '';
     uomHidden.value = '';
+    currencyHidden.value = '';
     uomHint.textContent = '—';
     
     document.getElementById('item_cost_hint').textContent = 'Cost per unit';
     document.getElementById('quantity_hint').textContent = 'Default: 1.00';
 }
 
-document.getElementById('new_currency_code').addEventListener('change', function() {
+document.getElementById('new_uom_code').addEventListener('change', function() {
     const uomHidden = document.getElementById('new_uom_code_hidden');
     const uomHint = document.getElementById('selected_uom');
+    const selectedOption = this.options[this.selectedIndex];
     uomHidden.value = this.value;
-    uomHint.textContent = this.value || '—';
+    uomHint.textContent = selectedOption ? selectedOption.getAttribute('data-desc') || this.value : '—';
+});
+
+document.getElementById('new_currency_code').addEventListener('change', function() {
+    const currencyHidden = document.getElementById('new_currency_code_hidden');
+    const uomHint = document.getElementById('selected_uom');
+    const selectedOption = this.options[this.selectedIndex];
+    currencyHidden.value = this.value;
+    uomHint.textContent = selectedOption ? (this.value + ' - ' + selectedOption.getAttribute('data-desc')) : 'Select currency...';
 });
 
 // Add item button click handler with GOODS/FUNDS validation
@@ -585,7 +615,9 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
     const quantityInput = document.getElementById('new_quantity');
     const itemCostInput = document.getElementById('new_item_cost');
     const uomHidden = document.getElementById('new_uom_code_hidden');
+    const currencyHidden = document.getElementById('new_currency_code_hidden');
     const uomSelect = document.getElementById('new_uom_code');
+    const currencySelect = document.getElementById('new_currency_code');
     const locationInput = document.getElementById('new_location_name');
     const commentsInput = document.getElementById('new_item_comments');
     
@@ -621,10 +653,19 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
         return;
     }
     
-    if (!uomHidden.value) {
-        alert('Please select an item with a valid unit of measure');
-        itemSelect.focus();
-        return;
+    // Validate based on donation type
+    if (currentCategoryType === 'GOODS') {
+        if (!uomHidden.value) {
+            alert('Please select a unit of measure for goods.');
+            uomSelect.focus();
+            return;
+        }
+    } else if (currentCategoryType === 'FUNDS') {
+        if (!currencyHidden.value) {
+            alert('Please select a currency for funds.');
+            currencySelect.focus();
+            return;
+        }
     }
     
     if (!locationInput.value.trim()) {
@@ -634,15 +675,18 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
     }
     
     const selectedItemOption = itemSelect.options[itemSelect.selectedIndex];
-    const currencySelect = document.getElementById('new_currency_code');
     
-    let uomDesc;
+    let uomDesc, uomCode, currencyCode;
     if (currentCategoryType === 'FUNDS') {
         const selectedCurrencyOption = currencySelect.options[currencySelect.selectedIndex];
-        uomDesc = selectedCurrencyOption ? selectedCurrencyOption.getAttribute('data-desc') : uomHidden.value;
+        uomDesc = selectedCurrencyOption ? (currencyHidden.value + ' - ' + selectedCurrencyOption.getAttribute('data-desc')) : currencyHidden.value;
+        uomCode = null;
+        currencyCode = currencyHidden.value;
     } else {
         const selectedUomOption = uomSelect.options[uomSelect.selectedIndex];
         uomDesc = selectedUomOption ? selectedUomOption.getAttribute('data-desc') : uomHidden.value;
+        uomCode = uomHidden.value;
+        currencyCode = null;
     }
     
     const item = {
@@ -652,7 +696,8 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
         donation_type: currentCategoryType,
         quantity: qty,
         item_cost: itemCost,
-        uom_code: uomHidden.value,
+        uom_code: uomCode,
+        currency_code: currencyCode,
         uom_desc: uomDesc,
         location_name: locationInput.value.trim().toUpperCase(),
         comments: commentsInput.value.trim().toUpperCase()
@@ -711,7 +756,7 @@ function updateItemsTable() {
                             <th scope="col">Item</th>
                             <th scope="col">Type</th>
                             <th scope="col" class="text-end">Quantity</th>
-                            <th scope="col">UOM</th>
+                            <th scope="col">UOM / Currency</th>
                             <th scope="col" class="text-end">Item Cost</th>
                             <th scope="col" class="text-end">Actions</th>
                         </tr>
@@ -763,9 +808,9 @@ function updateItemsTable() {
                 <input type="hidden" name="item_cost_${num}" value="${Number(item.item_cost).toFixed(2)}">
             `;
             if (item.donation_type === 'GOODS') {
-                hiddenHtml += `<input type="hidden" name="uom_id_${num}" value="${String(item.uom_code)}">`;
+                hiddenHtml += `<input type="hidden" name="uom_id_${num}" value="${String(item.uom_code || '')}">`;
             } else {
-                hiddenHtml += `<input type="hidden" name="currency_code_${num}" value="${String(item.uom_code)}">`;
+                hiddenHtml += `<input type="hidden" name="currency_code_${num}" value="${String(item.currency_code || '')}">`;
             }
             hiddenHtml += `
                 <input type="hidden" name="location_name_${num}" value="${String(item.location_name)}">
