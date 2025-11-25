@@ -1,0 +1,232 @@
+We must update/align the donation_item table so that its structure matches the target DDL below, while:
+
+Retaining full referential integrity
+
+Not breaking any existing logic, UI, workflows, or behaviour
+
+Not touching any existing security fixes (CSP, CSRF, auth/RBAC, cookies, sessions)
+
+Not altering any other tables’ structure, beyond temporary FK drops/re-adds if truly necessary
+
+Preserving all existing data in donation_item and related tables
+
+🎯 TARGET DDL (FINAL SHAPE OF donation_item)
+
+Use this definition as the source of truth for how donation_item must look after the migration:
+
+create table donation_item
+(
+    donation_id integer not null
+        constraint fk_donation_item_donation references donation,
+    item_id integer not null
+        constraint fk_donation_item_item references item,
+    --
+    --Type of donation - Goods/Funds. For funds, unit of measure should
+    --default to the currency of the donor's country of residence. For
+    --goods, units of measure is defined on unit of measure table.
+    --For funds, the item quantity is the number of instances of funds
+    --donated (default 1), and the item cost is the average value over the
+    --instances of funds donated. Ideally, where there are multiple funds
+    --donated, record each fund as a separate item.
+    --The field tags should be reviewed for best indication of the data
+    --to be captured.
+    --
+    donation_type char(5) not null
+        constraint c_donation_item_0 check (donation_type in ('GOODS','FUNDS')),
+        
+    --Quantity (if goods)/number of instances (if funds) of items/funds received
+    item_qty decimal(9,2) not null default 1.00
+        constraint c_donation_item_1a check (item_qty >= 0.00),
+
+    --Purchase cost (if goods) or donated value (if funds) of item/fund.
+    item_cost decimal(10,2) not null
+        constraint c_donation_item_1b check (item_cost >= 0.00),
+
+    --
+    --Actual units in which quantity of item received is measured. Note that quantity
+    --of the item received may be measured in a different unit from the designated
+    --default unit of measure.
+    --For FUNDS, the unit of measure should be defaulted to the currency code/symbol
+    --the donor's country with the ability of ODPEM to select another currency (e.g.
+    --USD (US$) as the defactor international transaction currency.
+    --
+    uom_code varchar(25) not null
+        constraint fk_donation_item_unitofmeasure references unitofmeasure,
+
+    --Place at which consignment is located (bank & account, name of entity and/or
+    --address location at which donated item must be picked up)
+    location_name text not null,
+
+    status_code char(1) not null default 'V'
+        --P=Pending verification, V=Verified
+        constraint c_donation_item_2 check (status_code in ('P','V')),
+
+    --Any comments on item donated
+    comments_text text,
+        
+    create_by_id varchar(20) not null,
+    create_dtime timestamp(0) without time zone not null,
+    update_by_id varchar(20) not null,
+    update_dtime timestamp(0) without time zone not null,
+    verify_by_id varchar(20) not null,
+    verify_dtime timestamp(0) without time zone not null,
+    version_nbr integer not null,
+
+    constraint c_donation_item_10 check (item_cost + addon_cost > 0.00),
+
+    constraint pk_donation_item primary key(donation_id, item_id)
+);
+
+
+Note: The check constraint c_donation_item_10 references addon_cost.
+Before enforcing this constraint, you must ensure that addon_cost exists in the live table with a compatible type and semantics, in a way that does not break existing code or data.
+
+🚨 HARD CONSTRAINTS (DO NOT VIOLATE)
+
+Preserve referential integrity
+
+Identify all FKs involving donation_item, especially:
+
+Any FKs from dnintake_item:
+
+fk_dnintake_item_donation_item (donation_id, item_id) → donation_item(donation_id, item_id)
+
+After migration, all these FKs must remain valid and enforced.
+
+If you temporarily drop FKs (e.g., from dnintake_item), you must recreate them exactly.
+
+Do NOT break any application logic or workflows
+
+All flows that depend on donation_item must continue to behave exactly as before:
+
+Donation acceptance / entry
+
+Goods vs Funds handling
+
+Unit of measure & currency logic
+
+Verification flows
+
+Intake & packaging that depend on donation items
+
+Column names, meanings, and expected constraints used in the application must remain consistent.
+
+Do NOT change other tables’ schemas
+
+You may only:
+
+Temporarily drop/re-add foreign keys referencing donation_item if needed.
+
+No permanent DDL changes on donation, dnintake_item, unitofmeasure, or other tables.
+
+No security changes
+
+Do not touch:
+
+CSP config
+
+CSRF configuration
+
+Authentication & RBAC logic
+
+Sessions/cookies
+
+Flask routes/templates
+
+This is database-only schema migration.
+
+Minimal, safe DDL changes
+
+Compare the live donation_item structure with the target DDL.
+
+Apply only the minimal set of changes:
+
+Add missing columns (e.g., addon_cost if needed)
+
+Add or adjust constraints
+
+Add defaults
+
+Adjust types only if compatible
+
+Prefer in-place ALTER TABLE where possible.
+
+Only use a shadow-table (create new, copy, swap) strategy if you cannot safely alter in place.
+
+🧩 REQUIRED STEPS
+
+Inspect current schema
+
+Read /mnt/data/drms-2.2.sql to see the current design intent.
+
+Run \d donation_item on the live DB to see actual structure and constraints.
+
+Identify:
+
+Whether addon_cost already exists
+
+Existing check constraints and defaults
+
+Existing PK and FKs
+
+Plan the migration
+
+If addon_cost is missing:
+
+Add it with a safe type (e.g., decimal(10,2) not null default 0.00) only if this matches current business logic and doesn’t break existing code.
+
+Align:
+
+donation_type, item_qty, item_cost, uom_code, location_name, status_code, and audit columns to match types and constraints in the target DDL, without breaking existing data.
+
+Ensure pk_donation_item(donation_id, item_id) exists and matches expectations in dependent tables.
+
+Handle foreign keys carefully
+
+Identify all FKs referencing donation_item (e.g. from dnintake_item).
+
+For in-place ALTER:
+
+If constraint changes don’t affect referenced columns, you generally do not need to drop FKs.
+
+For shadow-table approach (only if necessary):
+
+Drop FKs referencing donation_item.
+
+Create donation_item_new with target DDL (including addon_cost).
+
+Copy data from donation_item → donation_item_new.
+
+Rename tables:
+
+ALTER TABLE donation_item RENAME TO donation_item_old;
+
+ALTER TABLE donation_item_new RENAME TO donation_item;
+
+Recreate FKs in dependent tables pointing to the new donation_item.
+
+Keep donation_item_old only if needed for rollback; otherwise, drop later.
+
+Apply/repair c_donation_item_10
+
+Before adding constraint c_donation_item_10 check (item_cost + addon_cost > 0.00):
+
+Ensure all existing rows satisfy this condition.
+
+If any row violates it, fix data with a sensible, business-consistent update (e.g., set addon_cost to 0.00 where null/invalid, then adjust item_cost if necessary).
+
+Then add/replace the constraint.
+
+Verify after migration
+
+Run \d donation_item to confirm structure matches target DDL.
+
+Ensure:
+
+pk_donation_item exists and is correct.
+
+fk_donation_item_donation, fk_donation_item_item, fk_donation_item_unitofmeasure exist and are valid.
+
+fk_dnintake_item_donation_item (and any others) point correctly to the new/altered donation_item.
+
+Run a small representative subset of application flows (if possible in test) to ensure no regressions.
