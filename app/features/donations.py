@@ -321,8 +321,8 @@ def create_donation():
             
             add_audit_fields(donation, current_user, is_new=True)
             
-            donation.verify_by_id = current_user.user_name
-            donation.verify_dtime = current_timestamp
+            # verify_by_id and verify_dtime remain NULL for new donations (status='E')
+            # They will be populated when the donation is actually verified
             
             db.session.add(donation)
             db.session.flush()
@@ -384,8 +384,8 @@ def create_donation():
                 
                 add_audit_fields(donation_item, current_user, is_new=True)
                 
-                donation_item.verify_by_id = current_user.user_name
-                donation_item.verify_dtime = current_timestamp
+                # verify_by_id and verify_dtime remain NULL for pending items (status='P')
+                # They will be populated when the donation is actually verified
                 
                 db.session.add(donation_item)
             
