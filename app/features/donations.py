@@ -161,6 +161,7 @@ def create_donation():
             origin_address2 = request.form.get('origin_address2_text', '').strip()
             comments_text = request.form.get('comments_text', '').strip()
             
+            tot_item_cost_str = request.form.get('tot_item_cost', '0.00').strip()
             storage_cost_str = request.form.get('storage_cost', '0.00').strip()
             haulage_cost_str = request.form.get('haulage_cost', '0.00').strip()
             other_cost_str = request.form.get('other_cost', '0.00').strip()
@@ -185,6 +186,14 @@ def create_donation():
                 received_date = datetime.strptime(received_date_str, '%Y-%m-%d').date()
                 if received_date > date.today():
                     errors.append('Received date cannot be in the future')
+            
+            tot_item_cost_value = Decimal('0.00')
+            try:
+                tot_item_cost_value = Decimal(tot_item_cost_str) if tot_item_cost_str else Decimal('0.00')
+                if tot_item_cost_value <= 0:
+                    errors.append('Total Donation Value must be greater than 0')
+            except:
+                errors.append('Invalid Total Donation Value')
             
             storage_cost_value = Decimal('0.00')
             try:
@@ -352,16 +361,6 @@ def create_donation():
                 form_data['form_data'] = request.form
                 return render_template('donations/create.html', **form_data)
             
-            # Validate that total item cost is > 0.00 (database constraint)
-            if total_value <= 0:
-                errors.append('Total item cost must be greater than 0.00. Please ensure at least one item has a cost.')
-                db.session.rollback()
-                for error in errors:
-                    flash(error, 'danger')
-                form_data = _get_donation_form_data()
-                form_data['form_data'] = request.form
-                return render_template('donations/create.html', **form_data)
-            
             # All items validated - now persist them
             for item_info in validated_items:
                 donation_item = DonationItem()
@@ -382,8 +381,8 @@ def create_donation():
                 
                 db.session.add(donation_item)
             
-            # Set cost breakdown on donation header
-            donation.tot_item_cost = total_value
+            # Set cost breakdown on donation header (user-entered value)
+            donation.tot_item_cost = tot_item_cost_value
             
             # Handle document uploads
             document_count = 0
@@ -560,6 +559,7 @@ def edit_donation(donation_id):
             origin_address2 = request.form.get('origin_address2_text', '').strip()
             
             # Cost fields
+            tot_item_cost_str = request.form.get('tot_item_cost', '0.00').strip()
             storage_cost_str = request.form.get('storage_cost', '0.00').strip()
             haulage_cost_str = request.form.get('haulage_cost', '0.00').strip()
             other_cost_str = request.form.get('other_cost', '0.00').strip()
@@ -588,6 +588,14 @@ def edit_donation(donation_id):
                     errors.append('Received date cannot be in the future')
             
             # Validate cost fields
+            tot_item_cost_value = Decimal('0.00')
+            try:
+                tot_item_cost_value = Decimal(tot_item_cost_str) if tot_item_cost_str else Decimal('0.00')
+                if tot_item_cost_value <= 0:
+                    errors.append('Total Donation Value must be greater than 0')
+            except:
+                errors.append('Invalid Total Donation Value')
+            
             storage_cost_value = Decimal('0.00')
             try:
                 storage_cost_value = Decimal(storage_cost_str) if storage_cost_str else Decimal('0.00')
@@ -772,8 +780,8 @@ def edit_donation(donation_id):
                     add_audit_fields(new_item, current_user, is_new=True)
                     db.session.add(new_item)
             
-            # Update total item cost
-            donation.tot_item_cost = total_item_cost
+            # Set total donation value from user input (user-entered value)
+            donation.tot_item_cost = tot_item_cost_value
             
             add_audit_fields(donation, current_user, is_new=False)
             
@@ -1196,6 +1204,7 @@ def verify_donation_detail(donation_id):
             origin_address2 = request.form.get('origin_address2_text', '').strip()
             comments_text = request.form.get('comments_text', '').strip()
             
+            tot_item_cost_str = request.form.get('tot_item_cost', '0.00').strip()
             storage_cost_str = request.form.get('storage_cost', '0.00').strip()
             haulage_cost_str = request.form.get('haulage_cost', '0.00').strip()
             other_cost_str = request.form.get('other_cost', '0.00').strip()
@@ -1221,6 +1230,14 @@ def verify_donation_detail(donation_id):
                 received_date = datetime.strptime(received_date_str, '%Y-%m-%d').date()
                 if received_date > date.today():
                     errors.append('Received date cannot be in the future')
+            
+            tot_item_cost_value = Decimal('0.00')
+            try:
+                tot_item_cost_value = Decimal(tot_item_cost_str) if tot_item_cost_str else Decimal('0.00')
+                if tot_item_cost_value <= 0:
+                    errors.append('Total Donation Value must be greater than 0')
+            except:
+                errors.append('Invalid Total Donation Value')
             
             storage_cost_value = Decimal('0.00')
             try:
@@ -1395,15 +1412,8 @@ def verify_donation_detail(donation_id):
                     donation_item.verify_dtime = current_timestamp
                     db.session.add(donation_item)
             
-            if total_value <= 0:
-                db.session.rollback()
-                flash('Total item cost must be greater than 0.00. Please ensure at least one item has a cost.', 'danger')
-                form_data = _get_donation_form_data()
-                form_data['donation'] = donation
-                form_data['form_data'] = request.form
-                return render_template('donations/verify.html', **form_data)
-            
-            donation.tot_item_cost = total_value
+            # Set total donation value from user input (user-entered value)
+            donation.tot_item_cost = tot_item_cost_value
             
             document_count = 0
             uploaded_files = request.files.getlist('document_files')
