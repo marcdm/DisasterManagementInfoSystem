@@ -177,13 +177,14 @@ input[type=number] {
                                 <div class="row g-2 mb-2">
                                     <div class="col-md-2">
                                         <div class="field-label">Donated Qty</div>
-                                        {% set donation_item = namespace(qty=0) %}
+                                        {% set donation_item = namespace(qty=0, uom_code='', item_cost=0) %}
                                         {% for di in donation.items if di.item_id == ii.item_id %}
                                             {% set donation_item.qty = di.item_qty %}
+                                            {% set donation_item.uom_code = di.uom_code %}
+                                            {% set donation_item.item_cost = di.item_cost %}
                                         {% endfor %}
                                         <div class="donated-qty-box">
                                             <strong class="text-primary fs-6">{{ donation_item.qty }}</strong>
-                                            <small class="text-muted d-block fs-tiny">{{ ii.uom_code }}</small>
                                         </div>
                                         <input type="hidden" name="donated_qty_{{ ii.item_id }}" value="{{ donation_item.qty }}">
                                     </div>
@@ -223,11 +224,17 @@ input[type=number] {
                                 <div class="row g-2 align-items-end">
                                     <div class="col-md-2">
                                         <label class="field-label">UOM</label>
-                                        <div class="form-control form-control-sm bg-light">{{ ii.uom_code }}</div>
+                                        <input type="text" 
+                                               class="form-control form-control-sm bg-light field-disabled-visual" 
+                                               value="{{ donation_item.uom_code }}"
+                                               disabled>
                                     </div>
                                     <div class="col-md-2">
                                         <label class="field-label">Unit Cost ($J)</label>
-                                        <div class="form-control form-control-sm bg-light text-end">{{ "%.2f"|format(ii.avg_unit_value) }}</div>
+                                        <input type="text" 
+                                               class="form-control form-control-sm bg-light text-end field-disabled-visual" 
+                                               value="{{ "%.2f"|format(donation_item.item_cost) }}"
+                                               disabled>
                                     </div>
                                     <div class="col-md-3">
                                         <label for="usable_qty_{{ ii.item_id }}" class="field-label">Usable Qty</label>
@@ -241,7 +248,7 @@ input[type=number] {
                                                readonly>
                                     </div>
                                     <div class="col-md-2">
-                                        <label for="defective_qty_{{ ii.item_id }}" class="field-label">Defective</label>
+                                        <label for="defective_qty_{{ ii.item_id }}" class="field-label">Defective Qty</label>
                                         <input type="number" 
                                                class="form-control form-control-sm qty-input qty-adjust" 
                                                id="defective_qty_{{ ii.item_id }}"
@@ -253,7 +260,7 @@ input[type=number] {
                                                data-donated-qty="{{ donation_item.qty }}">
                                     </div>
                                     <div class="col-md-3">
-                                        <label for="expired_qty_{{ ii.item_id }}" class="field-label">Expired</label>
+                                        <label for="expired_qty_{{ ii.item_id }}" class="field-label">Expiry Qty</label>
                                         <input type="number" 
                                                class="form-control form-control-sm qty-input qty-adjust" 
                                                id="expired_qty_{{ ii.item_id }}"
