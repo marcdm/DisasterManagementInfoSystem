@@ -168,7 +168,6 @@
                                 <i class="bi bi-currency-dollar"></i> Cost Breakdown (JMD)
                             </h5>
                             <div class="row g-3">
-                                {% if has_role('LOGISTICS_MANAGER') %}
                                 <div class="col-md-3">
                                     <label for="tot_item_cost" class="form-label">
                                         Total Donation Value
@@ -182,9 +181,6 @@
                                            placeholder="$0.00">
                                     <small class="form-text text-muted">Enter total value of this donation</small>
                                 </div>
-                                {% else %}
-                                <input type="hidden" name="tot_item_cost" value="{{ donation.tot_item_cost|default('0.00', true) }}">
-                                {% endif %}
                                 <div class="col-md-3">
                                     <label for="storage_cost" class="form-label">
                                         Storage Cost
@@ -499,14 +495,14 @@ function enableFieldsForGoods() {
     const uomCurrencyLabel = document.getElementById('uom_currency_label');
     const uomCurrencyHintText = document.getElementById('uom_currency_hint_text');
     const currencyHidden = document.getElementById('new_currency_code_hidden');
-    
+
     itemCostHint.textContent = 'Cost per unit';
     quantityHint.textContent = 'Quantity of goods';
     uomCurrencyLabel.textContent = 'UOM *';
     uomCurrencyHintText.textContent = 'Unit:';
-    
+
     // GOODS: Quantity is fully editable
-    quantityInput.readOnly = false;
+    quantityInput.disabled = false;
     quantityInput.classList.remove('field-disabled-visual');
     
     uomSelect.classList.remove('d-none');
@@ -528,15 +524,15 @@ function enableFieldsForFunds() {
     const uomHint = document.getElementById('selected_uom');
     const uomCurrencyLabel = document.getElementById('uom_currency_label');
     const uomCurrencyHintText = document.getElementById('uom_currency_hint_text');
-    
+
     itemCostHint.textContent = 'Donated value';
     quantityHint.textContent = 'Fixed at 1.00 for FUNDS';
     uomCurrencyLabel.textContent = 'Currency *';
     uomCurrencyHintText.textContent = 'Currency:';
-    
+
     // FUNDS: Quantity is fixed at 1.00 and non-editable
     quantityInput.value = '1.00';
-    quantityInput.readOnly = true;
+    quantityInput.disabled = true;
     quantityInput.classList.add('field-disabled-visual');
     
     uomSelect.classList.add('d-none');
@@ -560,15 +556,15 @@ function resetFormFields() {
     const uomHint = document.getElementById('selected_uom');
     const uomCurrencyLabel = document.getElementById('uom_currency_label');
     const uomCurrencyHintText = document.getElementById('uom_currency_hint_text');
-    
+
     donationTypeInput.value = '';
     categoryHint.textContent = 'Auto-set';
     uomCurrencyLabel.textContent = 'UOM *';
     uomCurrencyHintText.textContent = 'Unit:';
-    
+
     // Reset quantity field to editable state
     quantityInput.value = '1.00';
-    quantityInput.readOnly = false;
+    quantityInput.disabled = false;
     quantityInput.classList.remove('field-disabled-visual');
     
     uomSelect.value = '';
@@ -580,7 +576,7 @@ function resetFormFields() {
     uomHidden.value = '';
     currencyHidden.value = '';
     uomHint.textContent = '—';
-    
+
     document.getElementById('item_cost_hint').textContent = 'Cost per unit';
     document.getElementById('quantity_hint').textContent = 'Default: 1.00';
 }
@@ -633,11 +629,17 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
         return;
     }
     
-    const qty = parseFloat(quantityInput.value) || 0;
+    const qty = parseFloat(quantityInput.value);
     const itemCost = window.DRIMS && window.DRIMS.money ? window.DRIMS.money.parse(itemCostInput.value) : parseFloat(itemCostInput.value.replace(/[$,]/g, ''));
-    
-    if (qty < 0) {
+
+    if (isNaN(qty) || qty < 0) {
         alert('Quantity must be >= 0');
+        quantityInput.focus();
+        return;
+    }
+
+    if (currentCategoryType === 'FUNDS' && qty !== 1) {
+        alert('Quantity for FUNDS must be exactly 1.00');
         quantityInput.focus();
         return;
     }

@@ -1,0 +1,392 @@
+diff --git a/templates/donations/edit.html b/templates/donations/edit.html
+index 15debb6fb6b2941434aa4c4c178dffbf088e1c4e..4c124732624e635f90e2cb62d5f940d72b749d16 100644
+--- a/templates/donations/edit.html
++++ b/templates/donations/edit.html
+@@ -478,115 +478,115 @@ document.getElementById('new_item_id').addEventListener('change', async function
+         } else if (data.category_type === 'FUNDS') {
+             enableFieldsForFunds();
+         }
+         
+     } catch (error) {
+         console.error('Error fetching category:', error);
+         alert('Error loading item category information. Please try again.');
+         resetFormFields();
+     }
+ });
+ 
+ function enableFieldsForGoods() {
+     const itemCostHint = document.getElementById('item_cost_hint');
+     const quantityHint = document.getElementById('quantity_hint');
+     const quantityInput = document.getElementById('new_quantity');
+     const uomSelect = document.getElementById('new_uom_code');
+     const currencySelect = document.getElementById('new_currency_code');
+     const uomCurrencyLabel = document.getElementById('uom_currency_label');
+     const uomCurrencyHintText = document.getElementById('uom_currency_hint_text');
+     const currencyHidden = document.getElementById('new_currency_code_hidden');
+     
+     itemCostHint.textContent = 'Cost per unit';
+     quantityHint.textContent = 'Quantity of goods';
+     uomCurrencyLabel.textContent = 'UOM *';
+     uomCurrencyHintText.textContent = 'Unit:';
+-    
++
+     // GOODS: Quantity is fully editable
+-    quantityInput.readOnly = false;
++    quantityInput.disabled = false;
+     quantityInput.classList.remove('field-disabled-visual');
+     
+     uomSelect.classList.remove('d-none');
+     uomSelect.disabled = false;
+     uomSelect.classList.remove('field-disabled-visual');
+     currencySelect.classList.add('d-none');
+     currencySelect.value = '';
+     currencyHidden.value = '';
+ }
+ 
+ function enableFieldsForFunds() {
+     const itemCostHint = document.getElementById('item_cost_hint');
+     const quantityHint = document.getElementById('quantity_hint');
+     const quantityInput = document.getElementById('new_quantity');
+     const uomSelect = document.getElementById('new_uom_code');
+     const currencySelect = document.getElementById('new_currency_code');
+     const uomHidden = document.getElementById('new_uom_code_hidden');
+     const currencyHidden = document.getElementById('new_currency_code_hidden');
+     const uomHint = document.getElementById('selected_uom');
+     const uomCurrencyLabel = document.getElementById('uom_currency_label');
+     const uomCurrencyHintText = document.getElementById('uom_currency_hint_text');
+-    
++
+     itemCostHint.textContent = 'Donated value';
+     quantityHint.textContent = 'Fixed at 1.00 for FUNDS';
+     uomCurrencyLabel.textContent = 'Currency *';
+     uomCurrencyHintText.textContent = 'Currency:';
+-    
++
+     // FUNDS: Quantity is fixed at 1.00 and non-editable
+     quantityInput.value = '1.00';
+-    quantityInput.readOnly = true;
++    quantityInput.disabled = true;
+     quantityInput.classList.add('field-disabled-visual');
+     
+     uomSelect.classList.add('d-none');
+     uomSelect.value = '';
+     uomHidden.value = '';
+     currencySelect.classList.remove('d-none');
+     currencySelect.value = '';
+     currencyHidden.value = '';
+     uomHint.textContent = 'Select currency...';
+ }
+ 
+ function resetFormFields() {
+     currentCategoryType = null;
+     const donationTypeInput = document.getElementById('new_donation_type');
+     const categoryHint = document.getElementById('category_hint');
+     const quantityInput = document.getElementById('new_quantity');
+     const uomSelect = document.getElementById('new_uom_code');
+     const currencySelect = document.getElementById('new_currency_code');
+     const uomHidden = document.getElementById('new_uom_code_hidden');
+     const currencyHidden = document.getElementById('new_currency_code_hidden');
+     const uomHint = document.getElementById('selected_uom');
+     const uomCurrencyLabel = document.getElementById('uom_currency_label');
+     const uomCurrencyHintText = document.getElementById('uom_currency_hint_text');
+     
+     donationTypeInput.value = '';
+     categoryHint.textContent = 'Auto-set';
+     uomCurrencyLabel.textContent = 'UOM *';
+     uomCurrencyHintText.textContent = 'Unit:';
+-    
++
+     // Reset quantity field to editable state
+     quantityInput.value = '1.00';
+-    quantityInput.readOnly = false;
++    quantityInput.disabled = false;
+     quantityInput.classList.remove('field-disabled-visual');
+     
+     uomSelect.value = '';
+     uomSelect.classList.remove('d-none');
+     uomSelect.disabled = true;
+     uomSelect.classList.add('field-disabled-visual');
+     currencySelect.classList.add('d-none');
+     currencySelect.value = '';
+     uomHidden.value = '';
+     currencyHidden.value = '';
+     uomHint.textContent = '—';
+     
+     document.getElementById('item_cost_hint').textContent = 'Cost per unit';
+     document.getElementById('quantity_hint').textContent = 'Default: 1.00';
+ }
+ 
+ document.getElementById('new_uom_code').addEventListener('change', function() {
+     const uomHidden = document.getElementById('new_uom_code_hidden');
+     const uomHint = document.getElementById('selected_uom');
+     const selectedOption = this.options[this.selectedIndex];
+     uomHidden.value = this.value;
+     uomHint.textContent = selectedOption ? selectedOption.getAttribute('data-desc') || this.value : '—';
+ });
+ 
+ document.getElementById('new_currency_code').addEventListener('change', function() {
+@@ -607,58 +607,64 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
+     const uomHidden = document.getElementById('new_uom_code_hidden');
+     const currencySelect = document.getElementById('new_currency_code');
+     const currencyHidden = document.getElementById('new_currency_code_hidden');
+     const locationInput = document.getElementById('new_location_name');
+     const commentsInput = document.getElementById('new_item_comments');
+     
+     if (!itemSelect.value) {
+         alert('Please select an item');
+         itemSelect.focus();
+         return;
+     }
+     
+     if (!currentCategoryType) {
+         alert('Please wait for item category to load');
+         return;
+     }
+     
+     // Check for duplicate items
+     const existingItem = donationItems.find(item => item.item_id == itemSelect.value);
+     if (existingItem) {
+         alert('This item has already been added to the donation. Each item can only be added once.');
+         itemSelect.focus();
+         return;
+     }
+     
+-    const qty = parseFloat(quantityInput.value) || 0;
++    const qty = parseFloat(quantityInput.value);
+     const itemCost = window.DRIMS && window.DRIMS.money ? window.DRIMS.money.parse(itemCostInput.value) : parseFloat(itemCostInput.value.replace(/[$,]/g, ''));
+-    
+-    if (qty < 0) {
++
++    if (isNaN(qty) || qty < 0) {
+         alert('Quantity must be >= 0');
+         quantityInput.focus();
+         return;
+     }
++
++    if (currentCategoryType === 'FUNDS' && qty !== 1) {
++        alert('Quantity for FUNDS must be exactly 1.00');
++        quantityInput.focus();
++        return;
++    }
+     
+     if (itemCost === null || isNaN(itemCost) || itemCost < 0) {
+         alert('Item cost must be >= 0');
+         itemCostInput.focus();
+         return;
+     }
+     
+     // Validate based on donation type
+     if (currentCategoryType === 'GOODS') {
+         if (!uomHidden.value) {
+             alert('Please select a unit of measure for goods.');
+             uomSelect.focus();
+             return;
+         }
+     } else if (currentCategoryType === 'FUNDS') {
+         if (!currencyHidden.value) {
+             alert('Please select a currency for funds.');
+             currencySelect.focus();
+             return;
+         }
+     }
+     
+     if (!locationInput.value.trim()) {
+         alert('Please enter a location');
+         locationInput.focus();
+diff --git a/templates/donations/verify.html b/templates/donations/verify.html
+index 074ae089cd0b53f3bd5927cff015ffddb21a66ec..14c75753b13615e779263e15beac1bce3063f511 100644
+--- a/templates/donations/verify.html
++++ b/templates/donations/verify.html
+@@ -573,118 +573,129 @@ document.getElementById('new_item_id').addEventListener('change', async function
+         uomSelect.value = data.default_uom_code;
+         uomHidden.value = data.default_uom_code;
+         uomHint.textContent = data.default_uom_code;
+         
+         if (data.category_type === 'GOODS') {
+             enableFieldsForGoods();
+         } else if (data.category_type === 'FUNDS') {
+             enableFieldsForFunds();
+         }
+         
+     } catch (error) {
+         console.error('Error fetching category:', error);
+         alert('Error loading item category information. Please try again.');
+         resetFormFields();
+     }
+ });
+ 
+ function enableFieldsForGoods() {
+     const itemCostHint = document.getElementById('item_cost_hint');
+     const quantityHint = document.getElementById('quantity_hint');
+     const uomSelect = document.getElementById('new_uom_code');
+     const currencySelect = document.getElementById('new_currency_code');
+     const uomCurrencyLabel = document.getElementById('uom_currency_label');
+     const uomCurrencyHintText = document.getElementById('uom_currency_hint_text');
+     const currencyHidden = document.getElementById('new_currency_code_hidden');
+-    
++    const quantityInput = document.getElementById('new_quantity');
++
+     itemCostHint.textContent = 'Cost per unit';
+     quantityHint.textContent = 'Quantity of goods';
+     uomCurrencyLabel.textContent = 'UOM *';
+     uomCurrencyHintText.textContent = 'Unit:';
+-    
++
++    quantityInput.disabled = false;
++    quantityInput.classList.remove('field-disabled-visual');
++
+     uomSelect.classList.remove('d-none');
+     uomSelect.disabled = false;
+     uomSelect.classList.remove('field-disabled-visual');
+     currencySelect.classList.add('d-none');
+     currencySelect.value = '';
+     currencyHidden.value = '';
+ }
+ 
+ function enableFieldsForFunds() {
+     const itemCostHint = document.getElementById('item_cost_hint');
+     const quantityHint = document.getElementById('quantity_hint');
+     const uomSelect = document.getElementById('new_uom_code');
+     const currencySelect = document.getElementById('new_currency_code');
+     const uomHidden = document.getElementById('new_uom_code_hidden');
+     const currencyHidden = document.getElementById('new_currency_code_hidden');
+     const uomHint = document.getElementById('selected_uom');
+     const uomCurrencyLabel = document.getElementById('uom_currency_label');
+     const uomCurrencyHintText = document.getElementById('uom_currency_hint_text');
+-    
++    const quantityInput = document.getElementById('new_quantity');
++
+     itemCostHint.textContent = 'Donated value per instance';
+-    quantityHint.textContent = 'Number of fund instances';
++    quantityInput.value = '1.00';
++    quantityInput.disabled = true;
++    quantityInput.classList.add('field-disabled-visual');
++    quantityHint.textContent = 'Quantity fixed to 1 for funds';
+     uomCurrencyLabel.textContent = 'Currency *';
+     uomCurrencyHintText.textContent = 'Currency:';
+     
+     uomSelect.classList.add('d-none');
+     uomSelect.value = '';
+     uomHidden.value = '';
+     currencySelect.classList.remove('d-none');
+     currencySelect.value = '';
+     currencyHidden.value = '';
+     uomHint.textContent = 'Select currency...';
+ }
+ 
+ function resetFormFields() {
+     currentCategoryType = null;
+     const donationTypeInput = document.getElementById('new_donation_type');
+     const categoryHint = document.getElementById('category_hint');
+     const uomSelect = document.getElementById('new_uom_code');
+     const currencySelect = document.getElementById('new_currency_code');
+     const uomHidden = document.getElementById('new_uom_code_hidden');
+     const currencyHidden = document.getElementById('new_currency_code_hidden');
+     const uomHint = document.getElementById('selected_uom');
+     const uomCurrencyLabel = document.getElementById('uom_currency_label');
+     const uomCurrencyHintText = document.getElementById('uom_currency_hint_text');
+-    
++    const quantityInput = document.getElementById('new_quantity');
++
+     donationTypeInput.value = '';
+     categoryHint.textContent = 'Auto-set';
+     uomCurrencyLabel.textContent = 'UOM *';
+     uomCurrencyHintText.textContent = 'Unit:';
+     
+     uomSelect.value = '';
+     uomSelect.classList.remove('d-none');
+     uomSelect.disabled = true;
+     uomSelect.classList.add('field-disabled-visual');
+     currencySelect.classList.add('d-none');
+     currencySelect.value = '';
+     uomHidden.value = '';
+     currencyHidden.value = '';
+     uomHint.textContent = '—';
+-    
++
+     document.getElementById('item_cost_hint').textContent = 'Cost per unit';
+     document.getElementById('quantity_hint').textContent = 'Default: 1.00';
++    quantityInput.disabled = false;
++    quantityInput.classList.remove('field-disabled-visual');
+ }
+ 
+ document.getElementById('new_uom_code').addEventListener('change', function() {
+     const uomHidden = document.getElementById('new_uom_code_hidden');
+     const uomHint = document.getElementById('selected_uom');
+     const selectedOption = this.options[this.selectedIndex];
+     uomHidden.value = this.value;
+     uomHint.textContent = selectedOption ? selectedOption.getAttribute('data-desc') || this.value : '—';
+ });
+ 
+ document.getElementById('new_currency_code').addEventListener('change', function() {
+     const currencyHidden = document.getElementById('new_currency_code_hidden');
+     const uomHint = document.getElementById('selected_uom');
+     const selectedOption = this.options[this.selectedIndex];
+     currencyHidden.value = this.value;
+     uomHint.textContent = selectedOption ? (this.value + ' - ' + selectedOption.getAttribute('data-desc')) : 'Select currency...';
+ });
+ 
+ document.getElementById('addItemBtn').addEventListener('click', function() {
+     const itemSelect = document.getElementById('new_item_id');
+     const donationTypeInput = document.getElementById('new_donation_type');
+     const quantityInput = document.getElementById('new_quantity');
+     const itemCostInput = document.getElementById('new_item_cost');
+     const uomHidden = document.getElementById('new_uom_code_hidden');
+     const currencyHidden = document.getElementById('new_currency_code_hidden');
+@@ -696,50 +707,56 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
+     if (!itemSelect.value) {
+         alert('Please select an item');
+         itemSelect.focus();
+         return;
+     }
+     
+     if (!currentCategoryType) {
+         alert('Please wait for category information to load');
+         return;
+     }
+     
+     const existingItemIndex = donationItems.findIndex(item => item.item_id === itemSelect.value);
+     if (existingItemIndex > -1) {
+         alert('This item is already in the donation. Remove it first to add it again.');
+         return;
+     }
+     
+     const qty = parseFloat(quantityInput.value);
+     const itemCost = window.DRIMS && window.DRIMS.money ? window.DRIMS.money.parse(itemCostInput.value) : parseFloat(itemCostInput.value.replace(/[$,]/g, ''));
+     
+     if (isNaN(qty) || qty < 0) {
+         alert('Please enter a valid quantity (must be >= 0)');
+         quantityInput.focus();
+         return;
+     }
++
++    if (currentCategoryType === 'FUNDS' && qty !== 1) {
++        alert('Quantity for funds must be 1.00');
++        quantityInput.focus();
++        return;
++    }
+     
+     if (itemCost === null || isNaN(itemCost) || itemCost < 0) {
+         alert('Please enter a valid item cost (>= 0)');
+         itemCostInput.focus();
+         return;
+     }
+     
+     if (itemCost <= 0) {
+         alert('Item cost must be greater than 0');
+         itemCostInput.focus();
+         return;
+     }
+     
+     // Validate based on donation type
+     if (currentCategoryType === 'GOODS') {
+         if (!uomHidden.value) {
+             alert('Please select a unit of measure for goods.');
+             uomSelect.focus();
+             return;
+         }
+     } else if (currentCategoryType === 'FUNDS') {
+         if (!currencyHidden.value) {
+             alert('Please select a currency for funds.');
+             currencySelect.focus();
+             return;
