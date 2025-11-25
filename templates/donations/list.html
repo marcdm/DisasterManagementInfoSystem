@@ -70,6 +70,16 @@
             <span class="filter-tab-count" aria-label="{{ status_counts.get('E', 0) }} entered">{{ status_counts.get('E', 0) }}</span>
             {% endif %}
         </a>
+        {% if has_feature('donation_verification') %}
+        <a href="{{ url_for('donations.verify_list') }}" 
+           class="filter-tab {% if current_filter == 'pending_verification' %}active{% endif %}"
+           aria-current="{% if current_filter == 'pending_verification' %}page{% endif %}">
+            <i class="bi bi-clipboard-check"></i> Pending Verification
+            {% if status_counts.get('E', 0) > 0 %}
+            <span class="filter-tab-count" aria-label="{{ status_counts.get('E', 0) }} pending verification">{{ status_counts.get('E', 0) }}</span>
+            {% endif %}
+        </a>
+        {% endif %}
         <a href="{{ url_for('donations.list_donations', status='V') }}" 
            class="filter-tab {% if current_filter == 'v' %}active{% endif %}"
            aria-current="{% if current_filter == 'v' %}page{% endif %}">

@@ -9,16 +9,17 @@
 
 {% block content %}
 <div class="container-fluid py-4">
+    <!-- Page Header with Action Button -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div class="page-header mb-0">
             <div class="page-title">
-                <i class="bi bi-clipboard-check page-title-icon"></i>
-                <h1 class="page-title-text">Verify Donations</h1>
+                <i class="bi bi-gift page-title-icon"></i>
+                <h1 class="page-title-text">Donations</h1>
             </div>
-            <p class="page-subtitle">Review and verify entered donations</p>
         </div>
-        <a href="{{ url_for('donations.list_donations') }}" class="btn-relief-secondary">
-            <i class="bi bi-arrow-left"></i> Back to Donations
+        <a href="{{ url_for('donations.create_donation') }}" class="btn-relief-primary">
+            <i class="bi bi-plus-circle"></i>
+            Accept New Donation
         </a>
     </div>
 
@@ -31,6 +32,34 @@
         }
     ] %}
     {{ render_summary_cards(summary_metrics) }}
+
+    <!-- Filter Tabs - Matches donations list.html -->
+    <nav class="filter-tabs" role="navigation" aria-label="Donation status filters">
+        <a href="{{ url_for('donations.list_donations', status='all') }}" 
+           class="filter-tab">
+            All Donations
+        </a>
+        <a href="{{ url_for('donations.list_donations', status='E') }}" 
+           class="filter-tab">
+            Entered
+        </a>
+        <a href="{{ url_for('donations.verify_list') }}" 
+           class="filter-tab active"
+           aria-current="page">
+            <i class="bi bi-clipboard-check"></i> Pending Verification
+            {% if pending_count > 0 %}
+            <span class="filter-tab-count" aria-label="{{ pending_count }} pending verification">{{ pending_count }}</span>
+            {% endif %}
+        </a>
+        <a href="{{ url_for('donations.list_donations', status='V') }}" 
+           class="filter-tab">
+            Verified
+        </a>
+        <a href="{{ url_for('donations.list_donations', status='P') }}" 
+           class="filter-tab">
+            Processed
+        </a>
+    </nav>
 
     <div class="card mb-3">
         <div class="card-body p-3">

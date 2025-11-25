@@ -349,7 +349,6 @@ class FeatureRegistry:
             'url': '/donations/verify',
             'icon': 'bi-clipboard-check',
             'category': 'inventory',
-            'navigation_group': 'inventory',
             'priority': 3
         },
         'donation_intake_management': {
@@ -371,7 +370,6 @@ class FeatureRegistry:
             'url': '/donation-intake/verify',
             'icon': 'bi-clipboard2-check',
             'category': 'inventory',
-            'navigation_group': 'inventory',
             'priority': 4
         },
         

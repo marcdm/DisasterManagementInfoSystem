@@ -67,6 +67,16 @@
             <span class="filter-tab-count" aria-label="{{ counts.get('draft', 0) }} drafts">{{ counts.get('draft', 0) }}</span>
             {% endif %}
         </a>
+        {% if has_feature('donation_intake_verification') %}
+        <a href="{{ url_for('donation_intake.verify_list') }}" 
+           class="filter-tab"
+           aria-current="">
+            <i class="bi bi-clipboard-check"></i> Pending Verification
+            {% if counts.get('submitted', 0) > 0 %}
+            <span class="filter-tab-count" aria-label="{{ counts.get('submitted', 0) }} pending">{{ counts.get('submitted', 0) }}</span>
+            {% endif %}
+        </a>
+        {% else %}
         <a href="{{ url_for('donation_intake.list_intakes', filter='submitted') }}" 
            class="filter-tab {% if current_filter == 'submitted' %}active{% endif %}"
            aria-current="{% if current_filter == 'submitted' %}page{% endif %}">
@@ -75,6 +85,7 @@
             <span class="filter-tab-count" aria-label="{{ counts.get('submitted', 0) }} pending">{{ counts.get('submitted', 0) }}</span>
             {% endif %}
         </a>
+        {% endif %}
         <a href="{{ url_for('donation_intake.list_intakes', filter='verified') }}" 
            class="filter-tab {% if current_filter == 'verified' %}active{% endif %}"
            aria-current="{% if current_filter == 'verified' %}page{% endif %}">
@@ -159,7 +170,14 @@
                                     <i class="bi bi-pencil"></i> Edit
                                 </a>
                                 {% elif intake.status_code == 'C' %}
+                                {% if has_feature('donation_intake_verification') %}
+                                <a href="{{ url_for('donation_intake.verify_intake', donation_id=intake.donation_id, inventory_id=intake.inventory_id) }}" 
+                                   class="btn btn-sm btn-outline-warning" title="Verify Intake">
+                                    <i class="bi bi-clipboard-check"></i> Verify
+                                </a>
+                                {% else %}
                                 <span class="text-muted small">Awaiting verification</span>
+                                {% endif %}
                                 {% elif intake.status_code == 'V' %}
                                 <span class="text-muted small">
                                     <i class="bi bi-check-circle text-success"></i> 
