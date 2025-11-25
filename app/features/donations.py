@@ -161,6 +161,11 @@ def create_donation():
             origin_address2 = request.form.get('origin_address2_text', '').strip()
             comments_text = request.form.get('comments_text', '').strip()
             
+            storage_cost_str = request.form.get('storage_cost', '0.00').strip()
+            haulage_cost_str = request.form.get('haulage_cost', '0.00').strip()
+            other_cost_str = request.form.get('other_cost', '0.00').strip()
+            other_cost_desc = request.form.get('other_cost_desc', '').strip()
+            
             errors = []
             
             if not donor_id:
@@ -180,6 +185,33 @@ def create_donation():
                 received_date = datetime.strptime(received_date_str, '%Y-%m-%d').date()
                 if received_date > date.today():
                     errors.append('Received date cannot be in the future')
+            
+            storage_cost_value = Decimal('0.00')
+            try:
+                storage_cost_value = Decimal(storage_cost_str) if storage_cost_str else Decimal('0.00')
+                if storage_cost_value < 0:
+                    errors.append('Storage cost must be >= 0')
+            except:
+                errors.append('Invalid storage cost value')
+            
+            haulage_cost_value = Decimal('0.00')
+            try:
+                haulage_cost_value = Decimal(haulage_cost_str) if haulage_cost_str else Decimal('0.00')
+                if haulage_cost_value < 0:
+                    errors.append('Haulage cost must be >= 0')
+            except:
+                errors.append('Invalid haulage cost value')
+            
+            other_cost_value = Decimal('0.00')
+            try:
+                other_cost_value = Decimal(other_cost_str) if other_cost_str else Decimal('0.00')
+                if other_cost_value < 0:
+                    errors.append('Other cost must be >= 0')
+            except:
+                errors.append('Invalid other cost value')
+            
+            if other_cost_value > 0 and not other_cost_desc:
+                errors.append('Other cost description is required when other cost is greater than 0')
             
             item_data = []
             item_ids_seen = set()
@@ -277,8 +309,13 @@ def create_donation():
             donation.origin_country_id = int(origin_country_id) if origin_country_id else None
             donation.origin_address1_text = origin_address1.upper() if origin_address1 else None
             donation.origin_address2_text = origin_address2.upper() if origin_address2 else None
-            donation.status_code = 'V'
+            donation.status_code = 'E'
             donation.comments_text = comments_text.upper() if comments_text else None
+            
+            donation.storage_cost = storage_cost_value
+            donation.haulage_cost = haulage_cost_value
+            donation.other_cost = other_cost_value
+            donation.other_cost_desc = other_cost_desc.upper() if other_cost_desc else None
             
             current_timestamp = jamaica_now()
             
@@ -360,6 +397,7 @@ def create_donation():
                 donation_item.addon_cost = item_info['addon_cost']
                 donation_item.uom_code = item_info['uom_code']
                 donation_item.location_name = item_info['location_name'].upper()
+                donation_item.status_code = 'P'
                 donation_item.comments_text = item_info['item_comments'].upper() if item_info['item_comments'] else None
                 
                 add_audit_fields(donation_item, current_user, is_new=True)
@@ -371,12 +409,6 @@ def create_donation():
             
             # Set cost breakdown on donation header
             donation.tot_item_cost = total_value
-            # Set default values for additional costs (minimum valid value to satisfy CHECK constraints)
-            # These can be updated later through the intake/verification process
-            donation.storage_cost = Decimal('0.01')
-            donation.haulage_cost = Decimal('0.01')
-            donation.other_cost = Decimal('0.01')
-            donation.other_cost_desc = None
             
             # Handle document uploads
             document_count = 0

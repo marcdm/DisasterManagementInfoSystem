@@ -160,6 +160,85 @@
                             </div>
                         </div>
 
+                        <!-- Cost Breakdown Section -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-currency-dollar"></i> Cost Breakdown
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label for="tot_item_cost" class="form-label">
+                                        Total Item Cost
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="tot_item_cost" 
+                                           name="tot_item_cost" 
+                                           step="0.01" 
+                                           min="0"
+                                           value="{{ form_data.get('tot_item_cost') if form_data else '0.00' }}"
+                                           readonly>
+                                    <small class="form-text text-muted">Auto-calculated from items</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="storage_cost" class="form-label">
+                                        Storage Cost
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="storage_cost" 
+                                           name="storage_cost" 
+                                           step="0.01" 
+                                           min="0"
+                                           value="{{ form_data.get('storage_cost') if form_data else '0.00' }}"
+                                           placeholder="0.00">
+                                    <small class="form-text text-muted">Warehousing costs</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="haulage_cost" class="form-label">
+                                        Haulage Cost
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="haulage_cost" 
+                                           name="haulage_cost" 
+                                           step="0.01" 
+                                           min="0"
+                                           value="{{ form_data.get('haulage_cost') if form_data else '0.00' }}"
+                                           placeholder="0.00">
+                                    <small class="form-text text-muted">Transportation costs</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="other_cost" class="form-label">
+                                        Other Cost
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="other_cost" 
+                                           name="other_cost" 
+                                           step="0.01" 
+                                           min="0"
+                                           value="{{ form_data.get('other_cost') if form_data else '0.00' }}"
+                                           placeholder="0.00">
+                                    <small class="form-text text-muted">Miscellaneous costs</small>
+                                </div>
+                                <div class="col-md-12">
+                                    <label for="other_cost_desc" class="form-label">
+                                        Other Cost Description
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="other_cost_desc" 
+                                           name="other_cost_desc" 
+                                           placeholder="Describe other costs..."
+                                           value="{{ form_data.get('other_cost_desc') if form_data else '' }}"
+                                           disabled
+                                           style="text-transform: uppercase;">
+                                    <small class="form-text text-muted">Required when Other Cost > 0</small>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Comments Section -->
                         <div class="mb-4">
                             <h5 class="border-bottom pb-2 mb-3">
@@ -638,7 +717,35 @@ function updateItemsTable() {
         
         hiddenContainer.innerHTML = hiddenHtml;
     }
+    
+    updateTotalItemCost();
 }
+
+function updateTotalItemCost() {
+    let total = 0;
+    donationItems.forEach(item => {
+        total += (item.item_cost + item.addon_cost) * item.quantity;
+    });
+    document.getElementById('tot_item_cost').value = total.toFixed(2);
+}
+
+document.getElementById('other_cost').addEventListener('input', function() {
+    const otherCost = parseFloat(this.value) || 0;
+    const otherCostDescInput = document.getElementById('other_cost_desc');
+    
+    if (otherCost > 0) {
+        otherCostDescInput.disabled = false;
+        otherCostDescInput.style.backgroundColor = '';
+        otherCostDescInput.style.cursor = '';
+        otherCostDescInput.required = true;
+    } else {
+        otherCostDescInput.disabled = true;
+        otherCostDescInput.style.backgroundColor = '#e9ecef';
+        otherCostDescInput.style.cursor = 'not-allowed';
+        otherCostDescInput.value = '';
+        otherCostDescInput.required = false;
+    }
+});
 
 // Form submission validation
 document.querySelector('form').addEventListener('submit', function(e) {
