@@ -547,12 +547,14 @@ const existingItems = [
 {% endfor %}
 ];
 
-existingItems.forEach(item => {
-    donationItems.push(item);
-    itemCounter = Math.max(itemCounter, item.id);
+document.addEventListener('DOMContentLoaded', function() {
+    existingItems.forEach(item => {
+        donationItems.push(item);
+        itemCounter = Math.max(itemCounter, item.id);
+    });
+    
+    updateItemsTable();
 });
-
-updateItemsTable();
 
 document.getElementById('new_item_id').addEventListener('change', async function() {
     const itemId = this.value;
