@@ -634,31 +634,45 @@ def _process_verification_submission(intake, donation, warehouse):
         try:
             defective_qty = Decimal(defective_qty_str) if defective_qty_str else Decimal('0')
             expired_qty = Decimal(expired_qty_str) if expired_qty_str else Decimal('0')
-            
+
             if defective_qty < 0 or expired_qty < 0:
                 errors.append(f'{item.item_name}: Quantities cannot be negative')
                 continue
-            
+
             donation_item = DonationItem.query.filter_by(
                 donation_id=donation.donation_id,
                 item_id=item_id
             ).first()
-            
+
             if not donation_item:
                 errors.append(f'{item.item_name}: Donation item not found')
                 continue
-            
+
+            intake_item_total = (
+                (intake_item.usable_qty or Decimal('0'))
+                + (intake_item.defective_qty or Decimal('0'))
+                + (intake_item.expired_qty or Decimal('0'))
+            )
+
             total_deductions = defective_qty + expired_qty
-            if total_deductions > donation_item.item_qty:
-                errors.append(f'{item.item_name}: Defective + Expired cannot exceed donated quantity ({donation_item.item_qty})')
+            if total_deductions > intake_item_total:
+                errors.append(
+                    f'{item.item_name}: Defective + Expired cannot exceed the intake quantity ({intake_item_total})'
+                )
                 continue
-            
-            usable_qty = donation_item.item_qty - defective_qty - expired_qty
-            
+
+            if total_deductions > donation_item.item_qty:
+                errors.append(
+                    f'{item.item_name}: Defective + Expired cannot exceed donated quantity ({donation_item.item_qty})'
+                )
+                continue
+
+            usable_qty = intake_item_total - defective_qty - expired_qty
+
             if usable_qty <= 0:
                 errors.append(f'{item.item_name}: Usable quantity must be greater than zero')
                 continue
-            
+
         except (InvalidOperation, ValueError):
             errors.append(f'{item.item_name}: Invalid quantity values')
             continue
