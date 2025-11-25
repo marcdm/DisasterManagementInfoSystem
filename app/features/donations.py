@@ -374,7 +374,8 @@ def create_donation():
                 donation_item.donation_id = donation.donation_id
                 donation_item.item_id = item_info['item_id']
                 donation_item.donation_type = item_info['donation_type']
-                donation_item.item_qty = item_info['quantity']
+                # FUNDS items: Server-side enforcement - quantity is always 1.00
+                donation_item.item_qty = Decimal('1.00') if item_info['donation_type'] == 'FUNDS' else item_info['quantity']
                 donation_item.item_cost = item_info['item_cost']
                 donation_item.uom_code = item_info['uom_code']
                 donation_item.currency_code = item_info['currency_code']
@@ -806,7 +807,8 @@ def edit_donation(donation_id):
             
             for item_info in item_data:
                 item_cost = item_info['item_cost']
-                quantity = item_info['quantity']
+                # FUNDS items: Server-side enforcement - quantity is always 1.00
+                quantity = Decimal('1.00') if item_info['donation_type'] == 'FUNDS' else item_info['quantity']
                 line_total = item_cost * quantity
                 total_item_cost += line_total
                 
