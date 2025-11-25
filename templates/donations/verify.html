@@ -165,12 +165,12 @@
 
                         <div class="mb-4">
                             <h5 class="border-bottom pb-2 mb-3">
-                                <i class="bi bi-currency-dollar"></i> Cost Breakdown
+                                <i class="bi bi-currency-dollar"></i> Cost Breakdown (JMD)
                             </h5>
                             <div class="row g-3">
                                 <div class="col-md-3">
                                     <label for="tot_item_cost" class="form-label">
-                                        Total Donation Value (JMD)
+                                        Total Donation Value
                                     </label>
                                     <input type="text" 
                                            class="form-control" 
@@ -179,7 +179,7 @@
                                            data-money-format="true"
                                            value="{{ form_data.get('tot_item_cost') if form_data else (donation.tot_item_cost or '') }}"
                                            placeholder="$0.00">
-                                    <small class="form-text text-muted">Enter total value of this donation in JMD</small>
+                                    <small class="form-text text-muted">Enter total value of this donation</small>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="storage_cost" class="form-label">
@@ -196,7 +196,7 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label for="haulage_cost" class="form-label">
-                                        Haulage Cost (JMD)
+                                        Haulage Cost
                                     </label>
                                     <input type="text" 
                                            class="form-control" 
@@ -209,7 +209,7 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label for="other_cost" class="form-label">
-                                        Other Cost (JMD)
+                                        Other Cost
                                     </label>
                                     <input type="text" 
                                            class="form-control" 
