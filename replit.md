@@ -5,6 +5,18 @@ DMIS (Disaster Management Information System) is a web-based platform for the Go
 
 ## Recent Changes (November 24, 2025)
 
+### Donation Intake Item Table Migration (Migration 013)
+- **Primary Key Restructured**: Changed from serial `intake_item_id` to composite PK `(donation_id, inventory_id, item_id, batch_no)`
+- **New Column Added**: `ext_item_cost` DECIMAL(12,2) for extended cost tracking (total qty * avg_unit_value)
+- **Batch Tracking Enforced**: `batch_no`, `batch_date`, `expiry_date` now required (NOT NULL)
+- **Constraint Updates**: 
+  - `c_dnintake_item_1c`: Changed from `expiry_date >= CURRENT_DATE` to `expiry_date >= batch_date`
+  - `c_dnintake_item_1e`: New constraint for `ext_item_cost >= 0.00`
+- **Performance Indexes**: Created `dk_dnintake_item_1` and `dk_dnintake_item_2` for efficient queries
+- **Code Updates**: Updated SQLAlchemy DonationIntakeItem model with composite PK and new columns
+- **Zero Breaking Changes**: Table was empty during migration; referential integrity preserved
+- **Migration File**: `migrations/013_migrate_dnintake_item_table_to_target_ddl.sql`
+
 ### Donation Item Table Migration (Migration 012)
 - **Quantity Precision**: Changed `item_qty` from DECIMAL(12,2) to DECIMAL(9,2) with default 1.00
 - **Audit Trail Enforcement**: Made `verify_by_id` and `verify_dtime` NOT NULL (previously nullable)

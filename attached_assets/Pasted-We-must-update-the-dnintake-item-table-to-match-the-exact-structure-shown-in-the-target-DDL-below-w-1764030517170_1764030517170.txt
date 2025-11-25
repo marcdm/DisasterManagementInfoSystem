@@ -1,0 +1,209 @@
+We must update the dnintake_item table to match the exact structure shown in the target DDL below, while:
+
+Preserving referential integrity across all related tables
+
+Not breaking any logic, UI, workflow, or behaviour
+
+Not touching any security fixes (CSP, CSRF, auth, RBAC, cookies)
+
+Not altering any other tables except temporary FK drops/rebuilds
+
+Not changing any data types or fields of other tables
+
+Ensuring the final table structure is exactly the target DDL
+
+The table is currently empty, so you may safely perform a drop + recreate migration, as long as you safely handle all foreign keys referencing it.
+
+TARGET DDL — FINAL STRUCTURE REQUIRED FOR dnintake_item
+
+This is the schema the table MUST have after the migration:
+
+create table dnintake_item
+(
+    donation_id integer not null,
+    inventory_id integer not null,
+    item_id integer not null,
+
+    --Batch number
+    batch_no varchar(20)
+        constraint c_dnintake_item_1a check (batch_no = upper(batch_no)),
+
+    batch_date date not null
+        constraint c_dnintake_item_1b check (batch_date <= CURRENT_DATE),
+
+    expiry_date date not null
+        constraint c_dnintake_item_1c check (expiry_date >= CURRENT_DATE),
+
+    --Unit of measure
+    uom_code varchar(25) not null
+        constraint fk_dnintake_item_unitofmeasure references unitofmeasure,
+
+    avg_unit_value decimal(10,2) not null
+        constraint c_dnintake_item_1d check (avg_unit_value > 0.00),
+
+    --Extended item cost = (usable + defective + expired) * avg_unit_value
+    ext_item_cost decimal(12,2) not null
+        default ((usable_qty + defective_qty + expired_qty) * avg_unit_value)
+        constraint c_dnintake_item_1e 
+            check (ext_item_cost = (usable_qty + defective_qty + expired_qty) * avg_unit_value),
+
+    usable_qty decimal(12,2) not null
+        constraint c_dnintake_item_2 check (usable_qty >= 0.00),
+
+    defective_qty decimal(12,2) not null
+        constraint c_dnintake_item_3 check (defective_qty >= 0.00),
+
+    expired_qty decimal(12,2) not null
+        constraint c_dnintake_item_4 check (expired_qty >= 0.00),
+
+    status_code char(1) not null
+        constraint c_dnintake_item_5 check (status_code in ('P','V')),
+
+    comments_text varchar(255),
+
+    create_by_id varchar(20) not null,
+    create_dtime timestamp(0) without time zone not null,
+    update_by_id varchar(20) not null,
+    update_dtime timestamp(0) without time zone not null,
+    version_nbr integer not null,
+
+    constraint fk_dnintake_item_intake 
+        foreign key (donation_id, inventory_id) 
+            references dnintake(donation_id, inventory_id),
+
+    constraint fk_dnintake_item_donation_item 
+        foreign key(donation_id, item_id)
+            references donation_item(donation_id, item_id),
+
+    constraint pk_dnintake_item 
+        primary key(donation_id, inventory_id, item_id, batch_no)
+);
+
+create index dk_dnintake_item_1 on dnintake_item(inventory_id, item_id);
+create index dk_dnintake_item_2 on dnintake_item(item_id);
+
+HARD CONSTRAINTS — DO NOT VIOLATE
+1. Maintain full referential integrity
+
+Identify all foreign key dependencies:
+
+dnintake(donation_id, inventory_id)
+
+donation_item(donation_id, item_id)
+
+unitofmeasure(uom_code)
+
+If dropping the table:
+
+First drop referencing FKs in child tables (if any exist)
+
+Recreate them exactly afterward
+
+2. Do NOT break any application logic
+
+All DRIMS workflows (intake, verification, warehouse updates, packaging) must continue working.
+
+New definition must remain compatible with existing code expecting:
+
+PK columns
+
+FK relationships
+
+Column names & types
+
+Constraints & logic
+
+3. Do NOT touch any other table
+
+Only temporarily drop/recreate FKs if required.
+
+4. Security must remain unchanged
+
+Do NOT modify:
+
+CSP
+
+CSRF tokens
+
+Authentication logic
+
+Roles or permissions
+
+Session handling or cookies
+
+5. Use the safest migration method
+
+Because the table is empty, the safest approach is:
+
+DROP TABLE → RECREATE TABLE → RECREATE INDEXES → RECREATE FKs
+
+Unless FKs prevent dropping — then do:
+
+Drop dependent FKs → Drop table → Recreate table → Restore FKs
+
+WHAT YOU MUST DO IN THE MIGRATION SCRIPT
+Step 1 — Introspect live DB
+
+Read /mnt/data/drms-2.2.sql
+
+Run \d dnintake_item on the live DB
+
+Identify structural or constraint differences
+
+Step 2 — Identify external FKs
+
+Find any tables that reference dnintake_item (usually none, but confirm).
+
+Step 3 — Safe Migration Steps
+
+If there are FKs referencing the table:
+
+ALTER TABLE <child> DROP CONSTRAINT <fk_name>;
+
+DROP TABLE dnintake_item;
+
+Recreate the table using the exact target DDL provided.
+
+Recreate FKs with the exact same definitions.
+
+Recreate indexes:
+
+dk_dnintake_item_1
+
+dk_dnintake_item_2
+
+If there are no referencing FKs, then:
+
+DROP TABLE dnintake_item;
+
+Recreate table using target DDL.
+
+Recreate indexes.
+
+Step 4 — Validation
+
+After migration, verify:
+
+Table exists and matches target DDL exactly
+
+PK and FKs are correct
+
+Indexes exist
+
+No orphaned references exist
+
+System runs with zero regressions in workflows
+
+Step 5 — Deliverable
+
+Produce a PostgreSQL migration script (SQL or Alembic) that:
+
+Replaces the dnintake_item table with the new definition
+
+Preserves all referential integrity
+
+Works on a system where dnintake_item is currently empty
+
+Makes no changes to application code, routes, security, or logic
+
+Comments each step clearly

@@ -1195,28 +1195,28 @@ class DonationIntakeItem(db.Model):
     dates, expiry, and quantities. If batch doesn't exist in itembatch table,
     create it with batch_id and zero quantities, then update with intake amounts.
     
-    CRITICAL: batch_no and batch_date are nullable to support items without batch tracking.
-    When both are NULL, items are tracked without specific batch identification.
+    IMPORTANT: batch_no is required and part of composite PK. If no manufacturer batch
+    number exists, use the item code as the batch_no value.
     
     Status Codes:
-        P = Processed
+        P = Pending verification
         V = Verified
     """
     __tablename__ = 'dnintake_item'
     
-    intake_item_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    donation_id = db.Column(db.Integer, nullable=False)
-    inventory_id = db.Column(db.Integer, nullable=False)
-    item_id = db.Column(db.Integer, nullable=False)
-    batch_no = db.Column(db.String(20), nullable=True)  # Nullable - supports items without batch tracking
-    batch_date = db.Column(db.Date, nullable=True)  # Nullable - supports items without batch tracking
-    expiry_date = db.Column(db.Date)
+    donation_id = db.Column(db.Integer, primary_key=True)
+    inventory_id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, primary_key=True)
+    batch_no = db.Column(db.String(20), primary_key=True)
+    batch_date = db.Column(db.Date, nullable=False)
+    expiry_date = db.Column(db.Date, nullable=False)
     uom_code = db.Column(db.String(25), db.ForeignKey('unitofmeasure.uom_code'), nullable=False)
     avg_unit_value = db.Column(db.Numeric(10, 2), nullable=False)
-    usable_qty = db.Column(db.Numeric(12, 2), nullable=False)
-    defective_qty = db.Column(db.Numeric(12, 2), nullable=False)
-    expired_qty = db.Column(db.Numeric(12, 2), nullable=False)
-    status_code = db.Column(db.CHAR(1), nullable=False)
+    ext_item_cost = db.Column(db.Numeric(12, 2), nullable=False, default=0.00)
+    usable_qty = db.Column(db.Numeric(12, 2), nullable=False, default=0.00)
+    defective_qty = db.Column(db.Numeric(12, 2), nullable=False, default=0.00)
+    expired_qty = db.Column(db.Numeric(12, 2), nullable=False, default=0.00)
+    status_code = db.Column(db.CHAR(1), nullable=False, default='P')
     comments_text = db.Column(db.String(255))
     create_by_id = db.Column(db.String(20), nullable=False)
     create_dtime = db.Column(db.DateTime, nullable=False)
@@ -1227,16 +1227,18 @@ class DonationIntakeItem(db.Model):
     __table_args__ = (
         db.ForeignKeyConstraint(['donation_id', 'inventory_id'], ['dnintake.donation_id', 'dnintake.inventory_id'], name='fk_dnintake_item_intake'),
         db.ForeignKeyConstraint(['donation_id', 'item_id'], ['donation_item.donation_id', 'donation_item.item_id'], name='fk_dnintake_item_donation_item'),
-        db.CheckConstraint("batch_no IS NULL OR batch_no = UPPER(batch_no)", name='c_dnintake_item_1a'),
-        db.CheckConstraint("batch_date IS NULL OR batch_date <= CURRENT_DATE", name='c_dnintake_item_1b'),
-        db.CheckConstraint("expiry_date >= CURRENT_DATE OR expiry_date IS NULL", name='c_dnintake_item_1c'),
+        db.CheckConstraint("batch_no = UPPER(batch_no)", name='c_dnintake_item_1a'),
+        db.CheckConstraint("batch_date <= CURRENT_DATE", name='c_dnintake_item_1b'),
+        db.CheckConstraint("expiry_date >= batch_date", name='c_dnintake_item_1c'),
         db.CheckConstraint("avg_unit_value > 0.00", name='c_dnintake_item_1d'),
+        db.CheckConstraint("ext_item_cost >= 0.00", name='c_dnintake_item_1e'),
         db.CheckConstraint("usable_qty >= 0.00", name='c_dnintake_item_2'),
         db.CheckConstraint("defective_qty >= 0.00", name='c_dnintake_item_3'),
         db.CheckConstraint("expired_qty >= 0.00", name='c_dnintake_item_4'),
         db.CheckConstraint("status_code IN ('P', 'V')", name='c_dnintake_item_5'),
         db.Index('dk_dnintake_item_1', 'inventory_id', 'item_id'),
         db.Index('dk_dnintake_item_2', 'item_id'),
+        db.PrimaryKeyConstraint('donation_id', 'inventory_id', 'item_id', 'batch_no', name='pk_dnintake_item'),
     )
     
     intake = db.relationship('DonationIntake', backref='items')
