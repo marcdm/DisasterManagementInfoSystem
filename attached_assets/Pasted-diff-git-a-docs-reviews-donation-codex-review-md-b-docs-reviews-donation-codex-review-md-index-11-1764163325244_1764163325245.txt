@@ -1,0 +1,49 @@
+diff --git a/docs/reviews/donation_codex_review.md b/docs/reviews/donation_codex_review.md
+index 11c9e08099663375894366c9f502bcdd0017d22d..625e301b72c06b6885387571720a80069869b810 100644
+--- a/docs/reviews/donation_codex_review.md
++++ b/docs/reviews/donation_codex_review.md
+@@ -1,16 +1,16 @@
+ # Codex Review: Donation Feature
+ 
+ ## Findings
+ 
+-1. **Uploaded documents are never persisted to storage**
+-   - In `create_donation`, each uploaded file is validated and a `DonationDoc` record is created, but the file content is never saved to disk or another storage backend. Only the filename metadata is stored, meaning downloads will fail because the referenced files do not exist. Add a file save step (e.g., `uploaded_file.save(path)` or cloud upload) after generating the unique filename so the stored metadata points to an actual asset.
+-   - Suggested test: create a donation with an attachment and verify the file is written to the configured media location, then downloaded via the UI without a 404.
++1. **Document uploads silently drop when storage is misconfigured**
++   - `create_donation` and the verification save path both validate uploaded files and prepare `DonationDoc` rows, but they only attempt to persist files if `UPLOAD_FOLDER` is set. When the setting is missing or empty, the code exits without saving files or logging an error, leaving validated attachments unpersisted while the request still succeeds. Fail fast when storage is unavailable, or enforce a required upload directory during app startup so attachments cannot be discarded implicitly.
++   - Suggested test: unset `UPLOAD_FOLDER` (or set it to an unwritable location), submit a donation with a PDF, and assert the request fails with a clear error instead of returning success while dropping the file.
+ 
+ 2. **Total donation value is not reconciled with item costs**
+-   - The handler computes `total_value` from the donation items but ultimately writes `tot_item_cost_value` from the form directly to the donation header. No check ensures the submitted header total matches the calculated item total, so inconsistent data can be persisted. Either replace the header value with the computed `total_value` or validate that they match before commit.
+-   - Suggested test: submit a donation where header total differs from the sum of item totals and confirm the request is rejected with a validation error rather than persisting inconsistent data.
++   - The create and verify handlers compute `total_value` from the items but ultimately persist `tot_item_cost_value` from the form without using or comparing the computed sum. No guard prevents a user from entering a header total that disagrees with the line totals, so inconsistent donation amounts can be stored. Replace the header value with the computed sum or validate the numbers match before commit.
++   - Suggested test: submit (and verify) a donation where the header total differs from the sum of item totals and confirm the request is rejected with a validation error rather than persisting inconsistent data.
+ 
+ ## Recommendations
+ 
+-- Add unit tests around `create_donation` to cover both attachment persistence and header/item total reconciliation, so regressions are caught automatically.
++- Add unit tests around the donation flow to cover attachment persistence and header/item total reconciliation, so regressions are caught automatically.
+ - Ensure the document storage path (local or cloud) is configurable through environment settings and validated during startup to avoid silent failures when the path is missing.
+diff --git a/docs/reviews/templates_codex_review.md b/docs/reviews/templates_codex_review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..d6d88bb2edd03f666fe03f696ca6f6d89779e5d6
+--- /dev/null
++++ b/docs/reviews/templates_codex_review.md
+@@ -0,0 +1,16 @@
++# Codex Review: Templates
++
++## Findings
++
++1. **Notification AJAX calls skip CSRF tokens**
++   - The notification panel issues POST requests for mark-read, clear-all, and delete actions directly with `fetch` but never includes a CSRF token or cookie-to-header copy even though the page exposes `csrf_token()` in a meta tag. An attacker could lure an authenticated user to a malicious page that silently triggers these POSTs, clearing alerts or deleting audit-relevant notifications without consent. Use a shared `csrfFetch` helper or inject the token header on these requests.
++   - Suggested test: load the app in a browser, capture the CSRF token from the meta tag, replay the notification POST endpoints from another origin (or disable same-site cookies) and confirm the requests are rejected rather than modifying notification state.
++
++2. **Unvalidated notification target URLs enable open redirects**
++   - Notification entries render `notif.link_url` directly as the anchor `href` after basic HTML escaping, but there is no protocol or host validation to keep navigation inside the trusted application. If an attacker can create a notification record, they can push users to arbitrary external sites (e.g., phishing or malware) by setting the link to a hostile domain. Restrict notification URLs to relative paths or an allowlist of trusted hosts before templating.
++   - Suggested test: craft a notification with a full `http://` or `https://` URL pointing to an external domain and verify the UI either rejects the notification, strips the domain, or displays a warning instead of providing a clickable redirect.
++
++## Recommendations
++
++- Centralize CSRF protection for all front-end POST requests (including notification actions) by using a helper that automatically attaches the token, and add regression tests that fail when the token is omitted.
++- Validate or normalize notification link destinations on the server side to ensure they resolve to approved in-app routes, preventing attackers from using alerts as phishing redirect vectors.
