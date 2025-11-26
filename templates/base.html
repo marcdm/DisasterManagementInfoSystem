@@ -935,8 +935,8 @@
                         }
                     }
                     
-                    // Mark notification as read via API
-                    fetch(`/notifications/api/mark-read/${notificationId}`, {
+                    // Mark notification as read via API (uses csrfFetch for CSRF protection)
+                    csrfFetch(`/notifications/api/mark-read/${notificationId}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -985,7 +985,8 @@
             clearAllBtn.disabled = true;
             clearAllBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Clearing...';
             
-            fetch('/notifications/api/clear-all', {
+            // Uses csrfFetch for CSRF protection
+            csrfFetch('/notifications/api/clear-all', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1027,7 +1028,8 @@
                 return;
             }
             
-            fetch(`/notifications/api/delete/${notificationId}`, {
+            // Uses csrfFetch for CSRF protection
+            csrfFetch(`/notifications/api/delete/${notificationId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
