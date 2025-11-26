@@ -156,7 +156,6 @@ class FeatureRegistry:
             'icon': 'bi-speedometer2',
             'category': 'eligibility',
             'dashboard_widget': 'director_overview',
-            'navigation_group': 'dashboard',
             'priority': 25
         },
         'operations_dashboard': {
