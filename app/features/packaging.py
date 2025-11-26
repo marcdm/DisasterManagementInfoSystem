@@ -230,6 +230,7 @@ def review_approval(reliefrqst_id):
             relief_pkg.dispatch_dtime = jamaica_now()
             relief_pkg.update_by_id = current_user.user_name
             relief_pkg.update_dtime = jamaica_now()
+            relief_pkg.version_nbr += 1
             
             # Commit inventory: convert reservations to actual deductions
             success, error_msg = reservation_service.commit_inventory(relief_request.reliefrqst_id)
