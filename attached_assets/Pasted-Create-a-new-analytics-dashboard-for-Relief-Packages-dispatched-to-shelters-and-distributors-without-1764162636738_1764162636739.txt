@@ -1,0 +1,189 @@
+Create a new analytics dashboard for Relief Packages dispatched to shelters and distributors without breaking any existing code, workflows, behaviour, security fixes, or the database schema.
+1. Purpose & Access Control
+
+
+Add a new page, e.g. “Relief Package Analytics”, separate from the Donation Analytics page.
+
+
+This dashboard must be read-only and visible only to the roles:
+
+
+Director General (DG)
+
+
+Deputy Director General (Deputy DG)
+
+
+Director, PEOD
+
+
+Logistics Manager
+
+
+
+
+Reuse the existing role/feature permission framework in the app; do not invent new auth logic or bypass current checks.
+
+
+2. Data Scope
+
+
+Include only relief packages that have been dispatched to shelters or distributors.
+
+
+Use the existing tables and fields (e.g. reliefpkg, reliefpkg_item, reliefrqst, warehouse, agency, location, etc.) and the existing status codes that indicate a package is dispatched/issued (e.g. current “Dispatched” or “Issued” status field).
+
+
+No changes to database schema, constraints, or indexes.
+
+
+3. Top KPI Cards (executive summary)
+Create KPI cards at the top of the dashboard, similar visual style to Donation Analytics:
+
+
+Total Relief Packages Dispatched
+
+
+Count of all dispatched relief packages in the selected period.
+
+
+
+
+Total Items Dispatched
+
+
+Sum of all item quantities included in dispatched packages.
+
+
+
+
+Total Beneficiary Locations
+
+
+Count of distinct shelters/distributors/locations that received packages.
+
+
+
+
+Total Requests Fulfilled
+
+
+Count of distinct relief requests that have at least one dispatched package.
+
+
+
+
+(Use existing date filters or provide a simple default range such as “All time”, with option to filter by date if there is already a shared filter component.)
+4. Charts & Visuals (management view)
+Add charts using the same charting library already used in Donation Analytics:
+
+
+Packages by Destination Type
+
+
+Bar or donut chart breaking down dispatched packages by destination category:
+
+
+Shelters vs Distributors (or whatever categorisation already exists in the schema).
+
+
+
+
+
+
+Packages by Parish / Region
+
+
+Bar or map-style chart (if available) showing number of dispatched packages per parish/region.
+
+
+Use existing location/parish fields in the schema (no new fields).
+
+
+
+
+Trend of Packages Dispatched Over Time
+
+
+Line or bar chart showing number of packages dispatched by week or month (using dispatch date / issue date).
+
+
+
+
+Top Shelters/Distributors by Packages Received
+
+
+Horizontal bar chart listing the top N shelters/distributors by:
+
+
+count of packages, or
+
+
+total item quantity.
+
+
+
+
+
+
+5. Tabular Detail (drill-down)
+Include a read-only table below the charts for drill-down:
+Columns might include (all using existing fields):
+
+
+Package ID / Tracking No
+
+
+Linked Request ID / Tracking No
+
+
+Destination name (shelter/distributor/agency)
+
+
+Parish / Region
+
+
+Dispatch date
+
+
+Number of items in package
+
+
+Status (Dispatched, Delivered, etc. – using existing status codes)
+
+
+Allow sorting and simple filtering (e.g. by parish, destination type, date range) if existing components already support this.
+6. UX & Consistency
+
+
+Match the look and feel of the current Donation Analytics dashboard:
+
+
+Same card style, colours, typography, spacing, and responsiveness.
+
+
+
+
+The dashboard is view-only; no buttons for editing, cancelling, or creating packages.
+
+
+Integrate it into existing navigation for the allowed roles (e.g. sidebar link “Relief Package Analytics”), without altering other roles’ menus.
+
+
+7. Constraints
+
+
+Do not modify any database tables or add new columns.
+
+
+Do not change any existing business logic for creating, dispatching, or updating relief packages.
+
+
+Do not weaken or change any security controls (auth, CSRF, CSP, headers, etc.).
+
+
+Reuse existing services/repositories for fetching relief package data where possible; avoid duplicating logic.
+
+
+Outcome:
+Executives and managers with roles DG, Deputy DG, Director PEOD, and Logistics Manager can open a Relief Package Analytics dashboard that gives them a clear, visual overview of how many packages are being dispatched, to where, and over what period—without impacting any existing functionality.

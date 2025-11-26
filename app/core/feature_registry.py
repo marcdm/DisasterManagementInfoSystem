@@ -87,6 +87,7 @@ class FeatureRegistry:
         'reports_inventory': 'reports.inventory_summary',
         'reports_donations': 'reports.donations_summary',
         'donations_analytics': 'dashboard.donations_analytics',
+        'relief_package_analytics': 'dashboard.relief_package_analytics',
         
         # Admin
         'users_list': 'user_admin.index',
@@ -419,6 +420,17 @@ class FeatureRegistry:
             'category': 'dashboard',
             'navigation_group': 'dashboard',
             'priority': 5
+        },
+        'relief_package_analytics': {
+            'name': 'Relief Package Analytics',
+            'description': 'Analytics dashboard for dispatched relief packages to shelters and distributors',
+            'roles': ['ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD', 'LOGISTICS_MANAGER'],
+            'route': 'dashboard.relief_package_analytics',
+            'url': '/dashboard/relief-package-analytics',
+            'icon': 'bi-box-arrow-up-right',
+            'category': 'dashboard',
+            'navigation_group': 'dashboard',
+            'priority': 6
         },
         
         # =================================================================

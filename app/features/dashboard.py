@@ -765,3 +765,197 @@ def donations_analytics():
     }
     
     return render_template('dashboard/donations_analytics.html', **context)
+
+
+@dashboard_bp.route('/relief-package-analytics')
+@login_required
+@role_required('ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD', 'LOGISTICS_MANAGER')
+def relief_package_analytics():
+    """
+    Relief Package Analytics Dashboard - Executive view of dispatched relief packages.
+    
+    Access: DG, Deputy DG, Director PEOD, Logistics Manager
+    
+    Displays:
+    - KPIs: Total packages dispatched, total items, beneficiary locations, requests fulfilled
+    - Charts: By destination type, by parish, over time, top destinations
+    - Detail table: Drill-down of dispatched packages
+    """
+    from app.db.models import ReliefPkg, ReliefPkgItem, ReliefRqst, Agency, Parish, Item
+    from sqlalchemy.orm import joinedload
+    
+    now = jamaica_now()
+    
+    dispatched_statuses = ['D', 'R']
+    
+    base_query = ReliefPkg.query.filter(
+        ReliefPkg.status_code.in_(dispatched_statuses)
+    )
+    
+    total_packages = base_query.count()
+    
+    total_items = db.session.query(
+        func.coalesce(func.sum(ReliefPkgItem.item_qty), 0)
+    ).join(
+        ReliefPkg, ReliefPkgItem.reliefpkg_id == ReliefPkg.reliefpkg_id
+    ).filter(
+        ReliefPkg.status_code.in_(dispatched_statuses)
+    ).scalar() or 0
+    
+    beneficiary_locations = db.session.query(
+        func.count(func.distinct(ReliefPkg.agency_id))
+    ).filter(
+        ReliefPkg.status_code.in_(dispatched_statuses)
+    ).scalar() or 0
+    
+    requests_fulfilled = db.session.query(
+        func.count(func.distinct(ReliefPkg.reliefrqst_id))
+    ).filter(
+        ReliefPkg.status_code.in_(dispatched_statuses)
+    ).scalar() or 0
+    
+    packages_by_type = db.session.query(
+        Agency.agency_type,
+        func.count(ReliefPkg.reliefpkg_id).label('package_count'),
+        func.coalesce(func.sum(ReliefPkgItem.item_qty), 0).label('total_items')
+    ).join(
+        ReliefPkg, Agency.agency_id == ReliefPkg.agency_id
+    ).outerjoin(
+        ReliefPkgItem, ReliefPkg.reliefpkg_id == ReliefPkgItem.reliefpkg_id
+    ).filter(
+        ReliefPkg.status_code.in_(dispatched_statuses)
+    ).group_by(
+        Agency.agency_type
+    ).all()
+    
+    type_labels_map = {
+        'SHELTER': 'Shelters',
+        'DISTRIBUTOR': 'Distributors',
+        'OTHER': 'Other'
+    }
+    
+    destination_type_data = {
+        'labels': [type_labels_map.get(t.agency_type, t.agency_type or 'Unknown') for t in packages_by_type],
+        'counts': [t.package_count for t in packages_by_type],
+        'items': [float(t.total_items) for t in packages_by_type]
+    }
+    
+    packages_by_parish = db.session.query(
+        Parish.parish_name,
+        func.count(ReliefPkg.reliefpkg_id).label('package_count')
+    ).join(
+        Agency, Parish.parish_code == Agency.parish_code
+    ).join(
+        ReliefPkg, Agency.agency_id == ReliefPkg.agency_id
+    ).filter(
+        ReliefPkg.status_code.in_(dispatched_statuses)
+    ).group_by(
+        Parish.parish_code, Parish.parish_name
+    ).order_by(
+        desc('package_count')
+    ).all()
+    
+    parish_chart_data = {
+        'labels': [p.parish_name for p in packages_by_parish],
+        'counts': [p.package_count for p in packages_by_parish]
+    }
+    
+    twelve_months_ago = now - timedelta(days=365)
+    
+    packages_over_time = db.session.query(
+        extract('year', ReliefPkg.dispatch_dtime).label('year'),
+        extract('month', ReliefPkg.dispatch_dtime).label('month'),
+        func.count(ReliefPkg.reliefpkg_id).label('package_count')
+    ).filter(
+        ReliefPkg.status_code.in_(dispatched_statuses),
+        ReliefPkg.dispatch_dtime.isnot(None),
+        ReliefPkg.dispatch_dtime >= twelve_months_ago
+    ).group_by(
+        extract('year', ReliefPkg.dispatch_dtime),
+        extract('month', ReliefPkg.dispatch_dtime)
+    ).order_by(
+        'year', 'month'
+    ).all()
+    
+    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    
+    timeline_data = {
+        'labels': [],
+        'counts': []
+    }
+    
+    for row in packages_over_time:
+        month_label = f"{month_names[int(row.month) - 1]} {int(row.year)}"
+        timeline_data['labels'].append(month_label)
+        timeline_data['counts'].append(row.package_count)
+    
+    top_destinations = db.session.query(
+        Agency.agency_name,
+        Agency.agency_type,
+        func.count(ReliefPkg.reliefpkg_id).label('package_count'),
+        func.coalesce(func.sum(ReliefPkgItem.item_qty), 0).label('total_items')
+    ).join(
+        ReliefPkg, Agency.agency_id == ReliefPkg.agency_id
+    ).outerjoin(
+        ReliefPkgItem, ReliefPkg.reliefpkg_id == ReliefPkgItem.reliefpkg_id
+    ).filter(
+        ReliefPkg.status_code.in_(dispatched_statuses)
+    ).group_by(
+        Agency.agency_id, Agency.agency_name, Agency.agency_type
+    ).order_by(
+        desc('package_count')
+    ).limit(10).all()
+    
+    top_destinations_data = {
+        'labels': [d.agency_name[:35] + '...' if len(d.agency_name) > 35 else d.agency_name for d in top_destinations],
+        'counts': [d.package_count for d in top_destinations],
+        'items': [float(d.total_items) for d in top_destinations],
+        'types': [type_labels_map.get(d.agency_type, d.agency_type or 'Unknown') for d in top_destinations]
+    }
+    
+    dispatched_packages = ReliefPkg.query.options(
+        joinedload(ReliefPkg.agency).joinedload(Agency.parish),
+        joinedload(ReliefPkg.relief_request)
+    ).filter(
+        ReliefPkg.status_code.in_(dispatched_statuses)
+    ).order_by(
+        desc(ReliefPkg.dispatch_dtime)
+    ).limit(100).all()
+    
+    package_item_counts = {}
+    if dispatched_packages:
+        pkg_ids = [pkg.reliefpkg_id for pkg in dispatched_packages]
+        item_counts = db.session.query(
+            ReliefPkgItem.reliefpkg_id,
+            func.sum(ReliefPkgItem.item_qty).label('total_qty')
+        ).filter(
+            ReliefPkgItem.reliefpkg_id.in_(pkg_ids)
+        ).group_by(
+            ReliefPkgItem.reliefpkg_id
+        ).all()
+        package_item_counts = {ic.reliefpkg_id: float(ic.total_qty) for ic in item_counts}
+    
+    status_labels = {
+        'D': 'Dispatched',
+        'R': 'Received'
+    }
+    
+    context = {
+        'total_packages': total_packages,
+        'total_items': int(total_items),
+        'beneficiary_locations': beneficiary_locations,
+        'requests_fulfilled': requests_fulfilled,
+        
+        'destination_type_data': destination_type_data,
+        'parish_chart_data': parish_chart_data,
+        'timeline_data': timeline_data,
+        'top_destinations_data': top_destinations_data,
+        
+        'dispatched_packages': dispatched_packages,
+        'package_item_counts': package_item_counts,
+        'status_labels': status_labels,
+        'type_labels_map': type_labels_map
+    }
+    
+    return render_template('dashboard/relief_package_analytics.html', **context)
