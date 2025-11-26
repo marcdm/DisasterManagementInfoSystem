@@ -22,7 +22,6 @@ from app.services import relief_request_service as rr_service
 from app.services import item_status_service
 from app.services import inventory_reservation_service as reservation_service
 from app.services.batch_allocation_service import BatchAllocationService, safe_decimal
-from app.core.audit import add_audit_fields
 from app.core.exceptions import OptimisticLockError
 
 
