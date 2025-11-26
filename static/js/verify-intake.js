@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
         verifyForm.addEventListener('submit', function(e) {
             var hasErrors = false;
             
-            var errorDivs = document.querySelectorAll('[class*="qty-error-"]');
+            var errorDivs = document.querySelectorAll('.invalid-feedback[class*="qty-error-"]');
             errorDivs.forEach(function(el) {
                 if (!el.classList.contains('d-none')) {
                     hasErrors = true;
