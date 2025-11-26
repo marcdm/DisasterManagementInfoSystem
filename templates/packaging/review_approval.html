@@ -348,9 +348,21 @@
                 <!-- Action Buttons -->
                 <div class="action-buttons">
                     <a href="{{ url_for('packaging.pending_approval') }}" class="btn btn-secondary">
-                        <i class="bi bi-x-circle"></i> Cancel
+                        <i class="bi bi-x-circle"></i> Close
                     </a>
+                    <form method="POST" action="{{ url_for('packaging.cancel_package', reliefpkg_id=relief_pkg.reliefpkg_id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this package? This will release all reservations and cannot be undone.');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Cancel Package
+                        </button>
+                    </form>
                     <form method="POST" action="{{ url_for('packaging.review_approval', reliefrqst_id=relief_request.reliefrqst_id) }}" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="relief_request_version" value="{{ relief_request.version_nbr }}">
+                        <input type="hidden" name="package_version" value="{{ relief_pkg.version_nbr }}">
+                        <button type="submit" name="action" value="reject" class="btn btn-outline-danger">
+                            <i class="bi bi-x-octagon"></i> Reject
+                        </button>
                         <button type="submit" name="action" value="approve_and_dispatch" class="btn-relief-primary">
                             <i class="bi bi-check-circle"></i> Approve & Dispatch to Inventory Clerk
                         </button>

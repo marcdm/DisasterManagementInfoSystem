@@ -182,3 +182,59 @@
 
 /* === Offcanvas Width === */
 .offcanvas-width-400 { width: 400px !important; }
+
+/* === Form Field State Utilities === */
+.field-disabled-visual {
+    background-color: #e9ecef !important;
+    cursor: not-allowed !important;
+}
+
+/* === Empty State Icon === */
+.empty-state-icon {
+    font-size: 3rem !important;
+    color: #dee2e6 !important;
+}
+
+/* === Alert Text Size === */
+.alert-text-sm {
+    font-size: 0.9rem !important;
+}
+
+/* === Body Overflow Control (for mobile sidebar) === */
+.body-no-scroll {
+    overflow: hidden !important;
+}
+
+/* === Animation/Transition Utilities === */
+.transition-all {
+    transition: all 0.3s ease !important;
+}
+
+.opacity-0 {
+    opacity: 0 !important;
+}
+
+.translate-x-20 {
+    transform: translateX(20px) !important;
+}
+
+/* === Character Counter Color Classes === */
+.char-count-danger {
+    color: #dc3545 !important;
+}
+
+.char-count-warning {
+    color: #ffc107 !important;
+}
+
+.char-count-normal {
+    color: #6c757d !important;
+}
+
+/* === Password Strength Bar Width === */
+.strength-0 { width: 0% !important; }
+.strength-20 { width: 20% !important; }
+.strength-40 { width: 40% !important; }
+.strength-60 { width: 60% !important; }
+.strength-80 { width: 80% !important; }
+.strength-100 { width: 100% !important; }

@@ -27,24 +27,55 @@ def build_csp_header():
     
     Security features:
     - Nonce-based inline script/style protection
-    - No wildcards or unsafe-eval
+    - NO wildcards (*, https:, http:) - SCANNER REQUIREMENT
+    - NO unsafe-inline or unsafe-eval - SCANNER REQUIREMENT
+    - Explicit script-src directive - SCANNER REQUIREMENT
     - Frame protection (frame-ancestors 'none')
     - Form submission restricted to same origin
+    
+    Security Scanner Compliance:
+    - Removed 'https:' wildcard from img-src (too broad)
+    - Removed cdn.jsdelivr.net from connect-src (not needed for static resources)
+    - All directives are explicit and restrictive
     """
     nonce = get_csp_nonce()
     
     csp_directives = [
+        # Default fallback - same origin only
         "default-src 'self'",
+        
+        # Scripts: self, nonce for inline, CDN for external libraries
+        # CRITICAL: Must be explicit for scanner compliance
         f"script-src 'self' 'nonce-{nonce}' https://cdn.jsdelivr.net",
+        
+        # Styles: self, nonce for inline, CDN for external frameworks
         f"style-src 'self' 'nonce-{nonce}' https://cdn.jsdelivr.net",
-        "img-src 'self' data: https:",
+        
+        # Images: self and data URIs only (removed https: wildcard)
+        "img-src 'self' data:",
+        
+        # Fonts: self, CDN for Bootstrap Icons, data URIs for embedded fonts
         "font-src 'self' https://cdn.jsdelivr.net data:",
-        "connect-src 'self' https://cdn.jsdelivr.net",
+        
+        # AJAX/fetch: same origin only (CDN resources don't need connect-src)
+        "connect-src 'self'",
+        
+        # Prevent all framing (clickjacking protection)
         "frame-ancestors 'none'",
+        
+        # Block all plugins (Flash, Java, etc.)
         "object-src 'none'",
+        
+        # Restrict base tag to prevent injection
         "base-uri 'self'",
+        
+        # Forms submit to same origin only
         "form-action 'self'",
+        
+        # Web app manifests from same origin
         "manifest-src 'self'",
+        
+        # Auto-upgrade HTTP to HTTPS
         "upgrade-insecure-requests"
     ]
     

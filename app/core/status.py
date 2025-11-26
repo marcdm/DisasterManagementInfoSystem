@@ -29,14 +29,15 @@ DONATION_STATUS = {
 }
 
 RELIEFRQST_STATUS = {
-    0: 'Pending',
-    1: 'In Review',
-    2: 'Approved',
-    3: 'Partial',
-    4: 'Fulfilled',
-    5: 'Rejected',
-    6: 'Cancelled',
-    7: 'Closed'
+    0: 'Draft',
+    1: 'Awaiting Approval',
+    2: 'Cancelled',
+    3: 'Submitted',
+    4: 'Denied',
+    5: 'Part Filled',
+    6: 'Closed',
+    7: 'Filled',
+    8: 'Ineligible'
 }
 
 RELIEFRQST_ITEM_STATUS = {
@@ -114,7 +115,7 @@ STATUS_BADGE_MAP = {
     'inventory': {'A': 'success', 'I': 'secondary'},
     'donation': {'A': 'success', 'P': 'warning', 'C': 'secondary'},
     'reliefpkg': {'P': 'warning', 'D': 'primary', 'C': 'success'},
-    'reliefrqst': {0: 'warning', 1: 'info', 2: 'primary', 3: 'warning', 4: 'success', 5: 'danger', 6: 'secondary', 7: 'secondary'},
+    'reliefrqst': {0: 'secondary', 1: 'warning', 2: 'secondary', 3: 'info', 4: 'danger', 5: 'warning', 6: 'secondary', 7: 'success', 8: 'danger'},
     'reliefrqst_item': {'R': 'info', 'U': 'danger', 'W': 'warning', 'D': 'danger', 'P': 'warning', 'L': 'info', 'F': 'success'},
     'urgency': {'L': 'secondary', 'M': 'info', 'H': 'warning', 'C': 'danger'},
     'dbintake': {'I': 'warning', 'C': 'success', 'V': 'primary'},

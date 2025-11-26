@@ -937,6 +937,17 @@
     }
 }
 
+/* Password Strength Indicator */
+.password-strength-meter .strength-bar {
+    height: 4px;
+    border-radius: 2px;
+    transition: background-color 0.3s;
+}
+
+.password-strength-meter .flex-1 {
+    flex: 1;
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
     *,

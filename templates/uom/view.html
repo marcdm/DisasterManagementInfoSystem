@@ -188,6 +188,7 @@
                 </button>
                 {% if not is_in_use %}
                 <form method="POST" action="{{ url_for('uom.delete_uom', uom_code=uom.uom_code) }}" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger">
                         <i class="bi bi-trash"></i> Delete UOM
                     </button>

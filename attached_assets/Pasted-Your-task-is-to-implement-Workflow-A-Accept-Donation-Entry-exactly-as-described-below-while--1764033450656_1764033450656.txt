@@ -1,0 +1,378 @@
+Your task is to implement Workflow A – Accept Donation Entry exactly as described below, while:
+
+🚨 Do NOT break or modify:
+
+Existing workflows, logic, UI structure, routes, or view behaviors
+
+Security configuration (CSP, CSRF, role-based access, sessions, cookies)
+
+Existing referential integrity or database schema
+
+Any other module/function unrelated to Accept Donation
+
+Any existing blueprint routing or login-required wrappers
+
+🔒 You may only:
+
+Extend UI templates for Accept Donation
+
+Extend controllers to support required behaviors
+
+Add helper functions or JS for UX behavior
+
+Add dropdowns / validations / dynamic enable/disable logic
+
+Use the existing ORM patterns already in project
+
+Use the existing secure file upload mechanism
+
+🧩 WORKFLOW A – ENTRY (ACCEPT DONATION)
+
+Implement the following behaviors inside the existing "Accept Donation / Create Donation" route/template.
+
+A.1 Navigation & Layout
+
+Use the existing route/template named:
+“Accept Donation / Create Donation”
+
+Page must have 3 sections:
+
+Donation Header → donation table
+
+Donation Items Grid → donation_item table
+
+Supporting Documents → donation_doc table
+
+All master-reference fields must appear as dropdowns:
+
+donor
+
+country
+
+currency
+
+event
+
+custodian
+
+unit-of-measure
+
+item + item category
+
+A.2 Donation Header → donation
+A.2.1 Fields & UI Controls
+
+Implement these fields:
+
+Field	UI Control	Rules
+donor_id	Dropdown	Only active donors
+donation_desc	Required textarea	Required
+origin_country_id	Dropdown	From country
+currency_code	Dropdown	See default/override rules
+origin_address1_text	Text	Optional
+origin_address2_text	Text	Optional
+event_id	Dropdown	Active events
+custodian_id	Dropdown	From custodian
+tot_item_cost	Numeric	Must be >=0.00
+storage_cost	Numeric	Must be >=0.00
+haulage_cost	Numeric	Must be >=0.00
+other_cost	Numeric	>=0.00
+other_cost_desc	Text	Enable ONLY if other_cost > 0
+received_date	Date	Must be <= CURRENT_DATE
+comments_text	Text	Optional
+
+All constraints must match the donation table exactly.
+
+A.2.2 Country → Currency Default + Override
+
+Implement the following rules:
+
+When user selects origin_country_id:
+
+Look up the country
+
+Default currency_code = country.currency_code
+
+User may override currency_code:
+
+Dropdown with all currencies
+
+Must validate value exists in currency table
+
+On save:
+
+Validate origin_country_id exists
+
+Validate currency_code exists
+
+Save currency_code on donation
+
+A.2.3 Status & Audit Behavior
+
+When creating a donation (status = Entry):
+
+donation.status_code = 'E'
+
+create_by_id = current user
+
+create_dtime = now
+
+update_by_id = current user
+
+update_dtime = now
+
+version_nbr = 1
+
+When updating donation while still “Entered”:
+
+Only allowed when status_code = 'E'
+
+Update:
+
+update_by_id = current user
+
+update_dtime = now
+
+version_nbr = version_nbr + 1
+
+Entry role cannot change status_code to V or P.
+
+A.3 Donation Items Grid → donation_item
+
+Below the header, implement a dynamic grid:
+
+Add Item (button)
+
+Each row represents a donation_item
+
+Primary key: (donation_id, item_id)
+
+Operations: Add / Edit / Delete rows
+
+A.3.1 Item Category → GOODS vs FUNDS Logic
+
+When user selects item_id:
+
+Lookup item.category_id
+
+Lookup itemcatg.category_type → 'GOODS' or 'FUNDS'
+
+Set donation_item.donation_type = category_type automatically
+
+Make donation_type read-only
+
+Only show items where:
+
+item.status_code = 'A'
+
+itemcatg.status_code = 'A'
+
+Show itemcatg.category_desc as tooltip/help
+
+If item_id changes:
+
+Recompute donation_type
+
+Reapply logic
+
+Reset incompatible fields
+
+A.3.2 Row Fields
+
+Each row must contain:
+
+item_id (dropdown/search)
+
+donation_type (read-only, auto)
+
+item_qty
+
+item_cost
+
+uom_code
+
+location_name
+
+status_code
+
+comments_text
+
+A.3.2.1 When donation_type = 'GOODS'
+
+Enable:
+
+item_qty (>=0)
+
+item_cost (>=0)
+
+uom_code (physical UOMs)
+
+location_name (required)
+
+comments_text (optional)
+
+Disable funds-specific UI elements.
+
+item_cost = purchase cost per unit.
+
+A.3.2.2 When donation_type = 'FUNDS'
+
+Apply the following:
+
+item_qty = 1.00 (default) → read-only
+
+item_cost > 0.00
+
+uom_code:
+
+Represents currency
+
+Default = donation.currency_code
+
+Dropdown from currency codes (override allowed)
+
+location_name: required
+
+comments_text: optional
+
+A.3.3 Status & Audit Logic for Items
+
+When adding a new row:
+
+status_code = 'P'
+
+create_by_id = current user
+
+create_dtime = now
+
+update_by_id = current user
+
+update_dtime = now
+
+verify_by_id / verify_dtime = NULL until verified
+
+version_nbr = 1
+
+When editing:
+
+Only allowed while parent donation.status_code = 'E'
+
+Keep status_code = 'P'
+
+update audit fields and increment version_nbr
+
+A.3.4 Validation & Upsert Logic
+
+For each row:
+
+donation_type in ('GOODS', 'FUNDS')
+
+item_qty >= 0
+
+item_cost >= 0
+
+location_name non-null
+
+On save:
+
+Upsert using PK (donation_id, item_id):
+
+If row exists → UPDATE
+
+If new → INSERT
+
+If removed from UI → DELETE
+
+A.4 Supporting Documents → donation_doc
+
+Implement a section titled “Supporting Documents”.
+
+Per document entry:
+
+document_type (static list: Receipt, Manifest, etc.)
+
+document_desc (required)
+
+File upload
+
+Use existing secure upload mechanism
+
+Extract:
+
+file_name
+
+file_type (must comply with allowed MIME)
+
+file_size (MB string)
+
+On save:
+
+Insert rows into donation_doc with:
+
+donation_id
+
+document_type
+
+document_desc
+
+file_name
+
+file_type
+
+file_size
+
+create_by_id / create_dtime
+
+update_by_id / update_dtime
+
+version_nbr
+
+Show an existing documents list with allowed actions (download/delete) according to current permission rules.
+
+🔐 Do Not Break Anything
+
+You must NOT:
+
+Modify field names or database schema
+
+Break any FK, PK, UNIQUE, CHECK constraints
+
+Change any existing workflow or role behavior
+
+Change any existing security feature
+
+Modify unrelated UI or logic
+
+Remove or weaken any validation
+
+All new logic must seamlessly integrate into existing DRIMS behavior.
+
+✔ Deliverables
+
+Produce:
+
+Updated Python route(s) for Accept Donation
+
+Updated Jinja template(s) for donation header, items grid, and documents
+
+Any JS required for dynamic enable/disable and defaults
+
+Helper functions for:
+
+Country → Currency default
+
+Category → donation_type behavior
+
+Fully wired save logic (header, items, docs)
+
+Full testing on:
+
+Entry flow
+
+Upsert items
+
+Goods vs Funds branching
+
+Document upload
+
+No regressions allowed.

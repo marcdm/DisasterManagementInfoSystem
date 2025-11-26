@@ -88,6 +88,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('requests.edit_items', request_id=request.reliefrqst_id) }}" id="addItemForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="item_id" class="form-label">Item <span class="text-danger">*</span></label>
@@ -218,6 +219,7 @@
                                 </td>
                                 <td>
                                     <form method="POST" action="{{ url_for('requests.delete_item', request_id=request.reliefrqst_id, item_id=item.item_id) }}" style="display: inline;" onsubmit="return confirm('Remove this item from the request?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-sm btn-danger">
                                             <i class="bi bi-trash"></i>
                                         </button>
@@ -241,6 +243,7 @@
                     <div class="d-flex gap-2 flex-wrap">
                         {% if request.items and request.status_code == 0 %}
                         <form method="POST" action="{{ url_for('requests.submit_request', request_id=request.reliefrqst_id) }}" style="display: inline;" id="submitForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="version_nbr" value="{{ request.version_nbr }}">
                             <button type="submit" class="btn-relief-primary">
                                 <i class="bi bi-send"></i>
@@ -254,6 +257,7 @@
                         </a>
                         {% if request.status_code == 0 %}
                         <form method="POST" action="{{ url_for('requests.cancel_request', request_id=request.reliefrqst_id) }}" style="display: inline;" id="cancelForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn-relief-secondary">
                                 <i class="bi bi-trash"></i>
                                 Delete Draft
@@ -403,13 +407,15 @@ if (urgencySelect) {
         
         if (this.value === 'H') {
             justificationField.setAttribute('required', 'required');
-            requiredIndicator.style.display = 'inline';
+            requiredIndicator.classList.remove('d-none');
+            requiredIndicator.classList.add('d-inline');
             hint.textContent = 'Required for High urgency items';
             hint.classList.remove('text-muted');
             hint.classList.add('text-danger');
         } else {
             justificationField.removeAttribute('required');
-            requiredIndicator.style.display = 'none';
+            requiredIndicator.classList.remove('d-inline');
+            requiredIndicator.classList.add('d-none');
             hint.textContent = 'Optional for Medium/Low urgency items';
             hint.classList.remove('text-danger');
             hint.classList.add('text-muted');
@@ -420,22 +426,28 @@ if (urgencySelect) {
 // Submit form - show modal instead of native confirm
 const submitForm = document.getElementById('submitForm');
 if (submitForm) {
-    submitForm.addEventListener('submit', function(e) {
+    submitForm.addEventListener('submit', function handleSubmit(e) {
+        if (submitForm.dataset.confirmed === 'true') {
+            return;
+        }
+
         e.preventDefault();
         const modal = new bootstrap.Modal(document.getElementById('submitRequestModal'));
         modal.show();
-        return false;
     });
 }
 
 // Delete form - show modal instead of native confirm
 const cancelForm = document.getElementById('cancelForm');
 if (cancelForm) {
-    cancelForm.addEventListener('submit', function(e) {
+    cancelForm.addEventListener('submit', function handleDelete(e) {
+        if (cancelForm.dataset.confirmed === 'true') {
+            return;
+        }
+
         e.preventDefault();
         const modal = new bootstrap.Modal(document.getElementById('deleteDraftModal'));
         modal.show();
-        return false;
     });
 }
 
@@ -445,16 +457,16 @@ document.addEventListener('click', function(e) {
     if (confirmSubmit) {
         const form = document.getElementById('submitForm');
         if (form) {
-            form.removeEventListener('submit', arguments.callee);
+            form.dataset.confirmed = 'true';
             form.submit();
         }
     }
-    
+
     const confirmDelete = e.target.closest('[data-action="confirm-delete-draft"]');
     if (confirmDelete) {
         const form = document.getElementById('cancelForm');
         if (form) {
-            form.removeEventListener('submit', arguments.callee);
+            form.dataset.confirmed = 'true';
             form.submit();
         }
     }

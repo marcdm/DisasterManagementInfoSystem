@@ -1,0 +1,87 @@
+diff --git a/templates/donations/create.html b/templates/donations/create.html
+index af3677d68e54108c60c92a7a91a75de853bcf33c..9f77392f451e8643a37976286aa5b2ce49bf28df 100644
+--- a/templates/donations/create.html
++++ b/templates/donations/create.html
+@@ -413,73 +413,78 @@
+                 </div>
+             </div>
+         </div>
+     </form>
+ </div>
+ 
+ <script nonce="{{ csp_nonce() }}">
+ let itemCounter = 0;
+ const donationItems = [];
+ let currentCategoryType = null;
+ 
+ // Restore items from form_data if page was re-rendered after validation error
+ {% if form_data %}
+ const restoredItems = [];
+ {% for key, value in form_data.items() %}
+ {% if key.startswith('item_id_') %}
+ {% set num = key.split('_')[-1] %}
+ restoredItems.push({
+     num: '{{ num }}',
+     item_id: '{{ form_data.get("item_id_" ~ num, "") }}',
+     donation_type: '{{ form_data.get("donation_type_" ~ num, "GOODS") }}',
+     quantity: parseFloat('{{ form_data.get("quantity_" ~ num, "0") }}') || 0,
+     item_cost: parseFloat('{{ form_data.get("item_cost_" ~ num, "0") }}') || 0,
+     addon_cost: parseFloat('{{ form_data.get("addon_cost_" ~ num, "0") }}') || 0,
+     uom_code: '{{ form_data.get("uom_id_" ~ num, "") }}',
++    currency_code: '{{ form_data.get("currency_code_" ~ num, "") }}',
+     location_name: '{{ form_data.get("location_name_" ~ num, "DONATION RECEIVED") }}',
+     comments: '{{ form_data.get("item_comments_" ~ num, "") }}'
+ });
+ {% endif %}
+ {% endfor %}
+ 
+ document.addEventListener('DOMContentLoaded', function() {
+     const itemsDropdown = document.getElementById('new_item_id');
+     restoredItems.forEach(function(item) {
+         const option = itemsDropdown.querySelector(`option[value="${item.item_id}"]`);
+         const itemName = option ? option.getAttribute('data-name') : 'Unknown Item';
+-        
++        const restoredType = (item.donation_type || 'GOODS').toUpperCase();
++
+         itemCounter++;
+         donationItems.push({
+             id: itemCounter,
+             item_id: item.item_id,
+             item_name: itemName,
+-            donation_type: item.donation_type,
++            donation_type: restoredType,
+             quantity: item.quantity,
+             item_cost: item.item_cost,
+             addon_cost: item.addon_cost,
+-            uom_code: item.uom_code,
+-            uom_desc: item.uom_code,
++            uom_code: restoredType === 'GOODS' ? item.uom_code : null,
++            currency_code: restoredType === 'FUNDS' ? item.currency_code : null,
++            uom_desc: restoredType === 'FUNDS'
++                ? (item.currency_code || '')
++                : (item.uom_code || ''),
+             location_name: item.location_name,
+             comments: item.comments
+         });
+     });
+     
+     if (donationItems.length > 0) {
+         updateItemsTable();
+     }
+ });
+ {% endif %}
+ 
+ // Fetch item category and adjust form fields dynamically
+ document.getElementById('new_item_id').addEventListener('change', async function() {
+     const itemId = this.value;
+     const donationTypeInput = document.getElementById('new_donation_type');
+     const categoryHint = document.getElementById('category_hint');
+     const quantityHint = document.getElementById('quantity_hint');
+     const itemCostHint = document.getElementById('item_cost_hint');
+     const uomSelect = document.getElementById('new_uom_code');
+     const uomHidden = document.getElementById('new_uom_code_hidden');
+     const uomHint = document.getElementById('selected_uom');
+     
+     if (!itemId) {
+         resetFormFields();
+         return;

@@ -20,6 +20,7 @@
                             <i class="bi bi-pencil"></i> Edit Items
                         </a>
                         <form method="POST" action="{{ url_for('requests.submit_request', request_id=request.reliefrqst_id) }}" class="d-inline" id="submitRequestForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-goj">
                                 <i class="bi bi-send"></i> Submit to ODPEM
                             </button>

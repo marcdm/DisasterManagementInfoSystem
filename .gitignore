@@ -29,3 +29,6 @@ instance/
 .coverage
 htmlcov/
 *.log
+
+# Uploaded files
+uploads/

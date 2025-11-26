@@ -1,0 +1,218 @@
+You are an expert full-stack Flask + HTML/JS security engineer working on an existing Disaster Relief Inventory Management System (DRIMS/DIMS) web app.
+
+A recent HCL AppScan report (KAY_DMIS_SCAN) shows a Low-severity finding “Missing or insecure 'Script-Src' policy in 'Content-Security-Policy' header” and recommends configuring the server to use a secure CSP header. Your previous changes did not fully satisfy the scanner. Your single mission now is:
+
+Completely fix all CSP issues (especially script-src) across the entire app, so that this finding is eliminated, without breaking any existing behavior, workflows, or database schema, and without weakening any other security controls.
+
+Hard Constraints
+
+DO NOT:
+
+Change or drop any database tables, columns, constraints, triggers, or schema.
+
+Change business logic, workflows, or role permissions.
+
+Break any existing routes, URLs, forms, or APIs.
+
+Remove or weaken existing security protections (auth, CSRF, input validation, etc.).
+
+You MAY:
+
+Add or update CSP headers in Flask or at the app level.
+
+Refactor templates and static assets to comply with CSP.
+
+Add nonces / hashes or move inline code into static JS/CSS files.
+
+Add other security headers only if they are strictly additive and non-breaking.
+
+1. Discover Current CSP Configuration & Issues
+
+Search the entire codebase for any CSP usage:
+
+Response hooks like @app.after_request that set Content-Security-Policy.
+
+Any meta http-equiv="Content-Security-Policy" tags in templates.
+
+Any reverse-proxy/header helper code that might add CSP.
+
+Document (in comments) what the current CSP looks like:
+
+Whether a script-src directive exists.
+
+Whether it uses wildcards (*) or overly broad sources.
+
+Whether it uses 'unsafe-inline' / 'unsafe-eval'.
+
+Identify patterns that typically cause scanners to flag CSP:
+
+No script-src directive at all.
+
+script-src * or script-src http: https: without restrictions.
+
+Using only default-src without explicit script-src.
+
+CSP defined only on some endpoints, not globally.
+
+2. Design a Secure, App-Compatible CSP
+
+Create a central CSP policy that:
+
+Uses default-src 'self' as a baseline.
+
+Explicitly defines:
+
+script-src – must be explicit and secure:
+
+Start from: 'self' and only the minimum required external script domains actually used in the app (e.g. CDNs).
+
+Avoid *, data:, blob: unless truly required and justified.
+
+Avoid 'unsafe-inline' and 'unsafe-eval' by default.
+
+If truly necessary, prefer nonces or hashes rather than 'unsafe-inline'.
+
+style-src – 'self' + minimal extras (e.g. 'self' and 'unsafe-inline' only if inline styles cannot be fully removed yet).
+
+img-src – 'self' and data: if your app uses data URIs.
+
+font-src – 'self' and any specific font domains if used.
+
+connect-src – 'self' and any AJAX/API endpoints this SPA actually uses (e.g. notifications API).
+
+frame-ancestors – restrict framing (e.g. 'self').
+
+object-src – 'none' unless absolutely required.
+
+Is strict enough that scanners will consider it “secure”, but not so strict that it breaks legitimate resources.
+
+Important: infer the actual domains from the existing templates (JS/CSS includes) instead of guessing.
+
+3. Implement CSP in Flask – Central & Consistent
+
+Implement or update a single, central CSP header using an after_request hook, for example:
+
+A function that:
+
+Builds the CSP string (from a Python dict or config).
+
+Sets response.headers["Content-Security-Policy"] on all HTML responses.
+
+If there is already a CSP header:
+
+Refine it in place instead of deleting it.
+
+Ensure script-src is present and follows the secure pattern above.
+
+If you use nonces:
+
+Generate a random nonce per request (e.g. using secrets.token_urlsafe).
+
+Store it in g.csp_nonce or request.csp_nonce.
+
+Inject it into templates where <script> tags are used:
+<script nonce="{{ csp_nonce }}"> etc.
+
+Ensure the same nonce value is included in the script-src directive for that response.
+
+Make sure all templates/routes that render HTML get the CSP header:
+
+Base templates used by all other templates should have access to csp_nonce if you use nonces.
+
+Avoid defining CSP as a <meta> tag; prefer the HTTP header.
+
+4. Refactor Templates to Be CSP-Compliant
+
+Scan all Jinja/HTML templates and:
+
+Inline scripts:
+
+Prefer to move inline JavaScript into external static JS files (e.g. under static/js/).
+
+Replace inline <script>...</script> with <script src="{{ url_for('static', filename='js/yourfile.js') }}"></script>.
+
+If certain small inline scripts must remain, convert them to nonce-based scripts instead of relying on 'unsafe-inline'.
+
+Inline event handlers (onclick, onchange, etc.):
+
+Remove inline handlers in templates.
+
+Add equivalent event binding in the external JS (e.g. using addEventListener after DOM load).
+
+Ensure behavior is identical (same validations, modals, redirects, etc.).
+
+Inline styles (style="...") where possible:
+
+Move complex style definitions into CSS files.
+
+If some inline styling must remain for now, keep 'unsafe-inline' only in style-src (not script-src) and plan to phase it out later.
+
+Verify that all key actions still work:
+
+Log in, log out.
+
+Creating/editing donors, agencies, custodians, items, warehouses, users, etc.
+
+Notifications and AJAX calls still function.
+
+5. Make CSP Scanner-Friendly (Script-Src in Particular)
+
+Because the scan explicitly reports “Missing or insecure 'Script-Src' policy in 'Content-Security-Policy' header”, you must ensure:
+
+The Content-Security-Policy header always includes a script-src directive.
+
+script-src:
+
+Is not omitted and does not rely only on default-src.
+
+Does not use *, http: scheme-wildcards, or unnecessary data: unless required.
+
+Avoids 'unsafe-inline' and 'unsafe-eval' for scripts. If needed, use nonces/hashes.
+
+There are no conflicting CSP headers:
+
+Ensure only one CSP header is sent per response.
+
+If any old meta CSP tags exist, remove them in favor of the HTTP header.
+
+The policy is consistent across the URLs that the scanner tests (login page, dashboard, users, items, profile, etc.), so the scanner no longer flags this as missing or insecure.
+
+Add brief comments in the CSP configuration explaining why each directive is needed and which external domains are allowed.
+
+6. Preserve All Other Security Fixes & Behavior
+
+While doing all of the above:
+
+Do not alter:
+
+Authentication logic (login/logout flow).
+
+Authorization or role checks.
+
+CSRF token handling and other security middleware.
+
+Database access patterns, migrations, or schema.
+
+If you need to introduce very small helper functions or config settings, keep them minimal and clearly documented.
+
+7. Final Validation
+
+After implementation:
+
+Manually:
+
+Open key pages and verify:
+
+No runtime errors in the browser console due to blocked scripts.
+
+All core workflows (donations, relief requests, items, warehouses, users, etc.) still operate correctly.
+
+Confirm CSP is present and has a proper script-src directive on representative responses.
+
+Code checks:
+
+Verify there is one source of truth for CSP in the codebase.
+
+Prepare the app so that when HCL AppScan is run again, the “Missing or insecure 'Script-Src' policy in 'Content-Security-Policy' header” and “Config your server to use the 'Content-Security-Policy' header with secure policies” findings should be resolved, without introducing regressions.
+
+Now inspect the entire DRIMS/DIMS codebase in this Replit project and perform these changes step-by-step, keeping everything functional while making CSP fully compliant and secur

@@ -1,0 +1,49 @@
+Update the DRIMS donation acceptance page with the following changes, without breaking any existing workflow, UI, logic, security fixes, or database schema:
+
+Separate Donation Header and Donation Items Sections (UI Layout)
+
+On the Accept Donation page, visually separate the Donation Header section block from the Add Donation Items section block.
+
+Keep the same existing UI style (cards/panels, fonts, spacing, buttons) but:
+
+Place the Donation Header section in its own clearly defined block at the top.
+
+Place the Add Donation Items section in a distinct block below the header.
+
+Make the Donation Items block stand out slightly (e.g. clearer panel/card, heading, subtle border or background consistent with existing design system) while still matching the overall UI and theme used elsewhere in the app.
+
+Ensure no changes to any existing form fields, validation rules, or backend calls—only adjust the layout and grouping for better usability.
+
+FUNDS Category – UOM Must Be Currency Code Dropdown
+
+In the Add Donation Items section, when the item category type is FUNDS:
+
+The UOM (Unit of Measure) field must become a dropdown list of currency codes (e.g. using the existing currency code master data in the system).
+
+Use the existing currency codes already stored in the database (e.g. currency_code table or equivalent) and do not create new tables or alter the schema.
+
+For non-FUNDS category types, keep the current UOM behavior exactly as is (including the ability to type or select other UOMs if that is the current behavior).
+
+The change must respect all existing constraints, validations, and business rules for items and donations.
+
+Fix “Other Cost Description” Clearing Bug on Validation Failure
+
+On the Accept Donation action, when the user clicks the Accept Donation button and mandatory fields are missing or fail validation:
+
+Fix the inconsistent behavior where the “Other Cost Description” field is being nulled/cleared when validation fails.
+
+Ensure that all user-entered values in the donation items, including “Other Cost Description”, are preserved and re-populated in the form when the page re-renders with validation errors.
+
+Make sure the “Other Cost Description” field remains fully editable after a failed submission and is not locked, disabled, or blocked due to placeholder/validation logic.
+
+The presence of a placeholder in the Other Cost field (or any cost field) must not cause the system to overwrite or null out the Other Cost Description value on validation failure.
+
+Do not change any existing server-side validation rules, only fix the state handling so that fields are not unintentionally cleared when there are validation errors.
+
+General Constraints
+
+Do not modify any database tables, columns, constraints, indexes, or triggers.
+
+Do not change any security-related configurations (authentication, authorization, CSP, headers, CSRF, etc.).
+
+Do not alter existing business logic for how donations and donation items are stored or processed—only improve UI layout, UOM behavior for FUNDS, and state persistence for the “Other Cost Description” field on failed submissions

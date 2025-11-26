@@ -6,6 +6,7 @@ from app.db import db
 from flask_login import UserMixin
 from datetime import datetime
 from sqlalchemy import CheckConstraint
+from sqlalchemy.orm import backref
 from app.utils.timezone import now as jamaica_now
 
 class User(UserMixin, db.Model):
@@ -320,11 +321,13 @@ class ItemCategory(db.Model):
     
     Defines categories for relief items with identity PK and unique category codes.
     Updated schema with category_id as primary key instead of category_code.
+    Supports GOODS and FUNDS category types for donation classification.
     """
     __tablename__ = 'itemcatg'
     __table_args__ = {'extend_existing': True}
     
     category_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    category_type = db.Column(db.CHAR(5), nullable=False, default='GOODS')
     category_code = db.Column(db.String(30), nullable=False, unique=True)
     category_desc = db.Column(db.String(60), nullable=False)
     comments_text = db.Column(db.Text)
@@ -373,6 +376,42 @@ class Item(db.Model):
     
     category = db.relationship('ItemCategory', foreign_keys=[category_id], backref='items')
     default_uom = db.relationship('UnitOfMeasure', backref='items')
+    
+    __mapper_args__ = {
+        'version_id_col': version_nbr
+    }
+
+class ItemCostDef(db.Model):
+    """Item Cost Definition - Defines cost types for items
+    
+    Defines various cost types that can be associated with items:
+    - Purchase costs: Purchase Price, CIF, etc.
+    - Additional costs: Storage, Transport, Inspection, Intake, Warehousing, etc.
+    
+    Cost types are categorized as PURCHASE or ADDITIONAL.
+    
+    Status Codes:
+        A = Active
+        I = Inactive
+    """
+    __tablename__ = 'itemcostdef'
+    
+    cost_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    cost_name = db.Column(db.String(50), nullable=False, unique=True)
+    cost_desc = db.Column(db.String(255), nullable=False)
+    cost_type = db.Column(db.CHAR(16), nullable=False)
+    status_code = db.Column(db.CHAR(1), nullable=False)
+    create_by_id = db.Column(db.String(20), nullable=False)
+    create_dtime = db.Column(db.DateTime, nullable=False)
+    update_by_id = db.Column(db.String(20), nullable=False)
+    update_dtime = db.Column(db.DateTime, nullable=False)
+    version_nbr = db.Column(db.Integer, nullable=False, default=1)
+    
+    __table_args__ = (
+        db.CheckConstraint("length(cost_name) <= 50", name='c_itemcostdef_1'),
+        db.CheckConstraint("cost_type IN ('PURCHASE','ADDITIONAL')", name='c_itemcostdef_2'),
+        db.CheckConstraint("status_code IN ('A','I')", name='c_itemcostdef_3'),
+    )
     
     __mapper_args__ = {
         'version_id_col': version_nbr
@@ -448,10 +487,10 @@ class ItemBatch(db.Model):
     inventory = db.relationship('Inventory', 
         foreign_keys=[inventory_id, item_id],
         primaryjoin='and_(ItemBatch.inventory_id==Inventory.inventory_id, ItemBatch.item_id==Inventory.item_id)',
-        backref='batches',
+        backref=backref('batches', overlaps='batches,item'),
         overlaps='batches,item')
     item = db.relationship('Item', 
-        backref='batches',
+        backref=backref('batches', overlaps='batches,inventory'),
         overlaps='batches,inventory')
     uom = db.relationship('UnitOfMeasure', backref='batches')
     
@@ -496,12 +535,43 @@ class BatchLocation(db.Model):
     batch = db.relationship('ItemBatch', foreign_keys=[batch_id], backref='locations')
     location = db.relationship('Location', backref='batch_locations')
 
+class Currency(db.Model):
+    """Currency Lookup Table"""
+    __tablename__ = 'currency'
+    
+    currency_code = db.Column(db.String(10), primary_key=True)
+    currency_name = db.Column(db.String(60), nullable=False)
+    currency_sign = db.Column(db.String(6), nullable=False)
+    status_code = db.Column(db.CHAR(1), nullable=False)
+    create_by_id = db.Column(db.String(20), nullable=False)
+    create_dtime = db.Column(db.DateTime, nullable=False)
+    update_by_id = db.Column(db.String(20), nullable=False)
+    update_dtime = db.Column(db.DateTime, nullable=False)
+    version_nbr = db.Column(db.Integer, nullable=False, default=1)
+    
+    __mapper_args__ = {
+        'version_id_col': version_nbr
+    }
+
 class Country(db.Model):
     """Country Lookup Table"""
     __tablename__ = 'country'
     
     country_id = db.Column(db.SmallInteger, primary_key=True)
     country_name = db.Column(db.String(80), nullable=False)
+    currency_code = db.Column(db.String(10), db.ForeignKey('currency.currency_code'), nullable=False)
+    status_code = db.Column(db.CHAR(1), nullable=False)
+    create_by_id = db.Column(db.String(20), nullable=False)
+    create_dtime = db.Column(db.DateTime, nullable=False)
+    update_by_id = db.Column(db.String(20), nullable=False)
+    update_dtime = db.Column(db.DateTime, nullable=False)
+    version_nbr = db.Column(db.Integer, nullable=False, default=1)
+    
+    currency = db.relationship('Currency', backref='countries')
+    
+    __mapper_args__ = {
+        'version_id_col': version_nbr
+    }
 
 class Donor(db.Model):
     """Donor"""
@@ -528,6 +598,7 @@ class Donation(db.Model):
     """Donation
     
     Tracks donations received from donors for specific events.
+    Includes cost breakdown for items, storage, haulage, and other expenses.
     
     Status Codes:
         E = Entered (initial entry)
@@ -539,27 +610,40 @@ class Donation(db.Model):
     donation_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     donor_id = db.Column(db.Integer, db.ForeignKey('donor.donor_id'), nullable=False)
     donation_desc = db.Column(db.Text, nullable=False)
+    origin_country_id = db.Column(db.SmallInteger, db.ForeignKey('country.country_id'), nullable=False)
+    origin_address1_text = db.Column(db.String(255))
+    origin_address2_text = db.Column(db.String(255))
     event_id = db.Column(db.Integer, db.ForeignKey('event.event_id'), nullable=False)
     custodian_id = db.Column(db.Integer, db.ForeignKey('custodian.custodian_id'), nullable=False)
     received_date = db.Column(db.Date, nullable=False)
+    tot_item_cost = db.Column(db.Numeric(12, 2), nullable=False, default=0.00)
+    storage_cost = db.Column(db.Numeric(12, 2), nullable=False, default=0.00)
+    haulage_cost = db.Column(db.Numeric(12, 2), nullable=False, default=0.00)
+    other_cost = db.Column(db.Numeric(12, 2), nullable=False, default=0.00)
+    other_cost_desc = db.Column(db.String(255))
     status_code = db.Column(db.CHAR(1), nullable=False)
     comments_text = db.Column(db.Text)
     create_by_id = db.Column(db.String(20), nullable=False)
     create_dtime = db.Column(db.DateTime, nullable=False)
-    update_by_id = db.Column(db.String(20))
-    update_dtime = db.Column(db.DateTime)
-    verify_by_id = db.Column(db.String(20))
-    verify_dtime = db.Column(db.DateTime)
+    update_by_id = db.Column(db.String(20), nullable=False)
+    update_dtime = db.Column(db.DateTime, nullable=False)
+    verify_by_id = db.Column(db.String(20), nullable=True)
+    verify_dtime = db.Column(db.DateTime, nullable=True)
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
     
     __table_args__ = (
         db.CheckConstraint("received_date <= CURRENT_DATE", name='c_donation_1'),
-        db.CheckConstraint("status_code IN ('E', 'V', 'P')", name='c_donation_2'),
+        db.CheckConstraint("tot_item_cost >= 0.00", name='c_donation_2'),
+        db.CheckConstraint("storage_cost >= 0.00", name='c_donation_2a'),
+        db.CheckConstraint("haulage_cost >= 0.00", name='c_donation_2b'),
+        db.CheckConstraint("other_cost >= 0.00", name='c_donation_2c'),
+        db.CheckConstraint("status_code IN ('E', 'V', 'P')", name='c_donation_3'),
     )
     
     donor = db.relationship('Donor', backref='donations')
     event = db.relationship('Event', backref='donations')
     custodian = db.relationship('Custodian', backref='donations')
+    origin_country = db.relationship('Country', backref='donations')
     created_by = db.relationship('User', foreign_keys=[create_by_id], primaryjoin='Donation.create_by_id == User.user_name', backref='donations_created')
     verify_by = db.relationship('User', foreign_keys=[verify_by_id], primaryjoin='Donation.verify_by_id == User.user_name', backref='donations_verified')
     update_by = db.relationship('User', foreign_keys=[update_by_id], primaryjoin='Donation.update_by_id == User.user_name', backref='donations_updated')
@@ -574,6 +658,10 @@ class DonationItem(db.Model):
     Tracks individual items and quantities donated as part of a donation.
     Links donations to specific items with verification status.
     
+    Donation Types:
+        GOODS = Physical goods (requires uom_code, no currency_code)
+        FUNDS = Monetary donation (requires currency_code, no uom_code)
+    
     Status Codes:
         P = Processed
         V = Verified
@@ -582,25 +670,69 @@ class DonationItem(db.Model):
     
     donation_id = db.Column(db.Integer, db.ForeignKey('donation.donation_id'), primary_key=True)
     item_id = db.Column(db.Integer, db.ForeignKey('item.item_id'), primary_key=True)
-    item_qty = db.Column(db.Numeric(12, 2), nullable=False)
-    uom_code = db.Column(db.String(25), db.ForeignKey('unitofmeasure.uom_code'), nullable=False)
+    donation_type = db.Column(db.CHAR(5), nullable=False, default='GOODS')
+    item_qty = db.Column(db.Numeric(9, 2), nullable=False, default=1.00)
+    item_cost = db.Column(db.Numeric(10, 2), nullable=False, default=0.00)
+    uom_code = db.Column(db.String(25), db.ForeignKey('unitofmeasure.uom_code'), nullable=True)
+    currency_code = db.Column(db.String(10), db.ForeignKey('currency.currency_code'), nullable=True)
     location_name = db.Column(db.Text, nullable=False)
     status_code = db.Column(db.CHAR(1), nullable=False, default='V')
     comments_text = db.Column(db.Text)
     create_by_id = db.Column(db.String(20), nullable=False)
     create_dtime = db.Column(db.DateTime, nullable=False)
-    verify_by_id = db.Column(db.String(20))
-    verify_dtime = db.Column(db.DateTime)
+    update_by_id = db.Column(db.String(20), nullable=False, default='SYSTEM')
+    update_dtime = db.Column(db.DateTime, nullable=False, server_default=db.text('CURRENT_TIMESTAMP'))
+    verify_by_id = db.Column(db.String(20), nullable=True)
+    verify_dtime = db.Column(db.DateTime, nullable=True)
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
     
     __table_args__ = (
-        db.CheckConstraint("item_qty >= 0.00", name='c_donation_item_1'),
+        db.CheckConstraint("donation_type IN ('GOODS', 'FUNDS')", name='c_donation_item_0'),
+        db.CheckConstraint("item_qty >= 0.00", name='c_donation_item_1a'),
+        db.CheckConstraint("item_cost >= 0.00", name='c_donation_item_1b'),
         db.CheckConstraint("status_code IN ('P', 'V')", name='c_donation_item_2'),
+        db.CheckConstraint(
+            "(donation_type = 'GOODS' AND uom_code IS NOT NULL AND currency_code IS NULL) OR "
+            "(donation_type = 'FUNDS' AND currency_code IS NOT NULL AND uom_code IS NULL)",
+            name='c_donation_item_type_fields'
+        ),
     )
     
     donation = db.relationship('Donation', backref='items')
     item = db.relationship('Item', backref='donation_items')
     uom = db.relationship('UnitOfMeasure', backref='donation_items')
+    currency = db.relationship('Currency', backref='donation_items')
+    
+    __mapper_args__ = {
+        'version_id_col': version_nbr
+    }
+
+class DonationDoc(db.Model):
+    """Donation Document - Attachments for donations
+    
+    Tracks documents attached to donations (receipts, manifests, delivery notices).
+    Supports PDF and JPEG file formats.
+    """
+    __tablename__ = 'donation_doc'
+    
+    document_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    donation_id = db.Column(db.Integer, db.ForeignKey('donation.donation_id'), nullable=False)
+    document_type = db.Column(db.String(40), nullable=False)
+    document_desc = db.Column(db.String(255), nullable=False)
+    file_name = db.Column(db.String(80), nullable=False)
+    file_type = db.Column(db.String(30), nullable=False)
+    file_size = db.Column(db.String(20))
+    create_by_id = db.Column(db.String(20), nullable=False)
+    create_dtime = db.Column(db.DateTime, nullable=False)
+    update_by_id = db.Column(db.String(20), nullable=False)
+    update_dtime = db.Column(db.DateTime, nullable=False)
+    version_nbr = db.Column(db.Integer, nullable=False, default=1)
+    
+    __table_args__ = (
+        db.CheckConstraint("file_type IN ('application/pdf', 'image/jpeg')", name='c_donation_doc_1'),
+    )
+    
+    donation = db.relationship('Donation', backref='documents')
     
     __mapper_args__ = {
         'version_id_col': version_nbr
@@ -1057,8 +1189,9 @@ class DonationIntake(db.Model):
     donation = db.relationship('Donation', backref='intakes')
     inventory = db.relationship('Inventory', backref='donation_intakes')
     warehouse = db.relationship('Warehouse', 
-                                primaryjoin='DonationIntake.inventory_id==foreign(Warehouse.warehouse_id)',
-                                viewonly=True)
+                                primaryjoin='foreign(DonationIntake.inventory_id)==Warehouse.warehouse_id',
+                                viewonly=True,
+                                uselist=False)
 
 class DonationIntakeItem(db.Model):
     """Donation Intake Item - Batch-level intake tracking for donations
@@ -1067,28 +1200,28 @@ class DonationIntakeItem(db.Model):
     dates, expiry, and quantities. If batch doesn't exist in itembatch table,
     create it with batch_id and zero quantities, then update with intake amounts.
     
-    CRITICAL: batch_no and batch_date are nullable to support items without batch tracking.
-    When both are NULL, items are tracked without specific batch identification.
+    IMPORTANT: batch_no is required and part of composite PK. If no manufacturer batch
+    number exists, use the item code as the batch_no value.
     
     Status Codes:
-        P = Processed
+        P = Pending verification
         V = Verified
     """
     __tablename__ = 'dnintake_item'
     
-    intake_item_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    donation_id = db.Column(db.Integer, nullable=False)
-    inventory_id = db.Column(db.Integer, nullable=False)
-    item_id = db.Column(db.Integer, nullable=False)
-    batch_no = db.Column(db.String(20), nullable=True)  # Nullable - supports items without batch tracking
-    batch_date = db.Column(db.Date, nullable=True)  # Nullable - supports items without batch tracking
-    expiry_date = db.Column(db.Date)
+    donation_id = db.Column(db.Integer, primary_key=True)
+    inventory_id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, primary_key=True)
+    batch_no = db.Column(db.String(20), primary_key=True)
+    batch_date = db.Column(db.Date, nullable=False)
+    expiry_date = db.Column(db.Date, nullable=False)
     uom_code = db.Column(db.String(25), db.ForeignKey('unitofmeasure.uom_code'), nullable=False)
     avg_unit_value = db.Column(db.Numeric(10, 2), nullable=False)
-    usable_qty = db.Column(db.Numeric(12, 2), nullable=False)
-    defective_qty = db.Column(db.Numeric(12, 2), nullable=False)
-    expired_qty = db.Column(db.Numeric(12, 2), nullable=False)
-    status_code = db.Column(db.CHAR(1), nullable=False)
+    ext_item_cost = db.Column(db.Numeric(12, 2), nullable=False, default=0.00)
+    usable_qty = db.Column(db.Numeric(12, 2), nullable=False, default=0.00)
+    defective_qty = db.Column(db.Numeric(12, 2), nullable=False, default=0.00)
+    expired_qty = db.Column(db.Numeric(12, 2), nullable=False, default=0.00)
+    status_code = db.Column(db.CHAR(1), nullable=False, default='P')
     comments_text = db.Column(db.String(255))
     create_by_id = db.Column(db.String(20), nullable=False)
     create_dtime = db.Column(db.DateTime, nullable=False)
@@ -1099,16 +1232,18 @@ class DonationIntakeItem(db.Model):
     __table_args__ = (
         db.ForeignKeyConstraint(['donation_id', 'inventory_id'], ['dnintake.donation_id', 'dnintake.inventory_id'], name='fk_dnintake_item_intake'),
         db.ForeignKeyConstraint(['donation_id', 'item_id'], ['donation_item.donation_id', 'donation_item.item_id'], name='fk_dnintake_item_donation_item'),
-        db.CheckConstraint("batch_no IS NULL OR batch_no = UPPER(batch_no)", name='c_dnintake_item_1a'),
-        db.CheckConstraint("batch_date IS NULL OR batch_date <= CURRENT_DATE", name='c_dnintake_item_1b'),
-        db.CheckConstraint("expiry_date >= CURRENT_DATE OR expiry_date IS NULL", name='c_dnintake_item_1c'),
+        db.CheckConstraint("batch_no = UPPER(batch_no)", name='c_dnintake_item_1a'),
+        db.CheckConstraint("batch_date <= CURRENT_DATE", name='c_dnintake_item_1b'),
+        db.CheckConstraint("expiry_date >= batch_date", name='c_dnintake_item_1c'),
         db.CheckConstraint("avg_unit_value > 0.00", name='c_dnintake_item_1d'),
+        db.CheckConstraint("ext_item_cost >= 0.00", name='c_dnintake_item_1e'),
         db.CheckConstraint("usable_qty >= 0.00", name='c_dnintake_item_2'),
         db.CheckConstraint("defective_qty >= 0.00", name='c_dnintake_item_3'),
         db.CheckConstraint("expired_qty >= 0.00", name='c_dnintake_item_4'),
         db.CheckConstraint("status_code IN ('P', 'V')", name='c_dnintake_item_5'),
         db.Index('dk_dnintake_item_1', 'inventory_id', 'item_id'),
         db.Index('dk_dnintake_item_2', 'item_id'),
+        db.PrimaryKeyConstraint('donation_id', 'inventory_id', 'item_id', 'batch_no', name='pk_dnintake_item'),
     )
     
     intake = db.relationship('DonationIntake', backref='items')

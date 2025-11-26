@@ -159,6 +159,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('eligibility.submit_decision', request_id=request.reliefrqst_id) }}" id="eligibilityForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <fieldset>
                             <legend class="form-label fw-bold">Is this request eligible for relief?</legend>
                             <div class="mb-4">
@@ -293,11 +294,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateReasonVisibility() {
         if (decisionNo.checked) {
-            reasonContainer.style.display = 'block';
+            reasonContainer.classList.remove('d-none');
+            reasonContainer.classList.add('d-block');
             reasonField.required = true;
             setTimeout(() => reasonField.focus(), 100);
         } else {
-            reasonContainer.style.display = 'none';
+            reasonContainer.classList.remove('d-block');
+            reasonContainer.classList.add('d-none');
             reasonField.required = false;
             reasonField.value = '';
             reasonField.classList.remove('is-invalid');

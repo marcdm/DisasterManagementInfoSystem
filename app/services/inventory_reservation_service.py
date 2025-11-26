@@ -375,3 +375,233 @@ def commit_inventory(reliefrqst_id: int) -> Tuple[bool, str]:
     except SQLAlchemyError as e:
         db.session.rollback()
         return False, f'Database error during commit: {str(e)}'
+
+
+def cancel_relief_package(reliefpkg_id: int, current_user_name: str) -> Tuple[bool, str]:
+    """
+    Cancel a relief package and fully reverse all reservations with optimistic locking.
+    
+    This function:
+    1. Validates the package exists and can be cancelled
+    2. Retrieves all ReliefPkgItem allocations for this package
+    3. Releases batch-level reservations (itembatch.reserved_qty) with optimistic locking
+    4. Releases warehouse-level reservations (inventory.reserved_qty) with optimistic locking
+    5. Deletes all ReliefPkgItem records
+    6. Deletes the ReliefPkg record
+    
+    All operations are performed in a single transaction (all-or-nothing).
+    
+    Optimistic Locking:
+    - Uses version_nbr on both itembatch and inventory tables
+    - If any version mismatch occurs, the entire cancellation is rolled back
+    
+    Validation:
+    - Ensures reserved_qty >= allocated_qty before decrementing
+    - Ensures reserved_qty >= 0 after decrementing
+    - On any validation failure, rolls back the entire transaction
+    
+    Args:
+        reliefpkg_id: ID of the relief package to cancel
+        current_user_name: Username of the current user (for audit trail)
+    
+    Returns:
+        (success: bool, error_message: str)
+        - success=True with empty error_message on successful cancellation
+        - success=False with descriptive error_message on failure
+    
+    Usage:
+        success, error = cancel_relief_package(123, 'admin')
+        if not success:
+            flash(error, 'danger')
+            return redirect(...)
+        flash('Package cancelled successfully', 'success')
+    """
+    try:
+        from app.db.models import ReliefPkg, User, Warehouse
+        from app.utils.timezone import now as jamaica_now
+        
+        # Get the relief package with lock
+        relief_pkg = ReliefPkg.query.filter_by(reliefpkg_id=reliefpkg_id).with_for_update().first()
+        
+        if not relief_pkg:
+            return False, f'Relief package #{reliefpkg_id} not found'
+        
+        # Validation: Only Pending (P) or Dispatched (D) packages can be cancelled
+        # Completed (C) packages cannot be cancelled as they've been received
+        if relief_pkg.status_code not in ('P', 'D'):
+            status_names = {'P': 'Pending', 'D': 'Dispatched', 'C': 'Completed', 
+                          'V': 'Verified', 'R': 'Received', 'A': 'Draft'}
+            current_status = status_names.get(relief_pkg.status_code, relief_pkg.status_code)
+            return False, f'Cannot cancel package with status: {current_status}. Only Pending or Dispatched packages can be cancelled.'
+        
+        # Get all package items (allocations) for this package
+        pkg_items = ReliefPkgItem.query.filter_by(reliefpkg_id=reliefpkg_id).all()
+        
+        if not pkg_items:
+            # No allocations to cancel - can safely delete the empty package
+            db.session.delete(relief_pkg)
+            return True, ''
+        
+        # Track affected (item_id, inventory_id) pairs for inventory-level recalculation
+        affected_inventory = set()
+        
+        # Track batch version numbers for optimistic locking
+        batch_versions = {}
+        
+        # PHASE 1: Release batch-level reservations (itembatch.reserved_qty)
+        for pkg_item in pkg_items:
+            item_id = pkg_item.item_id
+            inventory_id = pkg_item.fr_inventory_id
+            batch_id = pkg_item.batch_id
+            reserved_for_pkg = pkg_item.item_qty
+            
+            if reserved_for_pkg <= 0:
+                continue
+            
+            # Get the batch with optimistic lock
+            batch = ItemBatch.query.filter_by(
+                batch_id=batch_id,
+                item_id=item_id,
+                inventory_id=inventory_id
+            ).with_for_update().first()
+            
+            if not batch:
+                # Batch was deleted after package creation - log and continue
+                # (reservations will be recalculated at inventory level)
+                from flask import current_app
+                current_app.logger.warning(
+                    f'Batch not found during cancellation: '
+                    f'batch_id={batch_id}, item_id={item_id}, inventory_id={inventory_id}'
+                )
+                affected_inventory.add((item_id, inventory_id))
+                continue
+            
+            # Store original version for optimistic locking check
+            original_version = batch.version_nbr
+            batch_versions[(batch_id, item_id, inventory_id)] = original_version
+            
+            # VALIDATION: Ensure reserved_qty >= reserved_for_pkg (data consistency check)
+            if batch.reserved_qty < reserved_for_pkg:
+                from app.db.models import Warehouse, Item
+                warehouse = Warehouse.query.get(inventory_id)
+                item = Item.query.get(item_id)
+                warehouse_name = warehouse.warehouse_name if warehouse else f'ID {inventory_id}'
+                item_name = item.item_name if item else f'ID {item_id}'
+                
+                db.session.rollback()
+                return False, (
+                    f'Cancellation failed: Inconsistent reservation data detected. '
+                    f'Batch {batch_id} for {item_name} at {warehouse_name} has reserved_qty={batch.reserved_qty}, '
+                    f'but package allocated {reserved_for_pkg}. Please contact system administrator.'
+                )
+            
+            # Release reservation from batch
+            batch.reserved_qty -= reserved_for_pkg
+            
+            # VALIDATION: Ensure reserved_qty >= 0 after decrement
+            if batch.reserved_qty < 0:
+                db.session.rollback()
+                return False, (
+                    f'Cancellation failed: Batch reserved_qty would become negative. '
+                    f'Please contact system administrator.'
+                )
+            
+            # Update audit fields and increment version_nbr for optimistic locking
+            batch.update_by_id = current_user_name
+            batch.update_dtime = jamaica_now()
+            batch.version_nbr += 1
+            
+            # Track this inventory for warehouse-level recalculation
+            affected_inventory.add((item_id, inventory_id))
+        
+        # PHASE 2: Release warehouse-level reservations (inventory.reserved_qty)
+        # Recalculate from SUM(itembatch.reserved_qty) to ensure consistency
+        inventory_versions = {}
+        
+        for item_id, inventory_id in affected_inventory:
+            # Sum all batch reservations for this item+warehouse
+            batch_totals = db.session.query(
+                func.sum(ItemBatch.reserved_qty).label('total_reserved')
+            ).filter(
+                ItemBatch.item_id == item_id,
+                ItemBatch.inventory_id == inventory_id
+            ).first()
+            
+            # Get the inventory record with optimistic lock
+            inventory = Inventory.query.filter_by(
+                item_id=item_id,
+                inventory_id=inventory_id
+            ).with_for_update().first()
+            
+            if not inventory:
+                db.session.rollback()
+                return False, f'Inventory record not found for item {item_id} at warehouse {inventory_id}'
+            
+            # Store original version for optimistic locking
+            original_version = inventory.version_nbr
+            inventory_versions[(item_id, inventory_id)] = original_version
+            
+            # Calculate new warehouse-level reserved_qty from batch sums
+            new_reserved_qty = batch_totals.total_reserved if batch_totals.total_reserved is not None else Decimal('0')
+            
+            # VALIDATION: Ensure new reserved_qty >= 0
+            if new_reserved_qty < 0:
+                db.session.rollback()
+                return False, (
+                    f'Cancellation failed: Inventory reserved_qty would become negative '
+                    f'for item {item_id} at warehouse {inventory_id}. '
+                    f'Please contact system administrator.'
+                )
+            
+            # Update inventory reserved_qty
+            inventory.reserved_qty = new_reserved_qty
+            
+            # Update audit fields and increment version_nbr for optimistic locking
+            inventory.update_by_id = current_user_name
+            inventory.update_dtime = jamaica_now()
+            inventory.version_nbr += 1
+        
+        # PHASE 3: Delete package items and package
+        # Delete all ReliefPkgItem records
+        for pkg_item in pkg_items:
+            db.session.delete(pkg_item)
+        
+        # Delete the ReliefPkg record
+        db.session.delete(relief_pkg)
+        
+        # Transaction will be committed by caller
+        return True, ''
+        
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        
+        # Check if this was an optimistic locking failure (StaleDataError)
+        from sqlalchemy.orm.exc import StaleDataError
+        error_str = str(e)
+        
+        if isinstance(e, StaleDataError) or 'stale' in error_str.lower() or 'version' in error_str.lower() or 'concurrent' in error_str.lower():
+            return False, (
+                'This package or its inventory was updated by another user. '
+                'Please refresh the page and try again.'
+            )
+        
+        # Log the actual error for debugging
+        from flask import current_app
+        current_app.logger.error(f'Database error during package cancellation: {str(e)}', exc_info=True)
+        
+        return False, (
+            'Cancellation failed due to a database error. '
+            'Please contact system administrator if this persists.'
+        )
+    
+    except Exception as e:
+        db.session.rollback()
+        
+        # Log the actual error for debugging
+        from flask import current_app
+        current_app.logger.error(f'Unexpected error during package cancellation: {str(e)}', exc_info=True)
+        
+        return False, (
+            'An unexpected error occurred during cancellation. '
+            'Please contact system administrator if this persists.'
+        )

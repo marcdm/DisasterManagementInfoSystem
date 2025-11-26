@@ -28,6 +28,7 @@
             <div class="card">
                 <div class="card-body p-4">
                     <form method="POST" action="{{ url_for('donations.edit_donation_item', donation_id=donation_item.donation_id, item_id=donation_item.item_id) }}" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="version_nbr" value="{{ donation_item.version_nbr }}">
                         
                         <!-- Item Information Section -->
@@ -77,7 +78,7 @@
                                         Status <span class="text-danger">*</span>
                                     </label>
                                     <select class="form-select" id="status_code" name="status_code" required>
-                                        <option value="P" {% if donation_item.status_code == 'P' %}selected{% endif %}>Processed</option>
+                                        <option value="P" {% if donation_item.status_code == 'P' %}selected{% endif %}>Pending</option>
                                         <option value="V" {% if donation_item.status_code == 'V' %}selected{% endif %}>Verified</option>
                                     </select>
                                 </div>

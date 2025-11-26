@@ -264,7 +264,7 @@ def create_warehouse():
             db.session.commit()
             
             flash(f'Warehouse "{warehouse.warehouse_name}" created successfully', 'success')
-            return redirect(url_for('warehouses.view_warehouse', warehouse_id=warehouse.warehouse_id))
+            return redirect(url_for('warehouses.list_warehouses', filter='all'))
             
         except Exception as e:
             db.session.rollback()
@@ -358,7 +358,7 @@ def edit_warehouse(warehouse_id):
             db.session.commit()
             
             flash(f'Warehouse "{warehouse.warehouse_name}" updated successfully', 'success')
-            return redirect(url_for('warehouses.view_warehouse', warehouse_id=warehouse.warehouse_id))
+            return redirect(url_for('warehouses.list_warehouses', filter='all'))
             
         except Exception as e:
             db.session.rollback()

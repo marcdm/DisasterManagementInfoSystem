@@ -1,0 +1,169 @@
+Create a new page and route called /dashboard/donations-analytics for the roles: DG, Deputy DG, Director PEOD, and Logistics Manager.
+DO NOT modify any database table or schema.
+DO NOT break any existing code, workflows, logic, or behaviour.
+Use the existing Flask, Jinja2, SQLAlchemy patterns already in the DRIMS codebase.
+
+1. Purpose of the New Dashboard
+
+Build a modern analytics dashboard that shows:
+
+A. Donations by Donor / Organization
+
+A bar chart ranking donors by total donation amount (tot_item_cost sum)
+
+A donut/pie chart showing % share per donor
+
+B. Donations by Country of Origin
+
+A world map (if available) or bar/column chart showing origin_country
+
+Country vs Total Donation Amount
+
+C. Donations Received Over Time
+
+A line chart (monthly) showing:
+
+total donations received per month
+
+number of donations received per month
+
+D. Total Donation Metrics (KPIs displayed at top)
+
+Create 4 KPI cards with modern UI styling:
+
+Total Donations Received (count)
+
+Total Donation Value (JMD) → sum of tot_item_cost
+
+Unique Donors
+
+Number of Countries Donated From
+
+E. Donations Distribution (Where Donations Go)
+
+Using existing data:
+
+A stacked bar chart showing donations dispatched to warehouses or allocated to events.
+
+If event or warehouse is null, categorize as “Unassigned”.
+
+2. UI/UX Requirements
+General
+
+Use responsive layout (Bootstrap grid or Tailwind depending on project’s existing UI)
+
+Must work on desktop, tablet, and mobile
+
+Use card components to group each chart
+
+Use consistent modern theme following DRIMS UI style
+
+Charts
+
+Use Chart.js (existing) or any chart library already used in the project
+
+Each chart must have:
+
+legends
+
+axis labels
+
+tooltips
+
+responsive resizing
+
+Page Layout
+
+Top:
+
+[ KPI 1 ] [ KPI 2 ] [ KPI 3 ] [ KPI 4 ]
+
+
+Then two rows:
+
+Row 1:
+
+Left: Donations by Donor (bar chart)
+Right: Donations by Country (bar or donut chart)
+
+
+Row 2:
+
+Left: Monthly Donations Over Time (line chart)
+Right: Donations Distribution (stacked bar)
+
+3. Backend Requirements
+
+Create a new Flask blueprint route:
+
+GET /dashboard/donations-analytics
+
+
+Role access (read-only):
+
+DG
+
+Deputy DG
+
+Director PEOD
+
+Logistics Manager
+
+SQL Queries (use SQLAlchemy ORM)
+
+A. KPI Totals
+
+Count donations
+
+Sum donation.tot_item_cost
+
+Count distinct donors
+
+Count distinct origin_country_id
+
+B. Donations by Donor
+Group by donor.name
+
+C. Donations by Country
+Group by origin_country.country_name
+
+D. Monthly Donation Summary
+Group by date_trunc('month', received_date)
+
+E. Distribution
+If dispatched/allocated fields exist, use them.
+Else show placeholder “No distribution data recorded”.
+
+Return all data as JSON-serializable structures to Jinja.
+
+4. Frontend Template (Jinja)
+
+Create a new template:
+templates/dashboard/donations_analytics.html
+
+With:
+
+responsive cards
+
+charts embedded using <canvas> tags
+
+color palette consistent with DRIMS
+
+5. Security & Non-Breaking Requirements
+
+NO schema changes
+
+NO modifications to donation workflows
+
+NO change to CRUD functionality
+
+Must only display data (read-only)
+
+Must reuse existing DB models & utilities
+
+6. Navigation Update
+
+Add a menu link for the four roles:
+
+Label: “Donation Analytics Dashboard”
+Location: Under “Dashboard” menu section

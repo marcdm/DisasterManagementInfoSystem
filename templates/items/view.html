@@ -227,12 +227,14 @@
                     <div class="d-flex gap-2 justify-content-end border-top pt-3">
                         {% if item.status_code == 'A' %}
                         <form method="POST" action="{{ url_for('items.inactivate_item', item_id=item.item_id) }}" id="inactivateItemForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-outline-warning">
                                 <i class="bi bi-x-circle"></i> Inactivate Item
                             </button>
                         </form>
                         {% else %}
                         <form method="POST" action="{{ url_for('items.activate_item', item_id=item.item_id) }}" id="reactivateItemForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-outline-success">
                                 <i class="bi bi-check-circle"></i> Reactivate Item
                             </button>

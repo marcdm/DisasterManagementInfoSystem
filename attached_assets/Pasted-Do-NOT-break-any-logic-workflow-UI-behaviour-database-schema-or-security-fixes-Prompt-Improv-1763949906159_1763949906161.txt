@@ -1,0 +1,69 @@
+Do NOT break any logic, workflow, UI, behaviour, database schema, or security fixes.
+
+Prompt:
+Improve the donation item–creation flow so that when a user attempts to add the same item twice to the same donation, instead of showing the raw database error:
+
+(psycopg2.errors.UniqueViolation)
+duplicate key value violates unique constraint "pk_donation_item"
+DETAIL: Key (donation_id, item_id)=(46, 22) already exists.
+
+
+…the system must show a clean, friendly, non-technical validation message.
+
+Requirements
+
+Do NOT change the database schema
+
+The composite primary key (donation_id, item_id) must remain.
+
+This PK is correct and should continue preventing duplicates.
+
+Catch the duplicate-key error at the application level
+
+Intercept the UniqueViolation / SQLAlchemy IntegrityError.
+
+Detect when the violation corresponds to pk_donation_item.
+
+Do NOT expose technical stack traces or SQL error text to end users.
+
+Show a friendly message instead, such as:
+
+“This item has already been added to the donation.”
+
+“Duplicate items are not allowed for the same donation.”
+
+Or similar wording approved by ODPEM.
+
+Do NOT break or modify any other functionality
+
+Existing donation workflows (Entered → Verified → Processed) must behave the same.
+
+UI layout and page flow must not change.
+
+Existing security hardening (CSP, SRI, headers, TLS, cookie flags, no-store, POST-only rules, etc.) must remain unchanged.
+
+Do NOT introduce new fields or modify existing tables.
+
+Optional (but recommended):
+
+Highlight the item field in the form to show which item is duplicated.
+
+Maintain all other form values so the user doesn’t lose their input.
+
+Fallback behaviour:
+
+If any other database error occurs, continue using the existing generic error handling.
+
+Only show the friendly message for this specific uniqueness violation.
+
+Expected Outcome
+
+When a user tries to add the same item twice to a donation:
+
+The insert is still blocked by the PK constraint (as required).
+
+The user sees a clear, human-readable message instead of raw SQL.
+
+The app continues functioning exactly as before.
+
+No regression of any security fixes.

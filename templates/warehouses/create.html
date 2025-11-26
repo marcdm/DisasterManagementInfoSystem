@@ -20,7 +20,7 @@
                 <h1 class="page-title-text">Create New Warehouse</h1>
             </div>
         </div>
-        <a href="{{ url_for('warehouses.list_warehouses') }}" class="btn-relief-secondary">
+        <a href="{{ url_for('warehouses.list_warehouses', filter='all') }}" class="btn-relief-secondary">
             <i class="bi bi-arrow-left"></i> Back to List
         </a>
     </div>
@@ -31,6 +31,7 @@
             <div class="card">
                 <div class="card-body p-4">
                     <form method="POST" action="{{ url_for('warehouses.create_warehouse') }}" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <!-- Basic Information Section -->
                         <div class="mb-4">
                             <h5 class="border-bottom pb-2 mb-3">
@@ -241,7 +242,7 @@
 
                         <!-- Form Actions -->
                         <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                            <a href="{{ url_for('warehouses.list_warehouses') }}" class="btn-relief-secondary">
+                            <a href="{{ url_for('warehouses.list_warehouses', filter='all') }}" class="btn-relief-secondary">
                                 <i class="bi bi-x-circle"></i> Cancel
                             </a>
                             <button type="submit" class="btn-relief-primary">
@@ -262,10 +263,12 @@ function toggleReasonField() {
     const reasonInput = document.getElementById('reason_desc');
     
     if (status === 'I') {
-        reasonContainer.style.display = 'block';
+        reasonContainer.classList.remove('d-none');
+        reasonContainer.classList.add('d-block');
         reasonInput.required = true;
     } else {
-        reasonContainer.style.display = 'none';
+        reasonContainer.classList.remove('d-block');
+        reasonContainer.classList.add('d-none');
         reasonInput.required = false;
         reasonInput.value = '';
     }

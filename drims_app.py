@@ -2,6 +2,11 @@
 DRIMS - Disaster Relief Inventory Management System
 Main Flask Application
 """
+from flask import Flask, render_template, redirect, url_for, flash, request
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_wtf.csrf import CSRFProtect, generate_csrf
+from werkzeug.security import check_password_hash
+from urllib.parse import urlparse, urljoin
 import os
 from flask import Flask, abort, render_template, redirect, url_for, flash, request, session
 from flask_login import LoginManager, login_required, current_user
@@ -17,6 +22,7 @@ from app.security.error_handling import init_error_handling
 from app.security.query_string_protection import init_query_string_protection
 from app.utils.timezone import format_datetime, datetime_to_jamaica, now
 from app.utils.keycloak import *
+from app.security.csrf_validation import init_csrf_origin_validation
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -28,9 +34,22 @@ init_header_sanitization(app)
 init_error_handling(app)
 init_query_string_protection(app)
 
+csrf = CSRFProtect(app)
+init_csrf_origin_validation(app)
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+
+def is_safe_url(target):
+    """Validate that a redirect target stays within the same host (prevents open redirects)."""
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return (
+        test_url.scheme in ('http', 'https')
+        and ref_url.netloc == test_url.netloc
+    )
 
 
 @login_manager.user_loader
@@ -72,8 +91,8 @@ from app.features.operations_dashboard import operations_dashboard_bp
 from app.core.status import get_status_label, get_status_badge_class
 from app.core.rbac import (
     has_role, has_all_roles, has_warehouse_access,
-    is_admin, is_logistics_manager, is_logistics_officer, is_director_level,
-    can_manage_users, can_view_reports, has_permission
+    is_admin, is_logistics_manager, is_logistics_officer, is_director_level, is_executive,
+    can_manage_users, can_view_reports, has_permission, EXECUTIVE_ROLES
 )
 from app.core.feature_registry import FeatureRegistry
 
@@ -86,6 +105,11 @@ def get_feature_details(feature_key):
         }
     return None
 
+@app.context_processor
+def inject_csrf_token():
+    """Make CSRF token available to all templates."""
+    return dict(csrf_token=generate_csrf)
+
 app.jinja_env.globals.update(
     has_role=has_role,
     has_all_roles=has_all_roles,
@@ -94,6 +118,7 @@ app.jinja_env.globals.update(
     is_logistics_manager=is_logistics_manager,
     is_logistics_officer=is_logistics_officer,
     is_director_level=is_director_level,
+    is_executive=is_executive,
     can_manage_users=can_manage_users,
     can_view_reports=can_view_reports,
     has_permission=has_permission,

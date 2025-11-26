@@ -1,0 +1,229 @@
+(ZERO BREAKAGE: UI, logic, workflow, FK chains, and security remain untouched)
+
+You are working on an existing Flask + PostgreSQL Disaster Relief / Disaster Management Information System (DRIMS / DIMS).
+
+The authoritative schema is stored in:
+
+/mnt/data/drms-2.2.sql
+
+You must update the donation_item table so that it matches the target DDL below, while preserving:
+
+All referential integrity
+
+All existing data
+
+All security hardening
+
+All application workflows
+
+All UI logic
+
+All RBAC/permissions
+
+All existing behaviour and routes
+
+⚠️ You MUST NOT break ANY existing logic, workflows, UI, or security fixes.
+⚠️ You MUST NOT modify any other tables.
+⚠️ You MUST retain and reapply foreign keys exactly as they exist.
+
+TARGET DDL (Final Structure Required)
+
+This is the table structure the system must have after migration:
+
+create table donation_item
+(
+	donation_id integer not null
+		constraint fk_donation_item_donation references donation,
+	item_id integer not null
+		constraint fk_donation_item_item references item,
+
+	--Type of donation - Goods/Funds
+	donation_type char(5) not null
+		constraint c_donation_item_0 check (donation_type in ('GOODS','FUNDS')),
+
+	--Quantity (goods) / number of instances (funds)
+	item_qty decimal(9,2) not null default 1.00
+		constraint c_donation_item_1a check (item_qty >= 0.00),
+
+	--Purchase cost (goods) or donated value (funds)
+	item_cost decimal(10,2) not null
+		constraint c_donation_item_1b check (item_cost >= 0.00),
+
+	--Unit in which the item/funds quantity is measured
+	uom_code varchar(25) not null
+		constraint fk_donation_item_unitofmeasure references unitofmeasure,
+
+	--Pickup/Storage location information
+	location_name text not null,
+
+	status_code char(1) not null default 'V'
+		constraint c_donation_item_2 check (status_code in ('P','V')),
+
+	--Additional comments
+	comments_text text,
+
+	create_by_id varchar(20) not null,
+	create_dtime timestamp(0) without time zone not null,
+	update_by_id varchar(20) not null,
+	update_dtime timestamp(0) without time zone not null,
+	verify_by_id varchar(20) not null,
+	verify_dtime timestamp(0) without time zone not null,
+	version_nbr integer not null,
+
+	--Must reflect > 0 after combining purchase + additional costs
+	constraint c_donation_item_10 check (item_cost + addon_cost > 0.00),
+
+	constraint pk_donation_item primary key(donation_id,item_id)
+);
+
+HARD NON-NEGOTIABLE RULES
+1. DO NOT BREAK REFERENTIAL INTEGRITY
+
+Identify all tables referencing donation_item (e.g., dnintake_item, itembatch, etc.).
+
+Ensure no foreign key is invalidated.
+
+If you temporarily drop constraints for migration, you must restore them exactly.
+
+2. DO NOT BREAK ANY APP LOGIC / UI / WORKFLOW
+
+This table feeds critical DRIMS flows:
+
+Accept Donation → donation_item creation
+
+Goods/Funds item entry
+
+Currency/unit-of-measure auto-selection
+
+Validation logic
+
+Intake workflows
+
+Packaging workflows
+
+Dashboard statistics
+
+Verification flows
+
+All of these must continue to work EXACTLY as they do now.
+
+3. DO NOT WEAKEN SECURITY
+
+DO NOT modify CSP, CSRF, RBAC, cookie flags, or authentication.
+
+This migration must be DB-only and safe.
+
+4. APPLY ONLY THE MINIMAL SET OF ALTERATIONS
+
+Compare the LIVE schema in the DB to the TARGET DDL above.
+
+Only apply necessary changes:
+
+Add missing columns
+
+Add missing constraints
+
+Tighten definitions if safe
+
+Add missing check constraints
+
+Add missing defaults
+
+Fix mismatched data types only if compatible
+
+5. ENSURE ALL EXISTING DATA PASSES NEW CONSTRAINTS
+
+If existing rows violate constraints:
+
+Fix the data first using controlled UPDATE with safe default values.
+
+THEN add the constraint.
+
+WHAT YOU MUST DO IN THE MIGRATION
+
+Introspect current structure
+
+Read /mnt/data/drms-2.2.sql
+
+Run \d donation_item on the live DB
+
+Identify differences from the target table.
+
+Determine migration path
+Two options depending on differences:
+
+A. In-Place ALTER TABLE (preferred)
+
+If only small changes:
+
+Add missing columns (if safe)
+
+Add missing check constraints
+
+Add missing defaults
+
+Adjust data types if non-breaking
+
+Add missing foreign keys
+
+B. Shadow Table Method (if major differences)
+
+If type changes or incompatible constraints:
+
+Create donation_item_new with target DDL.
+
+Copy all data with explicit column mapping.
+
+Drop foreign keys referencing donation_item.
+
+Atomically rename:
+
+donation_item → donation_item_old
+
+donation_item_new → donation_item
+
+Recreate foreign keys referencing the new table.
+
+Validate row counts match.
+
+Keep donation_item_old until manual cleanup.
+
+Preserve PK (donation_id, item_id)
+
+This is referenced all throughout DRIMS.
+
+Must remain intact.
+
+Maintain audit columns exactly
+
+create_by_id, create_dtime, verify_by_id, etc.
+
+Must not change types or defaults unless already wrong.
+
+Ensure constraint c_donation_item_10 (item_cost + addon_cost > 0.00) exists
+
+If addon_cost does not exist yet:
+
+Add it first (non-null, decimal(10,2) default 0.00)
+
+Then apply the check constraint.
+
+Do not rename columns expected by the app
+
+No renaming allowed unless the live schema conflicts with the target DDL — and even then, only after mapping.
+
+DELIVERABLE
+
+Produce a PostgreSQL migration script (SQL or Alembic) that:
+
+Safely updates donation_item to match the EXACT target DDL above
+
+Preserves all data
+
+Preserves all foreign keys and referential integrity
+
+Requires zero changes to application code, UI, security, or logic
+
+Performs schema changes in the safest minimal-impact way
+
+Includes comments explaining each step and why it is safe

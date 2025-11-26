@@ -91,6 +91,7 @@ input[type=number] {
     </div>
 
     <form method="POST" action="{{ url_for('donation_intake.intake_form', donation_id=donation.donation_id, inventory_id=warehouse.warehouse_id) }}" id="intakeForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="row">
             <!-- Main Form Section -->
             <div class="col-lg-9">
@@ -176,7 +177,6 @@ input[type=number] {
                                         <div class="field-label">Donated Qty</div>
                                         <div class="donated-qty-box">
                                             <strong class="text-primary fs-6">{{ di.item_qty }}</strong>
-                                            <small class="text-muted d-block fs-tiny">{{ di.uom_code }}</small>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -230,32 +230,19 @@ input[type=number] {
                                 <div class="row g-2 align-items-end">
                                     <div class="col-md-2">
                                         <label for="uom_code_{{ di.item_id }}" class="field-label">UOM</label>
-                                        <select class="form-select form-select-sm" 
-                                                id="uom_code_{{ di.item_id }}"
-                                                name="uom_code_{{ di.item_id }}" 
-                                                required>
-                                            <option value="">--</option>
-                                            {% for uom in uoms %}
-                                            <option value="{{ uom.uom_code }}" {% if uom.uom_code == di.uom_code %}selected{% endif %}>
-                                                {{ uom.uom_code }}
-                                            </option>
-                                            {% endfor %}
-                                        </select>
+                                        <input type="text" 
+                                               class="form-control form-control-sm bg-light field-disabled-visual" 
+                                               value="{{ di.uom_code }}"
+                                               disabled>
+                                        <input type="hidden" name="uom_code_{{ di.item_id }}" value="{{ di.uom_code }}">
                                     </div>
                                     <div class="col-md-2">
                                         <label for="avg_unit_value_{{ di.item_id }}" class="field-label">Unit Cost ($J)</label>
-                                        <input type="number" 
-                                               class="form-control form-control-sm qty-input unit-cost-input" 
-                                               id="avg_unit_value_{{ di.item_id }}"
-                                               name="avg_unit_value_{{ di.item_id }}" 
-                                               step="0.01" 
-                                               min="0.01"
-                                               max="99999999.99"
-                                               data-item-id="{{ di.item_id }}"
-                                               placeholder="0.00"
-                                               data-validate="unit-cost"
-                                               required>
-                                        <div class="invalid-feedback unit-cost-error-{{ di.item_id }} d-none"></div>
+                                        <input type="text" 
+                                               class="form-control form-control-sm bg-light text-end field-disabled-visual" 
+                                               value="{{ "%.2f"|format(di.item_cost) }}"
+                                               disabled>
+                                        <input type="hidden" name="avg_unit_value_{{ di.item_id }}" value="{{ di.item_cost }}">
                                     </div>
                                     <div class="col-md-3">
                                         <label for="usable_qty_{{ di.item_id }}" class="field-label">Usable Qty</label>
@@ -275,7 +262,7 @@ input[type=number] {
                                                class="form-control form-control-sm qty-input bg-light">
                                     </div>
                                     <div class="col-md-2">
-                                        <label for="defective_qty_{{ di.item_id }}" class="field-label">Defective</label>
+                                        <label for="defective_qty_{{ di.item_id }}" class="field-label">Defective Qty</label>
                                         <input type="number" 
                                                class="form-control form-control-sm qty-input" 
                                                id="defective_qty_{{ di.item_id }}"
@@ -289,7 +276,7 @@ input[type=number] {
                                                data-auto-adjust="usable-qty">
                                     </div>
                                     <div class="col-md-3">
-                                        <label for="expired_qty_{{ di.item_id }}" class="field-label">Expired</label>
+                                        <label for="expired_qty_{{ di.item_id }}" class="field-label">Expiry Qty</label>
                                         <input type="number" 
                                                class="form-control form-control-sm qty-input" 
                                                id="expired_qty_{{ di.item_id }}"
@@ -337,10 +324,16 @@ input[type=number] {
                                 <i class="bi bi-arrow-left"></i>
                                 Back
                             </a>
-                            <button type="submit" class="btn-relief-primary" id="submitBtn">
-                                <i class="bi bi-check-circle"></i>
-                                Complete Intake
-                            </button>
+                            <div class="d-flex gap-2">
+                                <button type="submit" name="action" value="save_draft" class="btn btn-outline-secondary" id="saveDraftBtn">
+                                    <i class="bi bi-save"></i>
+                                    Save Draft
+                                </button>
+                                <button type="submit" name="action" value="submit" class="btn-relief-primary" id="submitBtn">
+                                    <i class="bi bi-send"></i>
+                                    Submit for Verification
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -483,7 +476,8 @@ function validateUnitCost(input) {
     // Remove invalid indicator first
     input.classList.remove('is-invalid');
     if (errorDiv) {
-        errorDiv.style.display = 'none';
+        errorDiv.classList.add('d-none');
+        errorDiv.classList.remove('d-block');
         errorDiv.textContent = '';
     }
     
@@ -497,7 +491,8 @@ function validateUnitCost(input) {
         input.classList.add('is-invalid');
         if (errorDiv) {
             errorDiv.textContent = 'Unit cost cannot exceed 99,999,999.99';
-            errorDiv.style.display = 'block';
+            errorDiv.classList.remove('d-none');
+            errorDiv.classList.add('d-block');
         }
         return;
     }
@@ -513,7 +508,8 @@ function validateUnitCost(input) {
         input.classList.add('is-invalid');
         if (errorDiv) {
             errorDiv.textContent = 'Unit cost cannot have more than 8 digits before decimal';
-            errorDiv.style.display = 'block';
+            errorDiv.classList.remove('d-none');
+            errorDiv.classList.add('d-block');
         }
     }
 }
@@ -543,7 +539,8 @@ function validateQuantities(itemId) {
         // Show inline error message
         if (errorDiv && errorText) {
             errorText.textContent = 'Usable quantity cannot be zero. At least some portion of the donation must be usable.';
-            errorDiv.style.display = 'block';
+            errorDiv.classList.remove('d-none');
+            errorDiv.classList.add('d-block');
         }
     }
     // Use tolerance of 0.01 since we're now limited to 2 decimal places
@@ -556,7 +553,8 @@ function validateQuantities(itemId) {
         // Show inline error message for total mismatch
         if (errorDiv && errorText) {
             errorText.textContent = 'Total quantities (Usable + Defective + Expired) must equal donated quantity.';
-            errorDiv.style.display = 'block';
+            errorDiv.classList.remove('d-none');
+            errorDiv.classList.add('d-block');
         }
     } else {
         usableInput.classList.remove('is-invalid');
@@ -567,7 +565,8 @@ function validateQuantities(itemId) {
         // Hide inline error message
         if (errorDiv && errorText) {
             errorText.textContent = '';
-            errorDiv.style.display = 'none';
+            errorDiv.classList.add('d-none');
+            errorDiv.classList.remove('d-block');
         }
     }
 }
@@ -586,7 +585,8 @@ function validateBatchPairing(itemId) {
     batchDateInput.classList.remove('is-invalid');
     if (errorDiv && errorText) {
         errorText.textContent = '';
-        errorDiv.style.display = 'none';
+        errorDiv.classList.add('d-none');
+        errorDiv.classList.remove('d-block');
     }
     
     // Step 2: Read current values
@@ -603,7 +603,8 @@ function validateBatchPairing(itemId) {
             batchDateInput.classList.add('is-invalid');
             if (errorDiv && errorText) {
                 errorText.textContent = 'Batch number and date are required for batched items.';
-                errorDiv.style.display = 'block';
+                errorDiv.classList.remove('d-none');
+                errorDiv.classList.add('d-block');
             }
             return false;
         } else if (!batchNo) {
@@ -611,7 +612,8 @@ function validateBatchPairing(itemId) {
             batchNoInput.classList.add('is-invalid');
             if (errorDiv && errorText) {
                 errorText.textContent = 'Batch number is required for batched items.';
-                errorDiv.style.display = 'block';
+                errorDiv.classList.remove('d-none');
+                errorDiv.classList.add('d-block');
             }
             return false;
         } else if (!batchDate) {
@@ -619,7 +621,8 @@ function validateBatchPairing(itemId) {
             batchDateInput.classList.add('is-invalid');
             if (errorDiv && errorText) {
                 errorText.textContent = 'Batch date is required for batched items.';
-                errorDiv.style.display = 'block';
+                errorDiv.classList.remove('d-none');
+                errorDiv.classList.add('d-block');
             }
             return false;
         }
@@ -635,7 +638,8 @@ function validateBatchPairing(itemId) {
             batchDateInput.classList.add('is-invalid');
             if (errorDiv && errorText) {
                 errorText.textContent = 'Please enter a Batch Date when a Batch No is provided.';
-                errorDiv.style.display = 'block';
+                errorDiv.classList.remove('d-none');
+                errorDiv.classList.add('d-block');
             }
             return false;
         } else if (!hasBatchNo && hasBatchDate) {
@@ -643,7 +647,8 @@ function validateBatchPairing(itemId) {
             batchNoInput.classList.add('is-invalid');
             if (errorDiv && errorText) {
                 errorText.textContent = 'Please enter a Batch No when a Batch Date is provided.';
-                errorDiv.style.display = 'block';
+                errorDiv.classList.remove('d-none');
+                errorDiv.classList.add('d-block');
             }
             return false;
         }
@@ -665,7 +670,8 @@ function validateExpiryDate(itemId) {
     expiryInput.classList.remove('is-invalid');
     if (errorDiv && errorText) {
         errorText.textContent = '';
-        errorDiv.style.display = 'none';
+        errorDiv.classList.add('d-none');
+        errorDiv.classList.remove('d-block');
     }
     
     const canExpire = expiryInput.dataset.canExpire === 'true';
@@ -676,7 +682,8 @@ function validateExpiryDate(itemId) {
         expiryInput.classList.add('is-invalid');
         if (errorDiv && errorText) {
             errorText.textContent = 'Expiry Date is required for items that can expire.';
-            errorDiv.style.display = 'block';
+            errorDiv.classList.remove('d-none');
+            errorDiv.classList.add('d-block');
         }
         return false;
     }

@@ -28,6 +28,7 @@
             <div class="drims-card">
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('profile.preferences') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <h5 class="card-title mb-4">
                             <i class="bi bi-envelope me-2"></i>
                             Notification Channels

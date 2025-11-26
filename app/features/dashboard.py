@@ -7,15 +7,16 @@ UI/UX standards with summary cards, filter tabs, and modern styling.
 
 from flask import Blueprint, render_template, request, flash, abort
 from flask_login import login_required, current_user
-from sqlalchemy import func, desc, or_, and_
+from sqlalchemy import func, desc, or_, and_, extract
 from app.db.models import (
     db, Inventory, Item, Warehouse, 
-    Event, Donor, Agency, User, ReliefRqst, ReliefRequestFulfillmentLock, ReliefPkg, ReliefPkgItem
+    Event, Donor, Agency, User, ReliefRqst, ReliefRequestFulfillmentLock, ReliefPkg, ReliefPkgItem,
+    Donation, DonationItem, Country
 )
 from app.services import relief_request_service as rr_service
 from app.services.dashboard_service import DashboardService
 from app.core.feature_registry import FeatureRegistry
-from app.core.rbac import has_role
+from app.core.rbac import has_role, role_required
 from datetime import datetime, timedelta
 from collections import defaultdict
 from app.utils.timezone import now as jamaica_now
@@ -564,3 +565,397 @@ def lo_dashboard():
     }
     
     return render_template('dashboard/lo.html', **context)
+
+
+@dashboard_bp.route('/donations-analytics')
+@login_required
+@role_required('ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD', 'LOGISTICS_MANAGER')
+def donations_analytics():
+    """
+    Donations Analytics Dashboard - Executive view of donation metrics and trends.
+    
+    Access: DG, Deputy DG, Director PEOD, Logistics Manager
+    
+    Displays:
+    - KPIs: Total donations, total value, unique donors, countries
+    - Charts: Donations by donor, by country, over time, distribution
+    """
+    now = jamaica_now()
+    
+    # ========== KPI METRICS ==========
+    
+    # Total donations count
+    total_donations = Donation.query.count()
+    
+    # Total donation value (sum of tot_item_cost)
+    total_value = db.session.query(
+        func.coalesce(func.sum(Donation.tot_item_cost), 0)
+    ).scalar() or 0
+    
+    # Total donation value by type (GOODS vs FUNDS)
+    total_value_goods = db.session.query(
+        func.coalesce(func.sum(DonationItem.item_cost), 0)
+    ).filter(
+        DonationItem.donation_type == 'GOODS'
+    ).scalar() or 0
+    
+    total_value_funds = db.session.query(
+        func.coalesce(func.sum(DonationItem.item_cost), 0)
+    ).filter(
+        DonationItem.donation_type == 'FUNDS'
+    ).scalar() or 0
+    
+    # Unique donors count
+    unique_donors = db.session.query(
+        func.count(func.distinct(Donation.donor_id))
+    ).scalar() or 0
+    
+    # Number of countries donations came from
+    countries_count = db.session.query(
+        func.count(func.distinct(Donation.origin_country_id))
+    ).scalar() or 0
+    
+    # ========== DONATIONS BY DONOR (Top 10) ==========
+    
+    donations_by_donor = db.session.query(
+        Donor.donor_name,
+        func.sum(Donation.tot_item_cost).label('total_amount'),
+        func.count(Donation.donation_id).label('donation_count')
+    ).join(
+        Donation, Donor.donor_id == Donation.donor_id
+    ).group_by(
+        Donor.donor_id, Donor.donor_name
+    ).order_by(
+        desc('total_amount')
+    ).limit(10).all()
+    
+    donor_chart_data = {
+        'labels': [d.donor_name[:30] + '...' if len(d.donor_name) > 30 else d.donor_name for d in donations_by_donor],
+        'amounts': [float(d.total_amount) for d in donations_by_donor],
+        'counts': [d.donation_count for d in donations_by_donor]
+    }
+    
+    # ========== DONATIONS BY COUNTRY ==========
+    
+    donations_by_country = db.session.query(
+        Country.country_name,
+        func.sum(Donation.tot_item_cost).label('total_amount'),
+        func.count(Donation.donation_id).label('donation_count')
+    ).join(
+        Donation, Country.country_id == Donation.origin_country_id
+    ).group_by(
+        Country.country_id, Country.country_name
+    ).order_by(
+        desc('total_amount')
+    ).limit(10).all()
+    
+    country_chart_data = {
+        'labels': [c.country_name for c in donations_by_country],
+        'amounts': [float(c.total_amount) for c in donations_by_country],
+        'counts': [c.donation_count for c in donations_by_country]
+    }
+    
+    # ========== DONATIONS OVER TIME (Last 12 months) ==========
+    
+    twelve_months_ago = now - timedelta(days=365)
+    
+    donations_over_time = db.session.query(
+        extract('year', Donation.received_date).label('year'),
+        extract('month', Donation.received_date).label('month'),
+        func.sum(Donation.tot_item_cost).label('total_amount'),
+        func.count(Donation.donation_id).label('donation_count')
+    ).filter(
+        Donation.received_date >= twelve_months_ago.date()
+    ).group_by(
+        extract('year', Donation.received_date),
+        extract('month', Donation.received_date)
+    ).order_by(
+        'year', 'month'
+    ).all()
+    
+    # Format month labels and data
+    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    
+    timeline_data = {
+        'labels': [],
+        'amounts': [],
+        'counts': []
+    }
+    
+    for row in donations_over_time:
+        month_label = f"{month_names[int(row.month) - 1]} {int(row.year)}"
+        timeline_data['labels'].append(month_label)
+        timeline_data['amounts'].append(float(row.total_amount))
+        timeline_data['counts'].append(row.donation_count)
+    
+    # ========== DONATIONS BY STATUS ==========
+    
+    donations_by_status = db.session.query(
+        Donation.status_code,
+        func.count(Donation.donation_id).label('count'),
+        func.sum(Donation.tot_item_cost).label('total_amount')
+    ).group_by(
+        Donation.status_code
+    ).all()
+    
+    status_labels_map = {
+        'E': 'Entered',
+        'V': 'Verified',
+        'P': 'Processed'
+    }
+    
+    status_chart_data = {
+        'labels': [status_labels_map.get(s.status_code, s.status_code) for s in donations_by_status],
+        'counts': [s.count for s in donations_by_status],
+        'amounts': [float(s.total_amount) if s.total_amount else 0 for s in donations_by_status]
+    }
+    
+    # ========== DONATIONS BY EVENT (Distribution) ==========
+    
+    donations_by_event = db.session.query(
+        Event.event_name,
+        func.sum(Donation.tot_item_cost).label('total_amount'),
+        func.count(Donation.donation_id).label('donation_count')
+    ).join(
+        Donation, Event.event_id == Donation.event_id
+    ).group_by(
+        Event.event_id, Event.event_name
+    ).order_by(
+        desc('total_amount')
+    ).limit(10).all()
+    
+    event_chart_data = {
+        'labels': [e.event_name[:25] + '...' if len(e.event_name) > 25 else e.event_name for e in donations_by_event],
+        'amounts': [float(e.total_amount) for e in donations_by_event],
+        'counts': [e.donation_count for e in donations_by_event]
+    }
+    
+    # ========== RECENT DONATIONS ==========
+    
+    recent_donations = Donation.query.options(
+        db.joinedload(Donation.donor),
+        db.joinedload(Donation.origin_country),
+        db.joinedload(Donation.event)
+    ).order_by(
+        desc(Donation.received_date)
+    ).limit(5).all()
+    
+    context = {
+        # KPIs
+        'total_donations': total_donations,
+        'total_value': float(total_value),
+        'total_value_goods': float(total_value_goods),
+        'total_value_funds': float(total_value_funds),
+        'unique_donors': unique_donors,
+        'countries_count': countries_count,
+        
+        # Chart data
+        'donor_chart_data': donor_chart_data,
+        'country_chart_data': country_chart_data,
+        'timeline_data': timeline_data,
+        'status_chart_data': status_chart_data,
+        'event_chart_data': event_chart_data,
+        
+        # Recent donations
+        'recent_donations': recent_donations,
+        
+        # Status labels
+        'status_labels_map': status_labels_map
+    }
+    
+    return render_template('dashboard/donations_analytics.html', **context)
+
+
+@dashboard_bp.route('/relief-package-analytics')
+@login_required
+@role_required('ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD', 'LOGISTICS_MANAGER')
+def relief_package_analytics():
+    """
+    Relief Package Analytics Dashboard - Executive view of dispatched relief packages.
+    
+    Access: DG, Deputy DG, Director PEOD, Logistics Manager
+    
+    Displays:
+    - KPIs: Total packages dispatched, total items, beneficiary locations, requests fulfilled
+    - Charts: By destination type, by parish, over time, top destinations
+    - Detail table: Drill-down of dispatched packages
+    """
+    from app.db.models import ReliefPkg, ReliefPkgItem, ReliefRqst, Agency, Parish, Item
+    from sqlalchemy.orm import joinedload
+    
+    now = jamaica_now()
+    
+    dispatched_statuses = ['D', 'R']
+    
+    base_query = ReliefPkg.query.filter(
+        ReliefPkg.status_code.in_(dispatched_statuses)
+    )
+    
+    total_packages = base_query.count()
+    
+    total_items = db.session.query(
+        func.coalesce(func.sum(ReliefPkgItem.item_qty), 0)
+    ).join(
+        ReliefPkg, ReliefPkgItem.reliefpkg_id == ReliefPkg.reliefpkg_id
+    ).filter(
+        ReliefPkg.status_code.in_(dispatched_statuses)
+    ).scalar() or 0
+    
+    beneficiary_locations = db.session.query(
+        func.count(func.distinct(ReliefPkg.agency_id))
+    ).filter(
+        ReliefPkg.status_code.in_(dispatched_statuses)
+    ).scalar() or 0
+    
+    requests_fulfilled = db.session.query(
+        func.count(func.distinct(ReliefPkg.reliefrqst_id))
+    ).filter(
+        ReliefPkg.status_code.in_(dispatched_statuses)
+    ).scalar() or 0
+    
+    packages_by_type = db.session.query(
+        Agency.agency_type,
+        func.count(ReliefPkg.reliefpkg_id).label('package_count'),
+        func.coalesce(func.sum(ReliefPkgItem.item_qty), 0).label('total_items')
+    ).join(
+        ReliefPkg, Agency.agency_id == ReliefPkg.agency_id
+    ).outerjoin(
+        ReliefPkgItem, ReliefPkg.reliefpkg_id == ReliefPkgItem.reliefpkg_id
+    ).filter(
+        ReliefPkg.status_code.in_(dispatched_statuses)
+    ).group_by(
+        Agency.agency_type
+    ).all()
+    
+    type_labels_map = {
+        'SHELTER': 'Shelters',
+        'DISTRIBUTOR': 'Distributors',
+        'OTHER': 'Other'
+    }
+    
+    destination_type_data = {
+        'labels': [type_labels_map.get(t.agency_type, t.agency_type or 'Unknown') for t in packages_by_type],
+        'counts': [t.package_count for t in packages_by_type],
+        'items': [float(t.total_items) for t in packages_by_type]
+    }
+    
+    packages_by_parish = db.session.query(
+        Parish.parish_name,
+        func.count(ReliefPkg.reliefpkg_id).label('package_count')
+    ).join(
+        Agency, Parish.parish_code == Agency.parish_code
+    ).join(
+        ReliefPkg, Agency.agency_id == ReliefPkg.agency_id
+    ).filter(
+        ReliefPkg.status_code.in_(dispatched_statuses)
+    ).group_by(
+        Parish.parish_code, Parish.parish_name
+    ).order_by(
+        desc('package_count')
+    ).all()
+    
+    parish_chart_data = {
+        'labels': [p.parish_name for p in packages_by_parish],
+        'counts': [p.package_count for p in packages_by_parish]
+    }
+    
+    twelve_months_ago = now - timedelta(days=365)
+    
+    packages_over_time = db.session.query(
+        extract('year', ReliefPkg.dispatch_dtime).label('year'),
+        extract('month', ReliefPkg.dispatch_dtime).label('month'),
+        func.count(ReliefPkg.reliefpkg_id).label('package_count')
+    ).filter(
+        ReliefPkg.status_code.in_(dispatched_statuses),
+        ReliefPkg.dispatch_dtime.isnot(None),
+        ReliefPkg.dispatch_dtime >= twelve_months_ago
+    ).group_by(
+        extract('year', ReliefPkg.dispatch_dtime),
+        extract('month', ReliefPkg.dispatch_dtime)
+    ).order_by(
+        'year', 'month'
+    ).all()
+    
+    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    
+    timeline_data = {
+        'labels': [],
+        'counts': []
+    }
+    
+    for row in packages_over_time:
+        month_label = f"{month_names[int(row.month) - 1]} {int(row.year)}"
+        timeline_data['labels'].append(month_label)
+        timeline_data['counts'].append(row.package_count)
+    
+    top_destinations = db.session.query(
+        Agency.agency_name,
+        Agency.agency_type,
+        func.count(ReliefPkg.reliefpkg_id).label('package_count'),
+        func.coalesce(func.sum(ReliefPkgItem.item_qty), 0).label('total_items')
+    ).join(
+        ReliefPkg, Agency.agency_id == ReliefPkg.agency_id
+    ).outerjoin(
+        ReliefPkgItem, ReliefPkg.reliefpkg_id == ReliefPkgItem.reliefpkg_id
+    ).filter(
+        ReliefPkg.status_code.in_(dispatched_statuses)
+    ).group_by(
+        Agency.agency_id, Agency.agency_name, Agency.agency_type
+    ).order_by(
+        desc('package_count')
+    ).limit(10).all()
+    
+    top_destinations_data = {
+        'labels': [d.agency_name[:35] + '...' if len(d.agency_name) > 35 else d.agency_name for d in top_destinations],
+        'counts': [d.package_count for d in top_destinations],
+        'items': [float(d.total_items) for d in top_destinations],
+        'types': [type_labels_map.get(d.agency_type, d.agency_type or 'Unknown') for d in top_destinations]
+    }
+    
+    dispatched_packages = ReliefPkg.query.options(
+        joinedload(ReliefPkg.agency).joinedload(Agency.parish),
+        joinedload(ReliefPkg.relief_request)
+    ).filter(
+        ReliefPkg.status_code.in_(dispatched_statuses)
+    ).order_by(
+        desc(ReliefPkg.dispatch_dtime)
+    ).limit(100).all()
+    
+    package_item_counts = {}
+    if dispatched_packages:
+        pkg_ids = [pkg.reliefpkg_id for pkg in dispatched_packages]
+        item_counts = db.session.query(
+            ReliefPkgItem.reliefpkg_id,
+            func.sum(ReliefPkgItem.item_qty).label('total_qty')
+        ).filter(
+            ReliefPkgItem.reliefpkg_id.in_(pkg_ids)
+        ).group_by(
+            ReliefPkgItem.reliefpkg_id
+        ).all()
+        package_item_counts = {ic.reliefpkg_id: float(ic.total_qty) for ic in item_counts}
+    
+    status_labels = {
+        'D': 'Dispatched',
+        'R': 'Received'
+    }
+    
+    context = {
+        'total_packages': total_packages,
+        'total_items': int(total_items),
+        'beneficiary_locations': beneficiary_locations,
+        'requests_fulfilled': requests_fulfilled,
+        
+        'destination_type_data': destination_type_data,
+        'parish_chart_data': parish_chart_data,
+        'timeline_data': timeline_data,
+        'top_destinations_data': top_destinations_data,
+        
+        'dispatched_packages': dispatched_packages,
+        'package_item_counts': package_item_counts,
+        'status_labels': status_labels,
+        'type_labels_map': type_labels_map
+    }
+    
+    return render_template('dashboard/relief_package_analytics.html', **context)

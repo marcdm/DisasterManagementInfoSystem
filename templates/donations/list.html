@@ -70,6 +70,16 @@
             <span class="filter-tab-count" aria-label="{{ status_counts.get('E', 0) }} entered">{{ status_counts.get('E', 0) }}</span>
             {% endif %}
         </a>
+        {% if has_feature('donation_verification') %}
+        <a href="{{ url_for('donations.verify_list') }}" 
+           class="filter-tab {% if current_filter == 'pending_verification' %}active{% endif %}"
+           aria-current="{% if current_filter == 'pending_verification' %}page{% endif %}">
+            <i class="bi bi-clipboard-check"></i> Pending Verification
+            {% if status_counts.get('E', 0) > 0 %}
+            <span class="filter-tab-count" aria-label="{{ status_counts.get('E', 0) }} pending verification">{{ status_counts.get('E', 0) }}</span>
+            {% endif %}
+        </a>
+        {% endif %}
         <a href="{{ url_for('donations.list_donations', status='V') }}" 
            class="filter-tab {% if current_filter == 'v' %}active{% endif %}"
            aria-current="{% if current_filter == 'v' %}page{% endif %}">
@@ -202,18 +212,32 @@
                             </td>
                             <td class="text-end">
                                 <div class="btn-group" role="group" aria-label="Donation actions">
-                                    <a href="{{ url_for('donations.view_donation', donation_id=donation.donation_id) }}" 
-                                       class="btn btn-sm btn-outline-primary" 
+                                    <a href="{{ url_for('donations.view_donation', donation_id=donation.donation_id) }}"
+                                       class="btn btn-sm btn-outline-primary"
                                        title="View details"
                                        aria-label="View donation #{{ donation.donation_id }} details">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="{{ url_for('donations.edit_donation', donation_id=donation.donation_id) }}" 
-                                       class="btn btn-sm btn-outline-secondary" 
+                                    {% if donation.status_code == 'E' and has_feature('donation_verification') %}
+                                    <a href="{{ url_for('donations.verify_donation_detail', donation_id=donation.donation_id) }}"
+                                       class="btn btn-sm btn-outline-warning"
+                                       title="Review and verify donation"
+                                       aria-label="Review and verify donation #{{ donation.donation_id }}">
+                                        <i class="bi bi-clipboard-check"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if donation.status_code == 'E' %}
+                                    <a href="{{ url_for('donations.edit_donation', donation_id=donation.donation_id) }}"
+                                       class="btn btn-sm btn-outline-secondary"
                                        title="Edit donation"
                                        aria-label="Edit donation #{{ donation.donation_id }}">
                                         <i class="bi bi-pencil"></i>
                                     </a>
+                                    {% else %}
+                                    <span class="btn btn-sm btn-outline-secondary disabled" title="Editing locked">
+                                        <i class="bi bi-lock"></i>
+                                    </span>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>

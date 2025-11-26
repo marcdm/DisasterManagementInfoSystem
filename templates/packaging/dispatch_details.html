@@ -294,6 +294,7 @@
                 <form method="POST" action="{{ url_for('packaging.mark_handover', reliefpkg_id=relief_pkg.reliefpkg_id) }}" 
                       class="d-inline-block" 
                       data-confirm="Confirm that this package has been handed over to the agency representative?">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn-modern btn-handover">
                         <i class="bi bi-check-circle"></i> Mark as Handed Over
                     </button>

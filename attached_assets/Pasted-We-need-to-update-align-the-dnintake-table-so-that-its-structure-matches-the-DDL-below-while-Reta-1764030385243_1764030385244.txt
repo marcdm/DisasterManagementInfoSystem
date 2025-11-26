@@ -1,0 +1,151 @@
+We need to update/align the dnintake table so that its structure matches the DDL below, while:
+
+Retaining referential integrity
+
+Not breaking any other tables or foreign keys
+
+Not touching any security fixes, app logic, UI, or workflows
+
+Note: The dnintake table is currently empty, so you may use a drop + recreate or shadow-table strategy as long as all foreign keys that reference it are handled safely and restored.
+
+Target DDL for dnintake
+
+This is the final shape that the dnintake table must have after the migration:
+
+create table dnintake
+(
+    donation_id integer not null
+        constraint fk_dnintake_donation references donation,
+    inventory_id integer not null
+        constraint fk_dnintake_warehouse references warehouse(warehouse_id),
+
+    intake_date date not null
+        constraint c_dnintake_1 check (intake_date <= CURRENT_DATE),
+
+    comments_text varchar(255),
+
+    status_code char(1) not null
+        --I=Incomplete, C=Completed, V=Verified
+        constraint c_dnintake_2 check (status_code in ('I','C','V')),
+
+    create_by_id varchar(20) not null,
+    create_dtime timestamp(0) without time zone not null,
+    update_by_id varchar(20) not null,
+    update_dtime timestamp(0) without time zone,
+    verify_by_id varchar(20) not null,
+    verify_dtime timestamp(0) without time zone,
+    version_nbr integer not null,
+
+    constraint pk_dnintake primary key(donation_id, inventory_id)
+);
+
+Hard Constraints (Do NOT Violate)
+
+Do NOT break referential integrity
+
+Identify all foreign keys that:
+
+Reference dnintake (e.g. dnintake_item may reference (donation_id, inventory_id)).
+
+If you drop/recreate dnintake, you must drop and recreate those FKs safely.
+
+Do NOT change other tables
+
+Do not alter donation, warehouse, dnintake_item, or any other table beyond temporarily dropping/recreating FKs if necessary.
+
+Do NOT touch security or application code
+
+No changes to:
+
+CSP headers
+
+CSRF configuration
+
+Auth/RBAC
+
+Flask routes, services, or templates
+
+This must be a database-only migration.
+
+Minimal, safe changes
+
+Compare the current live definition of dnintake with the target DDL.
+
+Since the table is empty, you may:
+
+Use DROP TABLE dnintake followed by CREATE TABLE dnintake (...), or
+
+Use a CREATE TABLE dnintake_new → DROP → RENAME pattern.
+
+Choose the simplest safe method that preserves foreign key relationships.
+
+Steps You Should Perform
+
+Inspect current dnintake structure
+
+From /mnt/data/drms-2.2.sql and via \d dnintake in PostgreSQL:
+
+Confirm current columns, constraints, PK, FKs.
+
+Identify any differences vs. the target DDL above.
+
+Identify dependent foreign keys
+
+Check for foreign keys referencing dnintake:
+
+e.g., dnintake_item might have a FK (donation_id, inventory_id) → dnintake.
+
+Record their names and definitions so they can be recreated exactly.
+
+Plan migration (table is empty)
+Because dnintake is empty, you can use one of these safe patterns:
+
+Option A – Drop and Recreate
+
+If there are no FKs referencing dnintake:
+
+DROP TABLE dnintake;
+
+Create dnintake with the target DDL above.
+
+Option B – Drop FKs → Drop Table → Recreate Table → Recreate FKs
+
+If FKs do reference dnintake:
+
+ALTER TABLE <child_table> DROP CONSTRAINT <fk_name>; for each referencing FK.
+
+DROP TABLE dnintake;
+
+CREATE TABLE dnintake (...) using the target DDL exactly.
+
+Recreate each dropped FK pointing to the new dnintake:
+
+e.g. ALTER TABLE dnintake_item ADD CONSTRAINT ... FOREIGN KEY (donation_id, inventory_id) REFERENCES dnintake(donation_id, inventory_id);
+
+Verify
+
+After migration:
+
+\d dnintake should show exactly the structure defined in the target DDL.
+
+All foreign keys that previously referenced dnintake should be restored and valid.
+
+No other tables or constraints should have been altered.
+
+Deliverable
+
+Produce a PostgreSQL migration script (SQL or Alembic) that:
+
+Safely updates dnintake to match the target DDL.
+
+Preserves referential integrity (recreating any necessary FKs).
+
+Assumes dnintake contains no data, so no data migration is needed.
+
+Comment each step clearly so a human can follow:
+
+Which constraints are dropped
+
+Why the table is being dropped/recreated
+
+How FKs are re-applied

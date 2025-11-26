@@ -1,0 +1,111 @@
+Update the Donation Items UI and backend logic without breaking any existing code, routes, workflows, behaviour, or database schema. Use the existing donation_item form layout shown in the screenshot (Item, Type, Location, Item Cost, Quantity, UOM) and modify it to correctly bind to the updated donation_item table with these columns:
+
+donation_type (GOODS / FUNDS, auto-set from the selected item’s category_type)
+
+uom_code (nullable, used ONLY for GOODS)
+
+currency_code (nullable, used ONLY for FUNDS)
+
+UI / UX requirements:
+
+Keep the existing layout and styling (Bootstrap / existing CSS) and green “Donation Items” header so nothing else in the app breaks.
+
+Type field:
+
+Must continue to be auto-set based on the selected item’s category (GOODS or FUNDS).
+
+Read-only / disabled so user cannot manually change it.
+
+UOM vs Currency behaviour:
+
+When donation_type = 'GOODS':
+
+Show a “UOM” dropdown exactly where the current UOM field is.
+
+UOM dropdown should be enabled and required, populated from unitofmeasure table with only valid stock/physical UOMs.
+
+Hide or disable the Currency Code field.
+
+When donation_type = 'FUNDS':
+
+Hide or disable the UOM field (and do NOT submit a value for uom_code).
+
+Show a “Currency” dropdown in the same row/area where UOM normally appears, with label:
+
+Label: Currency *
+
+Placeholder: Select currency…
+
+Currency dropdown must be required and populated from the currency table (currency_code + currency_name, e.g. “USD – US Dollar”).
+
+Form layout for the lower row (make it clean and user-friendly):
+
+Row 1 (unchanged): Item | Type | Location
+
+Row 2: Item Cost * | Quantity * | either UOM * or Currency * depending on donation_type.
+
+Under the UOM/Currency control, show a small helper text:
+
+For GOODS: Unit: physical unit of the item
+
+For FUNDS: Currency: monetary value of the donation
+
+Validation rules (client + server side):
+
+For GOODS:
+
+donation_type = 'GOODS'
+
+uom_code must NOT be null or empty.
+
+currency_code must be null.
+
+For FUNDS:
+
+donation_type = 'FUNDS'
+
+currency_code must NOT be null or empty.
+
+uom_code must be null.
+
+Show clear error messages near the field, e.g.:
+
+“Please select a unit of measure for goods.”
+
+“Please select a currency for funds.”
+
+Database binding:
+
+When saving a donation item:
+
+Map the selected UOM to donation_item.uom_code (GOODS only).
+
+Map the selected Currency to donation_item.currency_code (FUNDS only).
+
+Ensure the values satisfy the DB CHECK constraint:
+
+GOODS → uom_code IS NOT NULL AND currency_code IS NULL
+
+FUNDS → currency_code IS NOT NULL AND uom_code IS NULL
+
+Do not change any other columns on donation_item.
+
+Edit mode:
+
+When editing an existing donation item:
+
+Detect donation_type from the record.
+
+If GOODS: show UOM dropdown pre-selected with uom_code, hide/disable Currency.
+
+If FUNDS: show Currency dropdown pre-selected with currency_code, hide/disable UOM.
+
+Accessibility and usability:
+
+All labels must remain clear and have * for required fields.
+
+Make sure tab order is logical: Item → Type → Location → Item Cost → Quantity → UOM/Currency → Comments.
+
+Use existing tooltip/info icon pattern for Item Cost and (if available) add a small info icon beside Type to explain that it is auto-set from the item category.
+
+Implement these changes in the UI templates, forms, and view functions so that the donation items screen is easy to use, visually consistent with the rest of the app, and fully aligned with the updated donation_item table. Do not modify any other workflow or database table.

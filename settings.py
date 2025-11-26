@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
 
 _keycloak = {
     'realm': os.getenv('KEYCLOAK_REALM', 'drims'),
@@ -38,19 +40,15 @@ class Config:
     
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024
     
+    UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or os.path.join(BASE_DIR, 'uploads', 'donations')
+    ALLOWED_EXTENSIONS = {'pdf', 'jpg', 'jpeg'}
+    
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     
     LOG_TO_STDOUT = os.environ.get('LOG_TO_STDOUT', 'False').lower() == 'true'
 
-    KEYCLOAK_REG = {
-        'client_id': _keycloak['client_id'],
-        'client_secret': _keycloak['client_secret'],
-        'server_metadata_url': _keycloak['metadata_url'],
-        'client_kwargs':{'scope': 'openid profile email'}
-    }
-    
     KEYCLOAK_CONF = {
         'server_url': _keycloak['server_url'],
         'client_id': _keycloak['client_id'],

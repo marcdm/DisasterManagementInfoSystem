@@ -31,6 +31,7 @@
             <div class="card">
                 <div class="card-body p-4">
                     <form method="POST" action="{{ url_for('donors.edit', donor_id=donor.donor_id) }}" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <!-- Hidden version field for optimistic locking -->
                         <input type="hidden" name="version_nbr" value="{{ donor.version_nbr }}">
                         

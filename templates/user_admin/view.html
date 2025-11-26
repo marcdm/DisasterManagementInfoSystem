@@ -167,12 +167,14 @@
                             </a>
                             {% if user.is_active %}
                             <form method="POST" action="{{ url_for('user_admin.deactivate', user_id=user.user_id) }}" id="deactivateUserForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn-user-action danger w-100">
                                     <i class="bi bi-person-x"></i> Deactivate Account
                                 </button>
                             </form>
                             {% else %}
                             <form method="POST" action="{{ url_for('user_admin.activate', user_id=user.user_id) }}" id="activateUserForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn-user-action primary w-100">
                                     <i class="bi bi-person-check"></i> Activate Account
                                 </button>
@@ -375,11 +377,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Update panel visibility
             panels.forEach(panel => {
-                panel.style.display = 'none';
+                panel.classList.add('d-none');
+                panel.classList.remove('d-block');
             });
             const targetPanel = document.getElementById(`${targetTab}-panel`);
             if (targetPanel) {
-                targetPanel.style.display = 'block';
+                targetPanel.classList.remove('d-none');
+                targetPanel.classList.add('d-block');
             }
         });
     });

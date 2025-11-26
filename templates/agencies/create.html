@@ -33,6 +33,7 @@
             <div class="card">
                 <div class="card-body p-4">
                     <form method="POST" action="{{ url_for('agencies.create_agency') }}" id="agencyForm" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <!-- Basic Information Section -->
                         <div class="mb-4">
                             <h5 class="border-bottom pb-2 mb-3">
@@ -309,20 +310,23 @@ document.addEventListener('DOMContentLoaded', function() {
             warehouseSelect.disabled = false;
             warehouseSelect.required = true;
             warehouseSelect.classList.remove('warehouse-field-disabled');
-            warehouseRequired.style.display = 'inline';
+            warehouseRequired.classList.remove('d-none');
+            warehouseRequired.classList.add('d-inline');
         } else if (agencyType === 'SHELTER') {
             // Shelter cannot have warehouse
             warehouseSelect.disabled = true;
             warehouseSelect.required = false;
             warehouseSelect.value = '';
             warehouseSelect.classList.add('warehouse-field-disabled');
-            warehouseRequired.style.display = 'none';
+            warehouseRequired.classList.remove('d-inline');
+            warehouseRequired.classList.add('d-none');
         } else {
             // No type selected
             warehouseSelect.disabled = true;
             warehouseSelect.required = false;
             warehouseSelect.classList.add('warehouse-field-disabled');
-            warehouseRequired.style.display = 'none';
+            warehouseRequired.classList.remove('d-inline');
+            warehouseRequired.classList.add('d-none');
         }
     }
     

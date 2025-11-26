@@ -16,6 +16,7 @@
             {% if intake.status_code == 'I' %}
             <form method="POST" action="{{ url_for('intake.complete_intake', reliefpkg_id=intake.reliefpkg_id, inventory_id=intake.inventory_id) }}" 
                   class="d-inline" data-confirm="Mark this intake as complete?">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-success">
                     <i class="bi bi-check-circle"></i> Mark Complete
                 </button>

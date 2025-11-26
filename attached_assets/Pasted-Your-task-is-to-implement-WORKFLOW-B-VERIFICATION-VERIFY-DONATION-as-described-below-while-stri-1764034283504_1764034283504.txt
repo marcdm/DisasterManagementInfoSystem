@@ -1,0 +1,384 @@
+Your task is to implement WORKFLOW B – VERIFICATION (VERIFY DONATION) as described below, while strictly:
+
+❌ Not breaking any existing code, routes, logic, UI, or workflows
+
+❌ Not changing the database schema (no new tables/columns/constraints)
+
+❌ Not weakening or altering any security (CSP, CSRF, auth/RBAC, sessions, cookies)
+
+❌ Not breaking referential integrity
+
+You must reuse existing patterns (blueprints, forms, templates, CSRF, RBAC) already used for the donation entry flow.
+
+WORKFLOW B – VERIFICATION (VERIFY DONATION)
+B.1 Access & Listing
+
+Implement a “Verify Donations” view for verifier roles (e.g. Logistics Manager / Supervisor / designated verifier):
+
+Screen name: “Verify Donations”
+
+Show a list/grid of donations where:
+
+donation.status_code = 'E' (Entered, pending verification)
+
+Each row in the list must show at least:
+
+donation_id
+
+Donor name (join to donor)
+
+donation_desc
+
+received_date
+
+tot_item_cost
+
+Optionally: origin_country, event, custodian (as read-only context)
+
+When the verifier clicks a list row:
+
+Load a verification detail page with the same 3 sections as Entry:
+
+Donation Header (from donation)
+
+Donation Items Grid (from donation_item)
+
+Supporting Documents (from donation_doc)
+
+All fields must be pre-populated from the DB.
+
+Access control: only verification roles should see this screen and access the detail view. Use existing RBAC patterns.
+
+B.2 Verification Detail – Editable Behavior
+B.2.1 Header
+
+On the detail page:
+
+Show the same header fields and controls as in Entry (Workflow A):
+
+donor_id, donation_desc, origin_country_id, currency_code,
+origin_address1_text, origin_address2_text,
+event_id, custodian_id,
+tot_item_cost, storage_cost, haulage_cost, other_cost,
+other_cost_desc,
+received_date, comments_text
+
+Verifier can modify any field that was editable in Entry.
+
+Country/currency relationship:
+
+If verifier changes origin_country_id:
+
+Reapply default: currency_code = country.currency_code
+
+Still allow manual override of currency_code from the currency dropdown.
+
+B.2.2 Items Grid
+
+Load all donation_item rows for this donation_id into the grid.
+
+Apply the same behavior as Entry for:
+
+item_id → item.category_id → itemcatg.category_type ('GOODS' or 'FUNDS')
+
+Auto-set donation_type and make it read-only.
+
+Enabling/disabling fields based on GOODS vs FUNDS.
+
+For FUNDS:
+
+item_qty:
+
+Must remain fixed at 1.00
+
+Read-only / disabled
+
+item_cost:
+
+Editable, > 0.00
+
+uom_code:
+
+Represents currency
+
+Default from donation.currency_code
+
+Dropdown from currency and can be changed
+
+Verifier can:
+
+Edit any existing item row with the same rules as Entry:
+
+GOODS vs FUNDS logic
+
+Validation constraints (quantities, costs)
+
+Add new rows (new donation_item entries)
+
+Remove existing rows
+
+Changing item_id on any row:
+
+Recalculate itemcatg.category_type
+
+Reset donation_type accordingly
+
+Reapply GOODS/FUNDS enable/disable logic
+
+Clear/reset incompatible values where needed.
+
+B.2.3 Documents
+
+Load all donation_doc rows for this donation_id.
+
+Verifier can:
+
+Add new document rows (type, description, file upload)
+
+Edit document descriptions
+
+Remove documents (only if this matches business rules and existing security patterns)
+
+Use the same secure file upload mechanism used in Entry.
+
+B.3 Verify Action – Saving As Verified
+
+Add a “Verify” button on the verification detail page.
+
+When clicked:
+
+B.3.1 Validation
+
+Before changing any statuses:
+
+Perform the same validations as in Entry (plus any additional verification checks):
+
+Header:
+
+origin_country_id and currency_code present and valid
+
+received_date <= CURRENT_DATE
+
+Costs fields (tot_item_cost, storage, haulage, other_cost) obey constraints (>= 0.00)
+
+If other_cost > 0, ensure other_cost_desc is provided (if that is a business rule)
+
+Items:
+
+donation_type must match itemcatg.category_type
+
+item_qty and item_cost must obey table constraints
+
+FUNDS:
+
+item_qty == 1.00 and read-only
+
+currency behavior via uom_code consistent with rules
+
+GOODS:
+
+item_qty and uom_code meaningful for goods
+
+Documents:
+
+file_type must match allowed MIME types
+
+document_desc required
+
+Any required documents (if such a rule exists) must be present
+
+If validation fails:
+
+Show appropriate error messages
+
+Do not change donation or items status
+
+Do not partially save verification fields
+
+B.3.2 Persistence (Upsert + Verify) – Single Transaction
+
+All persistence must be executed in a single DB transaction:
+
+Header (donation)
+
+Perform an UPDATE on donation:
+
+Apply all edited header fields.
+
+Set:
+
+update_by_id = verifier user
+
+update_dtime = now
+
+status_code = 'V' (Verified)
+
+verify_by_id = verifier user
+
+verify_dtime = now
+
+version_nbr = version_nbr + 1
+
+Use optimistic locking:
+
+Require the request to send the last known version_nbr.
+
+In the UPDATE, check version_nbr matches.
+
+If not, abort and show:
+
+“This donation was changed by another user. Please reload and try again.”
+
+Items (donation_item)
+
+For each row in the grid:
+
+Upsert with PK (donation_id, item_id):
+
+If row exists → UPDATE fields.
+
+If not → INSERT new row.
+
+On successful verification:
+
+Set for all donation_item rows for this donation_id:
+
+status_code = 'V'
+
+update_by_id = verifier user
+
+update_dtime = now
+
+verify_by_id = verifier user
+
+verify_dtime = now
+
+version_nbr = version_nbr + 1
+
+Items removed from the grid:
+
+DELETE them from donation_item for this donation_id.
+
+Documents (donation_doc)
+
+For each document row:
+
+INSERT new ones with appropriate audit fields.
+
+UPDATE descriptions for existing rows as needed.
+
+Where business rules allow deletions:
+
+DELETE removed document rows for this donation_id.
+
+Apply the same audit conventions as elsewhere:
+
+create_by_id, create_dtime on insert
+
+update_by_id, update_dtime, version_nbr on update
+
+Commit / Rollback
+
+If:
+
+Header update passes optimistic locking, and
+
+All item & document operations succeed
+→ COMMIT the transaction
+
+If:
+
+Any DB error, or
+
+Any optimistic locking conflict occurs
+→ ROLLBACK everything and:
+
+Keep donation.status_code = 'E'
+
+Prompt the user to reload or correct errors
+
+B.3.3 Post-Verify Behavior
+
+After a successful verification:
+
+The donation:
+
+Must no longer appear in “Verify Donations” list (status now 'V', not 'E').
+
+It becomes available for downstream workflows:
+
+e.g., intake/processing flows that rely on status_code = 'V'.
+
+Show a user-friendly confirmation:
+
+“Donation verified successfully.”
+
+Two-step workflow to preserve
+
+The final behavior must enforce:
+
+Entry Role:
+
+Creates/edits donation with:
+
+donation.status_code = 'E'
+
+donation_item.status_code = 'P'
+
+Verification Role:
+
+Reviews/edits donation & items
+
+On “Verify”:
+
+Sets donation.status_code = 'V'
+
+Sets donation_item.status_code = 'V'
+
+This must preserve:
+
+GOODS vs FUNDS logic:
+
+FUNDS: qty=1 & locked, currency default + override, etc.
+
+Upsert behavior using PKs
+
+Audit fields (*_by_id, *_dtime, version_nbr)
+
+Existing dropdowns and master data usage
+
+Deliverables
+
+Implement:
+
+A new “Verify Donations” list view (or extend existing) that filters status_code = 'E'.
+
+A verification detail page reusing the same structure as Entry:
+
+Header, Items Grid, Documents.
+
+Backend logic for:
+
+Loading data for verification
+
+FULL validation
+
+Single-transaction upsert & verification
+
+Optimistic locking on donation.version_nbr
+
+UI and controller logic to:
+
+Show appropriate error messages
+
+Show success banner on verification
+
+Remove verified donations from the list
+
+All within the constraints:
+
+No schema changes
+
+No security regressions
+
+No breaking of existing workflows or code paths.

@@ -1,0 +1,72 @@
+Safely drop and recreate the donation_item table without breaking any existing database schema, foreign keys, workflows, or logic. 
+Follow these steps carefully:
+
+1. Before dropping the table, drop any foreign key constraints in other tables that reference donation_item.
+2. Drop the donation_item table only after all dependent constraints are removed.
+3. Recreate the donation_item table EXACTLY with the schema below.
+4. Recreate any foreign key constraints from other tables back to donation_item after the table is rebuilt.
+5. Do not modify any other table or schema.
+
+Use this exact definition when recreating the table:
+
+create table donation_item
+(
+    donation_id integer not null
+        constraint fk_donation_item_donation
+            references donation,
+
+    item_id integer not null
+        constraint fk_donation_item_item
+            references item,
+
+    donation_type char(5) not null
+        constraint c_donation_item_0
+            check (donation_type in ('GOODS','FUNDS')),
+
+    item_qty decimal(9,2) not null
+        constraint c_donation_item_1a
+            check (item_qty >= 0.00),
+
+    item_cost decimal(10,2) not null
+        constraint c_donation_item_1b
+            check (item_cost >= 0.00),
+
+    uom_code varchar(25)
+        constraint fk_donation_item_unitofmeasure
+            references unitofmeasure(uom_code),
+
+    currency_code varchar(10)
+        constraint fk_donation_item_currency
+            references currency(currency_code),
+
+    location_name text not null,
+
+    status_code char(1) not null default 'V'
+        constraint c_donation_item_2
+            check (status_code in ('P','V')),
+
+    comments_text text,
+
+    create_by_id varchar(20) not null,
+    create_dtime timestamp(0) without time zone not null,
+    update_by_id varchar(20) not null,
+    update_dtime timestamp(0) without time zone not null,
+    verify_by_id varchar(20) not null,
+    verify_dtime timestamp(0) without time zone not null,
+    version_nbr integer not null,
+
+    constraint c_donation_item_type_fields
+        check (
+               (donation_type = 'GOODS'
+                    and uom_code is not null
+                    and currency_code is null)
+            or (donation_type = 'FUNDS'
+                    and currency_code is not null
+                    and uom_code is null)
+        ),
+
+    constraint pk_donation_item
+        primary key (donation_id, item_id)
+);
+
+Be sure to recreate any dropped foreign keys referencing donation_item when finished.

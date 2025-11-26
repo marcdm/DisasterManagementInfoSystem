@@ -46,6 +46,7 @@
           {% endwith %}
 
           <form method="post" action="{{ url_for('login') }}" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
               <label for="email" class="form-label">Email Address</label>
               <input
@@ -90,35 +91,6 @@
             </button>
           </form>
         </div>
-      </div>
-
-      <!-- Agency CTA Card -->
-      <div class="agency-cta">
-        <div class="agency-cta-title">
-          <i class="bi bi-building"></i>
-          <span>New Agency?</span>
-        </div>
-        <p class="subtitle">
-          Relief agencies can request access to DMIS to submit relief requests and manage disaster response distributions.
-        </p>
-        <a href="{{ url_for('account_requests.submit_form') }}" class="btn-agency-request">
-          <i class="bi bi-plus-circle"></i>
-          Request Agency Account
-        </a>
-        <ul class="info-list">
-          <li>
-            <i class="bi bi-check-circle-fill"></i>
-            <span>Approval by ODPEM required</span>
-          </li>
-          <li>
-            <i class="bi bi-check-circle-fill"></i>
-            <span>Email updates on request status</span>
-          </li>
-          <li>
-            <i class="bi bi-check-circle-fill"></i>
-            <span>Full access after approval</span>
-          </li>
-        </ul>
       </div>
 
       <!-- Footer -->

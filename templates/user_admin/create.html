@@ -38,6 +38,7 @@
     {% endwith %}
 
     <form method="POST" class="needs-validation" novalidate id="createUserForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="row g-4">
             <!-- Main Form Column -->
             <div class="col-lg-8">
@@ -346,12 +347,13 @@ function updateUserNameCount() {
     countSpan.textContent = currentLength;
     
     // Color coding
+    countSpan.classList.remove('char-count-danger', 'char-count-warning', 'char-count-normal');
     if (currentLength > 18) {
-        countSpan.style.color = '#dc3545'; // Red
+        countSpan.classList.add('char-count-danger');
     } else if (currentLength > 15) {
-        countSpan.style.color = '#ffc107'; // Yellow
+        countSpan.classList.add('char-count-warning');
     } else {
-        countSpan.style.color = '#6c757d'; // Gray
+        countSpan.classList.add('char-count-normal');
     }
 }
 
@@ -380,11 +382,13 @@ document.addEventListener('DOMContentLoaded', function() {
         passwordInput.addEventListener('input', function() {
             const strengthDiv = document.getElementById('passwordStrength');
             if (this.value.length > 0) {
-                strengthDiv.style.display = 'block';
+                strengthDiv.classList.remove('d-none');
+                strengthDiv.classList.add('d-block');
                 const strength = calculatePasswordStrength(this.value);
                 updatePasswordStrength(strength);
             } else {
-                strengthDiv.style.display = 'none';
+                strengthDiv.classList.remove('d-block');
+                strengthDiv.classList.add('d-none');
             }
         });
     }
@@ -405,6 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!bar || !text) return;
         
         bar.className = 'password-strength-bar';
+        bar.classList.remove('strength-0', 'strength-20', 'strength-40', 'strength-60', 'strength-80', 'strength-100');
         if (strength <= 2) {
             bar.classList.add('weak');
             text.textContent = 'Weak';
@@ -418,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function() {
             bar.classList.add('strong');
             text.textContent = 'Strong';
         }
-        bar.style.width = (strength * 20) + '%';
+        bar.classList.add('strength-' + (strength * 20));
     }
     
     // Update role count

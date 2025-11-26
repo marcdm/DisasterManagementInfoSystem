@@ -14,6 +14,20 @@
                     
                     <h1 class="h3 mb-3">Access Denied</h1>
                     
+                    {% if error_message %}
+                    <p class="text-muted mb-4">
+                        {{ error_message }}
+                    </p>
+                    
+                    <div class="alert alert-warning border">
+                        <small>
+                            <strong>To resolve this issue:</strong><br>
+                            • Try refreshing the page and submitting again<br>
+                            • Make sure you're not using an outdated browser tab<br>
+                            • If the problem persists, log out and log back in
+                        </small>
+                    </div>
+                    {% else %}
                     <p class="text-muted mb-4">
                         You don't have permission to access this page or perform this action.
                     </p>
@@ -26,6 +40,7 @@
                             • The resource is restricted to specific users
                         </small>
                     </div>
+                    {% endif %}
                     
                     <div class="mt-4">
                         <a href="{{ url_for('index') }}" class="btn btn-primary me-2">

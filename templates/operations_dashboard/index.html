@@ -203,6 +203,16 @@
 
 <script nonce="{{ csp_nonce() }}">
 document.addEventListener('DOMContentLoaded', function() {
+    // Period selector navigation
+    const periodSelector = document.getElementById('periodSelector');
+    if (periodSelector) {
+        periodSelector.addEventListener('change', (event) => {
+            const url = new URL(window.location.href);
+            url.searchParams.set('period', event.target.value);
+            window.location.href = url.toString();
+        });
+    }
+
     // Common chart options
     const commonOptions = {
         responsive: true,

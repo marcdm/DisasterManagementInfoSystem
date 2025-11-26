@@ -1,0 +1,469 @@
+You are an expert Flask + PostgreSQL engineer working on the Disaster Relief Inventory Management System (DRIMS/DMIS).
+Your task is to implement a safe cancellation workflow for relief packages that:
+
+
+Fully reverses all reservations made by that package in itembatch and inventory
+
+
+Uses optimistic locking via version_nbr
+
+
+Runs transactionally (all-or-nothing)
+
+
+Does not break any existing:
+
+
+Code
+
+
+Workflow
+
+
+Behaviour
+
+
+Security fixes (CSRF, CSP, cookies, headers, query protections)
+
+
+Database schema (no new tables/columns, no altered constraints)
+
+
+
+
+You must use the existing database schema and existing status/logic in the codebase. Do not introduce new DB fields or enums.
+
+1. Trigger for Cancellation (Relief Package Level)
+Implement or update the existing “Cancel Package” / “Cancel Allocations” action for a relief package:
+
+
+This action is only available to the Logistics Manager (LM) role, using the existing auth/role system.
+
+
+When the LM chooses to cancel a previously submitted relief package (for a given reliefpkg_id), the system must treat this as a full rollback of reservations created by that package.
+
+
+Requirements:
+
+
+Use existing routing / UI patterns:
+
+
+Add/extend a route and handler for cancelling a package (e.g. POST /relief-packages/<reliefpkg_id>/cancel), following the current routing style.
+
+
+Ensure:
+
+
+CSRF protection is applied (use existing CSRF system).
+
+
+Existing authentication and authorization checks remain in force.
+
+
+
+
+
+
+Transactional behaviour:
+
+
+Wrap the entire cancellation logic in a single database transaction.
+
+
+If any error or validation failure occurs, rollback all changes and show a clear error to the LM (no partial cancellation).
+
+
+
+
+Status handling:
+
+
+Use the existing fields and workflow used by the system to mark a package as cancelled or inactive.
+
+
+Do not add new columns or status codes; instead, reuse the existing workflow states / fields in the codebase to indicate that the package is cancelled.
+
+
+
+
+
+2. Identify What to Release (reliefpkg_item)
+For the selected reliefpkg_id:
+
+
+Retrieve all related rows from reliefpkg_item associated with this package.
+
+
+Each reliefpkg_item row defines:
+
+
+fr_inventory_id (source warehouse / from-inventory)
+
+
+batch_id
+
+
+item_id
+
+
+item_qty (the quantity reserved for this package from that batch)
+
+
+
+
+These rows define exactly the reservations that must be reversed.
+Validation:
+
+
+If no reliefpkg_item rows are found for the given reliefpkg_id, return a safe, clear message (e.g. “No allocations to cancel for this package”) and do not fail the system.
+
+
+
+3. Releasing Reservations in itembatch (Per Batch, Per Warehouse, Per Item)
+For each reliefpkg_item row belonging to this package:
+
+
+Locate the matching itembatch row using existing schema:
+
+
+inventory_id = fr_inventory_id
+
+
+batch_id
+
+
+item_id
+
+
+
+
+Let:
+
+
+reserved_for_pkg = reliefpkg_item.item_qty
+
+
+
+
+Update the matching itembatch row as follows:
+itembatch.reserved_qty = itembatch.reserved_qty - reserved_for_pkg
+
+
+
+Before update validation:
+
+
+Ensure itembatch.reserved_qty >= reserved_for_pkg.
+
+
+If this is not true for any row:
+
+
+Treat this as a data inconsistency.
+
+
+Abort the cancellation.
+
+
+Roll back the entire transaction.
+
+
+Return a clear error message to the LM (e.g. “Cancellation failed due to inconsistent reserved quantities. Please contact system administrator.”).
+
+
+
+
+
+
+After update validation:
+
+
+Ensure itembatch.reserved_qty >= 0.
+
+
+If not, treat as a critical error, rollback, and report as above.
+
+
+
+
+Optimistic locking on itembatch:
+
+
+Use the existing version_nbr column for optimistic locking.
+
+
+When performing the update, include a version_nbr check (e.g. WHERE version_nbr = <original_version>).
+
+
+If the row’s version_nbr has changed since it was read:
+
+
+Reject the cancellation.
+
+
+Roll back all changes.
+
+
+Show a clear message: e.g. “This batch was updated by another user. Please refresh and try again.”
+
+
+
+
+
+
+Audit fields:
+
+
+Set:
+
+
+update_by_id = current LM user ID (from existing auth context)
+
+
+update_dtime = current system timestamp
+
+
+version_nbr = version_nbr + 1 on successful update
+
+
+
+
+
+
+Use existing helper functions / patterns in the codebase for timestamps and user IDs.
+
+4. Releasing Reservations in inventory (Aggregated by Warehouse + Item)
+Now, for each distinct pair (fr_inventory_id, item_id) represented in reliefpkg_item for this reliefpkg_id:
+
+
+Compute the total quantity reserved by this package for that warehouse and item:
+pkg_reserved_qty = SUM(reliefpkg_item.item_qty)
+WHERE reliefpkg_id = <current>
+  AND fr_inventory_id = <this inventory>
+  AND item_id = <this item>
+
+
+
+Locate the matching inventory record using the existing schema for:
+
+
+(inventory_id = fr_inventory_id, item_id)
+
+
+
+
+Reverse the reservation at the inventory level:
+inventory.reserved_qty = inventory.reserved_qty - pkg_reserved_qty
+
+
+
+Before update validation:
+
+
+Ensure inventory.reserved_qty >= pkg_reserved_qty.
+
+
+If not, treat this as a data inconsistency:
+
+
+Abort the cancellation.
+
+
+Roll back all changes.
+
+
+Show a clear error message to the LM.
+
+
+
+
+
+
+After update validation:
+
+
+Ensure inventory.reserved_qty >= 0.
+
+
+If not, rollback and report error.
+
+
+
+
+Optimistic locking on inventory:
+
+
+Use the existing version_nbr column on the inventory row.
+
+
+When updating, include a version_nbr match in the WHERE clause.
+
+
+On mismatch:
+
+
+Reject cancellation.
+
+
+Roll back.
+
+
+Inform the LM that the record has been updated by another process/user and they must refresh.
+
+
+
+
+
+
+Audit fields:
+
+
+Set:
+
+
+update_by_id = current LM user ID
+
+
+update_dtime = current timestamp
+
+
+version_nbr = version_nbr + 1
+
+
+
+
+
+
+Key invariant (must hold after cancellation for each (inventory_id, item_id)):
+
+inventory.reserved_qty_after = inventory.reserved_qty_before - SUM(reliefpkg_item.item_qty for that reliefpkg_id, fr_inventory_id, item_id)
+
+Where “before” is the value just prior to this cancellation.
+
+5. Transactionality and Error Handling
+
+
+Wrap all itembatch and inventory updates and the relief package status update in a single database transaction using existing transaction/session patterns.
+
+
+If any of the following occurs:
+
+
+reserved_qty underflow in itembatch or inventory
+
+
+version_nbr mismatch in either itembatch or inventory
+
+
+Missing required rows that should exist for a consistent package
+
+
+
+
+Then:
+
+
+Roll back the entire transaction.
+
+
+Do not partially cancel.
+
+
+Show a clear error message to the LM, but do not expose sensitive internal details.
+
+
+
+
+
+6. UI / Behaviour / Security Requirements
+
+
+Do NOT change:
+
+
+Existing page layouts or navigation.
+
+
+Any other workflows unrelated to cancellation.
+
+
+Existing security fixes (CSRF, CSP, cookie flags, header sanitization, query string protections).
+
+
+Any database DDL (no ALTER TABLE / new columns).
+
+
+
+
+Do ensure:
+
+
+CSRF tokens and existing security checks apply to the cancel action.
+
+
+Only authorized roles (LM, as currently configured) can trigger this cancellation.
+
+
+The LM sees:
+
+
+Success message when cancellation completes.
+
+
+Meaningful error message when it fails (but the system remains consistent).
+
+
+
+
+
+
+
+7. Testing
+After implementing:
+
+
+Use an LM test account to:
+
+
+Create a relief package with allocations.
+
+
+Confirm itembatch.reserved_qty and inventory.reserved_qty increase appropriately.
+
+
+Trigger “Cancel Package”.
+
+
+Verify:
+
+
+All reservations tied to that package are reversed exactly (both itembatch and inventory).
+
+
+The package is marked as cancelled using existing status logic.
+
+
+No other packages or reservations are affected.
+
+
+
+
+
+
+Repeat with concurrent modification scenarios (if possible) to verify that:
+
+
+version_nbr mismatches are correctly detected.
+
+
+The operation fails cleanly and instructs the LM to refresh.
+
+
+
+
+Confirm that no other features, workflows, or security measures are impacted.
+
+
+
+Now, inspect the existing DRIMS/DMIS codebase and implement this relief package cancellation and reservation rollback exactly as described, without changing the database schema or breaking any existing behaviour or security fixes.

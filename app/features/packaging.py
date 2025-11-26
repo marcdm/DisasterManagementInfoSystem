@@ -22,7 +22,6 @@ from app.services import relief_request_service as rr_service
 from app.services import item_status_service
 from app.services import inventory_reservation_service as reservation_service
 from app.services.batch_allocation_service import BatchAllocationService, safe_decimal
-from app.core.audit import add_audit_fields
 from app.core.exceptions import OptimisticLockError
 
 
@@ -162,9 +161,13 @@ def review_approval(reliefrqst_id):
     
     # POST: Approve and dispatch
     action = request.form.get('action')
+    relief_request_version = request.form.get('relief_request_version')
+    package_version = request.form.get('package_version')
     
     if action == 'approve_and_dispatch':
         try:
+            _validate_version_nbr("relief request", relief_request_version, relief_request.version_nbr)
+            _validate_version_nbr("package", package_version, relief_pkg.version_nbr)
             # CRITICAL VALIDATION: Ensure package has items AND issue_qty matches ReliefPkgItem totals
             # Get all ReliefPkgItem records for this package
             pkg_items = ReliefPkgItem.query.filter_by(reliefpkg_id=relief_pkg.reliefpkg_id).all()
@@ -226,6 +229,7 @@ def review_approval(reliefrqst_id):
             relief_pkg.dispatch_dtime = jamaica_now()
             relief_pkg.update_by_id = current_user.user_name
             relief_pkg.update_dtime = jamaica_now()
+            relief_pkg.version_nbr += 1
             
             # Commit inventory: convert reservations to actual deductions
             success, error_msg = reservation_service.commit_inventory(relief_request.reliefrqst_id)
@@ -269,19 +273,95 @@ def review_approval(reliefrqst_id):
             flash(f'Relief request #{relief_request.reliefrqst_id} approved and dispatched to inventory clerk', 'success')
             return redirect(url_for('packaging.pending_approval'))
             
-        except ValueError as e:
+        except (OptimisticLockError, ValueError) as e:
             db.session.rollback()
             flash(str(e), 'danger')
             return redirect(url_for('packaging.review_approval', reliefrqst_id=reliefrqst_id))
     
     elif action == 'reject':
-        # TODO: Implement rejection workflow (send back to LO for revision)
-        flash('Rejection workflow not yet implemented', 'info')
-        return redirect(url_for('packaging.review_approval', reliefrqst_id=reliefrqst_id))
+        try:
+            _validate_version_nbr("relief request", relief_request_version, relief_request.version_nbr)
+            _validate_version_nbr("package", package_version, relief_pkg.version_nbr)
+            
+            # Reset LM approval fields so Logistics Officer can revise and resubmit
+            relief_pkg.verify_by_id = None
+            relief_pkg.verify_dtime = None
+            relief_pkg.status_code = rr_service.PKG_STATUS_PENDING
+            relief_pkg.update_by_id = current_user.user_name
+            relief_pkg.update_dtime = jamaica_now()
+            relief_pkg.version_nbr += 1
+            
+            # Record action on the relief request for audit trail
+            relief_request.action_by_id = current_user.user_name
+            relief_request.action_dtime = jamaica_now()
+            relief_request.version_nbr += 1
+            
+            db.session.commit()
+            
+            flash('Package rejected and sent back to Logistics Officer for revision.', 'info')
+            return redirect(url_for('packaging.pending_approval'))
+        except (OptimisticLockError, ValueError) as e:
+            db.session.rollback()
+            flash(str(e), 'danger')
+            return redirect(url_for('packaging.review_approval', reliefrqst_id=reliefrqst_id))
     
     else:
         flash('Invalid action', 'danger')
         return redirect(url_for('packaging.review_approval', reliefrqst_id=reliefrqst_id))
+
+
+@packaging_bp.route('/package/<int:reliefpkg_id>/cancel', methods=['POST'])
+@login_required
+def cancel_package(reliefpkg_id):
+    """
+    Cancel a relief package and fully reverse all reservations.
+    
+    Only Logistics Managers can cancel packages.
+    Uses optimistic locking to prevent conflicts.
+    Fully transactional - all-or-nothing operation.
+    
+    Cancellation Process:
+    1. Validates package exists and can be cancelled (P=Pending or D=Dispatched only)
+    2. Releases batch-level reservations (itembatch.reserved_qty) with version_nbr check
+    3. Releases warehouse-level reservations (inventory.reserved_qty) with version_nbr check
+    4. Deletes all ReliefPkgItem records
+    5. Deletes the ReliefPkg record
+    
+    If any version_nbr mismatch or validation error occurs, the entire operation is rolled back.
+    """
+    from app.core.rbac import is_logistics_manager
+    from app.services.inventory_reservation_service import cancel_relief_package
+    
+    if not is_logistics_manager():
+        flash('Access denied. Only Logistics Managers can cancel packages.', 'danger')
+        abort(403)
+    
+    try:
+        # Call the service function to cancel the package with optimistic locking
+        success, error_msg = cancel_relief_package(reliefpkg_id, current_user.user_name)
+        
+        if not success:
+            db.session.rollback()
+            flash(error_msg, 'danger')
+            return redirect(request.referrer or url_for('packaging.pending_approval'))
+        
+        # Commit the transaction
+        db.session.commit()
+        
+        flash(f'Relief package #{reliefpkg_id} has been successfully cancelled. All reservations have been released.', 'success')
+        return redirect(url_for('packaging.pending_approval'))
+        
+    except Exception as e:
+        db.session.rollback()
+        
+        # Log the error for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Unexpected error in cancel_package route: {str(e)}', exc_info=True)
+        
+        # Show user-friendly error message
+        flash('An unexpected error occurred while canceling the package. Please contact system administrator if this persists.', 'danger')
+        return redirect(request.referrer or url_for('packaging.pending_approval'))
 
 
 @packaging_bp.route('/<int:reliefrqst_id>/approve', methods=['GET', 'POST'])
