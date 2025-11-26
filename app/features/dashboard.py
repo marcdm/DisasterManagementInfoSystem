@@ -592,6 +592,19 @@ def donations_analytics():
         func.coalesce(func.sum(Donation.tot_item_cost), 0)
     ).scalar() or 0
     
+    # Total donation value by type (GOODS vs FUNDS)
+    total_value_goods = db.session.query(
+        func.coalesce(func.sum(DonationItem.item_cost), 0)
+    ).filter(
+        DonationItem.donation_type == 'GOODS'
+    ).scalar() or 0
+    
+    total_value_funds = db.session.query(
+        func.coalesce(func.sum(DonationItem.item_cost), 0)
+    ).filter(
+        DonationItem.donation_type == 'FUNDS'
+    ).scalar() or 0
+    
     # Unique donors count
     unique_donors = db.session.query(
         func.count(func.distinct(Donation.donor_id))
@@ -732,6 +745,8 @@ def donations_analytics():
         # KPIs
         'total_donations': total_donations,
         'total_value': float(total_value),
+        'total_value_goods': float(total_value_goods),
+        'total_value_funds': float(total_value_funds),
         'unique_donors': unique_donors,
         'countries_count': countries_count,
         

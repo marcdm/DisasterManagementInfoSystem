@@ -24,12 +24,16 @@
     margin-bottom: 2rem;
 }
 
-.kpi-card-featured {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
-    padding: 2rem;
+.kpi-featured-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
     margin-bottom: 1.5rem;
+}
+
+.kpi-card-featured {
+    border-radius: 16px;
+    padding: 2rem;
     display: flex;
     align-items: center;
     gap: 1.5rem;
@@ -38,6 +42,23 @@
 
 .kpi-card-featured:hover {
     transform: translateY(-2px);
+}
+
+.kpi-card-goods {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+}
+
+.kpi-card-goods:hover {
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+}
+
+.kpi-card-funds {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.kpi-card-funds:hover {
     box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
 }
 
@@ -48,10 +69,14 @@
     background: rgba(255, 255, 255, 0.2);
     color: white;
     font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 .kpi-card-featured .kpi-value {
-    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-size: clamp(1.5rem, 3vw, 2rem);
     font-weight: 700;
     color: white;
     line-height: 1.2;
@@ -60,7 +85,7 @@
 }
 
 .kpi-card-featured .kpi-label {
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: rgba(255, 255, 255, 0.9);
     margin-top: 0.5rem;
     font-weight: 500;
@@ -234,6 +259,10 @@
         grid-template-columns: repeat(3, 1fr);
     }
     
+    .kpi-featured-row {
+        grid-template-columns: 1fr;
+    }
+    
     .chart-container {
         height: 250px;
     }
@@ -265,7 +294,7 @@
     }
     
     .kpi-card-featured .kpi-value {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
     }
 }
 
@@ -289,13 +318,24 @@
         <p class="page-subtitle">Overview of donation metrics, trends, and distribution</p>
     </div>
 
-    <div class="kpi-card-featured">
-        <div class="kpi-icon">
-            <i class="bi bi-currency-dollar"></i>
+    <div class="kpi-featured-row">
+        <div class="kpi-card-featured kpi-card-goods">
+            <div class="kpi-icon">
+                <i class="bi bi-box-seam"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-value">J${{ "{:,.2f}".format(total_value_goods) }}</div>
+                <div class="kpi-label">Total Donation Value - GOODS</div>
+            </div>
         </div>
-        <div class="kpi-content">
-            <div class="kpi-value">J${{ "{:,.2f}".format(total_value) }}</div>
-            <div class="kpi-label">Total Donation Value</div>
+        <div class="kpi-card-featured kpi-card-funds">
+            <div class="kpi-icon">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-value">J${{ "{:,.2f}".format(total_value_funds) }}</div>
+                <div class="kpi-label">Total Donation Value - FUNDS</div>
+            </div>
         </div>
     </div>
 
