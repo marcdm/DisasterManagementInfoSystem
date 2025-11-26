@@ -1,28 +1,45 @@
 """
 Currency Conversion Service for DRIMS
 
-This service handles fetching and caching exchange rates from Frankfurter.app (ECB-backed)
-for converting foreign currencies to JMD. Rates are cached in the database to minimize
-external API calls.
+NOTE FOR DEVELOPERS:
+====================
+External currency API integration is currently disabled.
+The system retains currency conversion capability using
+cached/manual values in the currency_rate table.
 
-Key Features:
-- Fetches rates from Frankfurter.app (free, no API key required)
-- Caches rates in the currency_rate database table
+To add a new provider:
+1. Implement fetch_rate_from_provider() function
+2. Configure the provider's base URL & API key in config.py
+3. Update get_or_update_rate_to_jmd() to call your new function
+4. Insert a new value for 'source' in currency_rate as needed
+
+Current Behavior:
+- get_cached_rate() returns cached rates from currency_rate table
+- store_rate() allows manual/programmatic rate insertion
+- get_or_update_rate_to_jmd() returns cached rates only (no external fetch)
+- convert_to_jmd() works with cached rates only
+- refresh_all_rates() is disabled (no external API configured)
+- set_usd_jmd_rate() allows manual USD/JMD rate setting
+
+Key Features (still operational):
+- Reads cached rates from the currency_rate database table
 - Provides JMD conversion for display purposes (read-only)
 - Graceful fallback when rates are unavailable
 
 Usage Example:
     from app.services.currency_service import CurrencyService
     
-    # Get rate (will fetch from API if not cached)
+    # Get cached rate (returns None if not cached)
     rate = CurrencyService.get_or_update_rate_to_jmd('USD', date.today())
     
-    # Convert amount
+    # Convert amount using cached rates
     jmd_amount = CurrencyService.convert_to_jmd(100.00, 'USD', date.today())
+    
+    # Manually set a rate
+    CurrencyService.store_rate('EUR', date.today(), Decimal('170.50'), 'MANUAL')
 """
 
 import logging
-import requests
 from decimal import Decimal, InvalidOperation
 from datetime import date, datetime
 from typing import Optional, List, Tuple
@@ -41,7 +58,7 @@ class CurrencyRate(db.Model):
     currency_code = db.Column(db.String(3), primary_key=True)
     rate_date = db.Column(db.Date, primary_key=True)
     rate_to_jmd = db.Column(db.Numeric(18, 8), nullable=False)
-    source = db.Column(db.String(50), nullable=False, default='FRANKFURTER_ECB')
+    source = db.Column(db.String(50), nullable=False, default='UNCONFIGURED')
     create_dtime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
     def __repr__(self):
@@ -53,18 +70,26 @@ class CurrencyServiceError(Exception):
     pass
 
 
+class NoProviderConfiguredError(CurrencyServiceError):
+    """Raised when attempting to fetch rates but no external provider is configured."""
+    pass
+
+
 class CurrencyService:
     """
-    Centralized service for currency conversion using Frankfurter.app.
+    Centralized service for currency conversion.
+    
+    NOTE: External API integration is currently disabled.
+    The service operates using cached/manual rates only.
     
     All methods are designed to fail gracefully - if a rate cannot be retrieved,
     methods return None rather than raising exceptions, allowing the app to
     continue functioning.
     """
     
-    FRANKFURTER_BASE_URL = 'https://api.frankfurter.app'
-    HTTP_TIMEOUT = 5  # seconds
-    SOURCE_NAME = 'FRANKFURTER_ECB'
+    # Default source for manually inserted rates
+    DEFAULT_SOURCE = 'MANUAL'
+    HTTP_TIMEOUT = 5  # seconds (retained for future provider integration)
     
     @staticmethod
     def get_cached_rate(currency_code: str, rate_date: date) -> Optional[Decimal]:
@@ -112,7 +137,7 @@ class CurrencyService:
     
     @staticmethod
     def store_rate(currency_code: str, rate_date: date, rate_to_jmd: Decimal, 
-                   source: str = 'FRANKFURTER_ECB') -> bool:
+                   source: str = 'MANUAL') -> bool:
         """
         Store or update an exchange rate in the database.
         
@@ -120,7 +145,7 @@ class CurrencyService:
             currency_code: ISO 4217 currency code
             rate_date: The date the rate applies to
             rate_to_jmd: Exchange rate (how many JMD for 1 unit of currency)
-            source: Rate source identifier
+            source: Rate source identifier (default: 'MANUAL')
             
         Returns:
             True if successful, False otherwise
@@ -160,12 +185,17 @@ class CurrencyService:
             return False
     
     @staticmethod
-    def fetch_rate_from_frankfurter(currency_code: str, rate_date: Optional[date] = None) -> Optional[Decimal]:
+    def fetch_rate_from_provider(currency_code: str, rate_date: Optional[date] = None) -> Optional[Decimal]:
         """
-        Fetch an exchange rate from Frankfurter.app API.
+        Fetch an exchange rate from an external API provider.
         
-        Frankfurter provides ECB rates. We need to calculate the cross-rate to JMD
-        since ECB doesn't directly provide JMD rates.
+        NOTE: No external currency API is currently configured.
+        This method is a placeholder for future provider integration.
+        
+        To implement a new provider:
+        1. Add provider configuration (base URL, API key) to config.py
+        2. Implement the API call logic in this method
+        3. Return the rate as a Decimal, or None if fetch failed
         
         Args:
             currency_code: ISO 4217 currency code (e.g., 'USD', 'EUR')
@@ -173,66 +203,22 @@ class CurrencyService:
             
         Returns:
             Exchange rate to JMD, or None if fetch failed
+            
+        Raises:
+            NoProviderConfiguredError: Always raised as no provider is configured
         """
-        if not currency_code:
-            return None
-            
-        currency_code = currency_code.upper().strip()
-        
-        if currency_code == 'JMD':
-            return Decimal('1')
-        
-        try:
-            if rate_date:
-                date_str = rate_date.strftime('%Y-%m-%d')
-                url = f"{CurrencyService.FRANKFURTER_BASE_URL}/{date_str}"
-            else:
-                url = f"{CurrencyService.FRANKFURTER_BASE_URL}/latest"
-            
-            params = {'from': currency_code, 'to': 'USD'}
-            
-            logger.info(f"Fetching rate from Frankfurter: {url} with params {params}")
-            
-            response = requests.get(url, params=params, timeout=CurrencyService.HTTP_TIMEOUT)
-            response.raise_for_status()
-            
-            data = response.json()
-            
-            if 'rates' not in data or 'USD' not in data['rates']:
-                logger.warning(f"No USD rate found in Frankfurter response for {currency_code}")
-                return None
-            
-            rate_to_usd = Decimal(str(data['rates']['USD']))
-            
-            usd_to_jmd = CurrencyService._get_usd_jmd_rate()
-            
-            rate_to_jmd = rate_to_usd * usd_to_jmd
-            
-            logger.info(f"Calculated rate: 1 {currency_code} = {rate_to_usd} USD = {rate_to_jmd} JMD")
-            
-            return rate_to_jmd
-            
-        except requests.exceptions.Timeout:
-            logger.warning(f"Timeout fetching rate for {currency_code} from Frankfurter")
-            return None
-        except requests.exceptions.RequestException as e:
-            logger.warning(f"HTTP error fetching rate for {currency_code}: {e}")
-            return None
-        except (KeyError, ValueError, InvalidOperation) as e:
-            logger.warning(f"Error parsing Frankfurter response for {currency_code}: {e}")
-            return None
-        except Exception as e:
-            logger.error(f"Unexpected error fetching rate for {currency_code}: {e}")
-            return None
+        raise NoProviderConfiguredError(
+            "No external currency API is configured. "
+            "Please add an exchange-rate provider to enable automatic rates."
+        )
     
     @staticmethod
     def _get_usd_jmd_rate() -> Decimal:
         """
-        Get the USD to JMD exchange rate.
+        Get the USD to JMD exchange rate from cache.
         
-        Frankfurter/ECB doesn't provide JMD directly. We use a reasonable
-        approximation based on current rates (approximately 157 JMD per USD as of 2025).
-        This can be updated periodically via the refresh command.
+        Returns the most recent cached USD rate, or a default approximation
+        if no rate is cached.
         
         Returns:
             Decimal rate for 1 USD to JMD
@@ -247,22 +233,23 @@ class CurrencyService:
         except Exception:
             pass
         
+        # Default approximation (can be updated via set_usd_jmd_rate)
         return Decimal('157.50')
     
     @staticmethod
     def get_or_update_rate_to_jmd(currency_code: str, rate_date: date) -> Optional[Decimal]:
         """
-        Get exchange rate to JMD, fetching from API if not cached.
+        Get exchange rate to JMD from cache.
         
-        This is the main entry point for currency conversion. It first checks
-        the cache, and if not found, fetches from Frankfurter and stores it.
+        NOTE: External API fetching is disabled. This method returns
+        cached rates only. Use store_rate() to manually add rates.
         
         Args:
             currency_code: ISO 4217 currency code
             rate_date: The date for which to get the rate
             
         Returns:
-            Exchange rate to JMD, or None if unavailable
+            Exchange rate to JMD, or None if not cached
         """
         if not currency_code:
             return None
@@ -272,16 +259,14 @@ class CurrencyService:
         if currency_code == 'JMD':
             return Decimal('1')
         
+        # Return cached rate only (no external fetch)
         cached_rate = CurrencyService.get_cached_rate(currency_code, rate_date)
         if cached_rate is not None:
             return cached_rate
         
-        fetched_rate = CurrencyService.fetch_rate_from_frankfurter(currency_code, rate_date)
-        
-        if fetched_rate is not None:
-            CurrencyService.store_rate(currency_code, rate_date, fetched_rate)
-            return fetched_rate
-        
+        # Log that no rate is available (external fetch disabled)
+        logger.debug(f"No cached rate available for {currency_code} on {rate_date}. "
+                     "External API fetch is disabled.")
         return None
     
     @staticmethod
@@ -344,47 +329,31 @@ class CurrencyService:
         """
         Refresh exchange rates for all currencies used in donations.
         
+        NOTE: External API fetching is disabled. This method currently
+        returns (0, 0) as no rates can be fetched automatically.
+        
+        To enable automatic rate refresh:
+        1. Implement fetch_rate_from_provider()
+        2. Configure the provider in config.py
+        3. Update this method to use the new provider
+        
         Args:
             target_date: Date for which to fetch rates; defaults to today
             
         Returns:
-            Tuple of (successful_count, failed_count)
+            Tuple of (successful_count, failed_count) - always (0, 0) when disabled
         """
-        if target_date is None:
-            target_date = date.today()
-        
-        currencies = CurrencyService.get_donation_currencies()
-        
-        currencies_to_refresh = [c for c in currencies if c.upper() != 'JMD']
-        
-        success_count = 0
-        fail_count = 0
-        
-        for currency_code in currencies_to_refresh:
-            try:
-                rate = CurrencyService.fetch_rate_from_frankfurter(currency_code, target_date)
-                if rate is not None:
-                    if CurrencyService.store_rate(currency_code, target_date, rate):
-                        success_count += 1
-                        logger.info(f"Refreshed rate for {currency_code}: {rate} JMD")
-                    else:
-                        fail_count += 1
-                else:
-                    fail_count += 1
-                    logger.warning(f"Failed to fetch rate for {currency_code}")
-            except Exception as e:
-                fail_count += 1
-                logger.error(f"Error refreshing rate for {currency_code}: {e}")
-        
-        return success_count, fail_count
+        logger.warning("refresh_all_rates called but no external API is configured. "
+                      "Rates must be inserted manually using store_rate() or set_usd_jmd_rate().")
+        return (0, 0)
     
     @staticmethod
     def set_usd_jmd_rate(rate: Decimal, rate_date: Optional[date] = None) -> bool:
         """
         Manually set the USD to JMD exchange rate.
         
-        Since ECB doesn't provide JMD rates directly, this allows administrators
-        to set/update the USD/JMD rate manually.
+        This allows administrators to set/update the USD/JMD rate manually.
+        Other currency rates can be set using store_rate().
         
         Args:
             rate: The USD to JMD exchange rate
@@ -397,3 +366,23 @@ class CurrencyService:
             rate_date = date.today()
         
         return CurrencyService.store_rate('USD', rate_date, rate, 'MANUAL')
+    
+    @staticmethod
+    def list_cached_rates(limit: int = 50) -> List[CurrencyRate]:
+        """
+        List cached exchange rates.
+        
+        Args:
+            limit: Maximum number of rates to return (default 50)
+            
+        Returns:
+            List of CurrencyRate objects, ordered by date descending
+        """
+        try:
+            return CurrencyRate.query.order_by(
+                CurrencyRate.rate_date.desc(),
+                CurrencyRate.currency_code
+            ).limit(limit).all()
+        except Exception as e:
+            logger.error(f"Error listing cached rates: {e}")
+            return []
