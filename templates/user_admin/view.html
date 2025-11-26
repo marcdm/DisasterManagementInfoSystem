@@ -187,7 +187,7 @@
         </div>
 
         <!-- Tab Content: Roles & Privileges -->
-        <div class="profile-tab-content" id="roles-panel" role="tabpanel" class="d-none">
+        <div class="profile-tab-content d-none" id="roles-panel" role="tabpanel">
             <div class="row g-4">
                 <div class="col-md-6">
                     <div class="info-card">
@@ -248,7 +248,7 @@
         </div>
 
         <!-- Tab Content: Security Controls -->
-        <div class="profile-tab-content" id="security-panel" role="tabpanel" class="d-none">
+        <div class="profile-tab-content d-none" id="security-panel" role="tabpanel">
             <div class="row g-4">
                 <div class="col-md-6">
                     <div class="info-card">
@@ -284,7 +284,7 @@
         </div>
 
         <!-- Tab Content: Activity Timeline -->
-        <div class="profile-tab-content" id="activity-panel" role="tabpanel" class="d-none">
+        <div class="profile-tab-content d-none" id="activity-panel" role="tabpanel">
             <div class="info-card">
                 <div class="info-card-header">
                     <h3 class="info-card-title">Recent Activity</h3>
@@ -358,15 +358,15 @@
 
 {% block extra_scripts %}
 <script nonce="{{ csp_nonce() }}">
-// Tab switching functionality
 document.addEventListener('DOMContentLoaded', function() {
+    // Tab switching functionality
     const tabs = document.querySelectorAll('.profile-tab');
     const panels = document.querySelectorAll('.profile-tab-content');
-    
+
     tabs.forEach(tab => {
         tab.addEventListener('click', function() {
             const targetTab = this.dataset.tab;
-            
+
             // Update tab states
             tabs.forEach(t => {
                 t.classList.remove('active');
@@ -374,7 +374,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             this.classList.add('active');
             this.setAttribute('aria-selected', 'true');
-            
+
             // Update panel visibility
             panels.forEach(panel => {
                 panel.classList.add('d-none');
@@ -387,66 +387,74 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-    
+
     // Keyboard navigation
     document.addEventListener('keydown', function(e) {
         const activeTab = document.querySelector('.profile-tab.active');
         if (!activeTab) return;
-        
+
         let targetTab = null;
-        
+
         if (e.key === 'ArrowRight') {
             targetTab = activeTab.nextElementSibling;
         } else if (e.key === 'ArrowLeft') {
             targetTab = activeTab.previousElementSibling;
         }
-        
+
         if (targetTab && targetTab.classList.contains('profile-tab')) {
             targetTab.click();
             targetTab.focus();
         }
     });
-});
 
-// Deactivate user confirmation modal
-const deactivateUserForm = document.getElementById('deactivateUserForm');
-if (deactivateUserForm) {
-    deactivateUserForm.addEventListener('submit', function(e) {
+    // Deactivate user confirmation modal
+    const deactivateUserForm = document.getElementById('deactivateUserForm');
+    const deactivateConfirmBtn = document.querySelector('[data-action="confirm-deactivate-user"]');
+
+    function handleDeactivateSubmit(e) {
         e.preventDefault();
         const modal = new bootstrap.Modal(document.getElementById('deactivateUserModal'));
         modal.show();
-        return false;
-    });
-}
-
-function confirmDeactivateUser() {
-    console.log('Confirming deactivate user');
-    const form = document.getElementById('deactivateUserForm');
-    if (form) {
-        form.removeEventListener('submit', arguments.callee);
-        form.submit();
     }
-}
 
-// Activate user confirmation modal
-const activateUserForm = document.getElementById('activateUserForm');
-if (activateUserForm) {
-    activateUserForm.addEventListener('submit', function(e) {
+    function confirmDeactivateUser() {
+        if (deactivateUserForm) {
+            deactivateUserForm.removeEventListener('submit', handleDeactivateSubmit);
+            deactivateUserForm.submit();
+        }
+    }
+
+    if (deactivateUserForm) {
+        deactivateUserForm.addEventListener('submit', handleDeactivateSubmit);
+    }
+    if (deactivateConfirmBtn) {
+        deactivateConfirmBtn.addEventListener('click', confirmDeactivateUser);
+    }
+
+    // Activate user confirmation modal
+    const activateUserForm = document.getElementById('activateUserForm');
+    const activateConfirmBtn = document.querySelector('[data-action="confirm-activate-user"]');
+
+    function handleActivateSubmit(e) {
         e.preventDefault();
         const modal = new bootstrap.Modal(document.getElementById('activateUserModal'));
         modal.show();
-        return false;
-    });
-}
-
-function confirmActivateUser() {
-    console.log('Confirming activate user');
-    const form = document.getElementById('activateUserForm');
-    if (form) {
-        form.removeEventListener('submit', arguments.callee);
-        form.submit();
     }
-}
+
+    function confirmActivateUser() {
+        if (activateUserForm) {
+            activateUserForm.removeEventListener('submit', handleActivateSubmit);
+            activateUserForm.submit();
+        }
+    }
+
+    if (activateUserForm) {
+        activateUserForm.addEventListener('submit', handleActivateSubmit);
+    }
+    if (activateConfirmBtn) {
+        activateConfirmBtn.addEventListener('click', confirmActivateUser);
+    }
+});
 </script>
 
 <!-- Deactivate User Confirmation Modal -->
