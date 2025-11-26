@@ -144,6 +144,7 @@ input[type=number] {
                     </div>
                     <div class="card-body">
                         {% for di in donation_items %}
+                        {% set donated_qty = di.item_qty or 0 %}
                         <!-- Item Card -->
                         <div class="item-card">
                             <!-- Item Header -->
@@ -176,7 +177,8 @@ input[type=number] {
                                     <div class="col-md-2">
                                         <div class="field-label">Donated Qty</div>
                                         <div class="donated-qty-box">
-                                            <strong class="text-primary fs-6">{{ di.item_qty }}</strong>
+                                            <strong class="text-primary fs-6">{{ donated_qty }}</strong>
+                                            <small class="text-muted d-block fs-tiny">{{ di.uom_code }}</small>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -246,20 +248,19 @@ input[type=number] {
                                     </div>
                                     <div class="col-md-3">
                                         <label for="usable_qty_{{ di.item_id }}" class="field-label">Usable Qty</label>
-                                        <input type="number" 
-                                               class="form-control form-control-sm qty-input" 
+                                        <input type="number"
+                                               class="form-control form-control-sm qty-input bg-light"
                                                id="usable_qty_{{ di.item_id }}"
-                                               name="usable_qty_{{ di.item_id }}" 
-                                               step="0.01" 
+                                               name="usable_qty_{{ di.item_id }}"
+                                               step="0.01"
                                                min="0"
-                                               value="{{ di.item_qty }}"
-                                               data-expected="{{ di.item_qty }}"
+                                               value="{{ donated_qty }}"
+                                               data-expected="{{ donated_qty }}"
                                                data-item-id="{{ di.item_id }}"
                                                data-validate="quantities"
                                                data-decimal-places="2"
                                                required
-                                               readonly
-                                               class="form-control form-control-sm qty-input bg-light">
+                                               readonly>
                                     </div>
                                     <div class="col-md-2">
                                         <label for="defective_qty_{{ di.item_id }}" class="field-label">Defective Qty</label>
