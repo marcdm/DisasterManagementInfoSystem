@@ -426,22 +426,28 @@ if (urgencySelect) {
 // Submit form - show modal instead of native confirm
 const submitForm = document.getElementById('submitForm');
 if (submitForm) {
-    submitForm.addEventListener('submit', function(e) {
+    submitForm.addEventListener('submit', function handleSubmit(e) {
+        if (submitForm.dataset.confirmed === 'true') {
+            return;
+        }
+
         e.preventDefault();
         const modal = new bootstrap.Modal(document.getElementById('submitRequestModal'));
         modal.show();
-        return false;
     });
 }
 
 // Delete form - show modal instead of native confirm
 const cancelForm = document.getElementById('cancelForm');
 if (cancelForm) {
-    cancelForm.addEventListener('submit', function(e) {
+    cancelForm.addEventListener('submit', function handleDelete(e) {
+        if (cancelForm.dataset.confirmed === 'true') {
+            return;
+        }
+
         e.preventDefault();
         const modal = new bootstrap.Modal(document.getElementById('deleteDraftModal'));
         modal.show();
-        return false;
     });
 }
 
@@ -451,16 +457,16 @@ document.addEventListener('click', function(e) {
     if (confirmSubmit) {
         const form = document.getElementById('submitForm');
         if (form) {
-            form.removeEventListener('submit', arguments.callee);
+            form.dataset.confirmed = 'true';
             form.submit();
         }
     }
-    
+
     const confirmDelete = e.target.closest('[data-action="confirm-delete-draft"]');
     if (confirmDelete) {
         const form = document.getElementById('cancelForm');
         if (form) {
-            form.removeEventListener('submit', arguments.callee);
+            form.dataset.confirmed = 'true';
             form.submit();
         }
     }
