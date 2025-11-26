@@ -4,9 +4,7 @@ Main Flask Application
 """
 import os
 from flask import Flask, abort, render_template, redirect, url_for, flash, request, session
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from keycloak import KeycloakOpenID, KeycloakAuthenticationError
-from keycloak.exceptions import KeycloakAuthenticationError, KeycloakConnectionError
+from flask_login import LoginManager, login_required, current_user
 
 
 from app.db import db, init_db
@@ -17,6 +15,8 @@ from app.security.cache_control import init_cache_control
 from app.security.header_sanitization import init_header_sanitization
 from app.security.error_handling import init_error_handling
 from app.security.query_string_protection import init_query_string_protection
+from app.utils.timezone import format_datetime, datetime_to_jamaica, now
+from app.utils.keycloak import *
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -32,15 +32,6 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-def get_keycloak_client():
-    # ToDo: Handle Connection error
-    kc_client = KeycloakOpenID(**app.config['KEYCLOAK_CONF'])
-    return kc_client
-
-def trim_keycloak_token(token):
-    '''returns a slimmed down token dict for storing in the session'''
-    keys_to_keep = ['refresh_token', 'expires_in', 'refresh_expires_in']
-    return dict([(x, token.get(x, None)) for x in keys_to_keep])
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -48,24 +39,7 @@ def load_user(user_id):
     signed in. But, we will only refresh if the access token has expired
     If the refresh token has expired, the user will be signed out.
     '''
-    token = session.get('_user_token')
-    token_time = session.get('_token_time')
-    if token and token_time:
-        token_age = now().timestamp() - token_time
-        print(f'Is {token["expires_in"]} (time) > {token_age} (age)?')
-        if token_age > (token['expires_in']*0.95):
-            # try refresh token if it expire or soon expire
-            if token_age > token['refresh_expires_in']:
-                # refresh token expired. Logout any user and return none
-                keycloak_logout()
-                return None
-
-            kc = get_keycloak_client()
-            token = kc.refresh_token(token['refresh_token'])
-            print(f'refreshing token to get \n\n{token}')
-            session['_user_token'] = trim_keycloak_token(token)
-            session['_token_time'] = now().timestamp()
-            
+    if check_refresh_token():        
         user_q = User.query.filter_by(user_uuid=user_id)
         return user_q.first()
     return None
@@ -172,11 +146,9 @@ def status_label_filter(status_code, entity_type):
 @app.context_processor
 def inject_now():
     """Inject current datetime for footer year and other templates"""
-    from app.utils.timezone import now
     return {'now': now()}
 
 # Register timezone-aware Jinja filters
-from app.utils.timezone import format_datetime, datetime_to_jamaica, now
 
 @app.template_filter('format_datetime')
 def format_datetime_filter(dt, format_str='%Y-%m-%d %H:%M:%S'):
@@ -207,45 +179,6 @@ def block_static_directory():
 @login_required
 def index():
     """Redirect to role-based dashboard"""
-   
-def keycloak_login(email, pwd, totp=None):
-    """Handles authentication by passing un/pw to keycloak and processing
-    the response
-
-    Args:
-        email (string): user email as username
-        pwd (string): password
-        totp (string, optional): Temporary 1-time password if any. Defaults to None.
-
-    Returns:
-        dict: user info from keycloak or None
-    """
-    keycloak_openid = get_keycloak_client()
-    try:
-        if (totp is None):
-            token = keycloak_openid.token(email, pwd)
-        else:
-            token = keycloak_openid.token(email, pwd, totp=totp)
-    except KeycloakAuthenticationError:
-        # ToDo: Log authentication failure
-        return False
-    # token has keys: access_token, refresh_token, id_token, session_state, scope
-    user_info = keycloak_openid.userinfo(token['access_token'])
-    user = User.query.filter_by(email=user_info.get('email', '@fake-email')).first()
-    # ToDo: remove this before production??
-    # if user.user_uuid is None:
-    #     user.user_uuid = user_info['sub']
-    session_token = trim_keycloak_token(token)
-    session['_user_token'] = session_token
-    session['_token_time'] = now().timestamp()
-    login_user(user)
-    return True
-
-def keycloak_logout():
-    '''Logout user and delete custom session values'''
-    session.pop('_user_token', None)
-    session.pop('_token_time', None)
-    logout_user()
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -257,8 +190,8 @@ def login():
         email = request.form.get('email')
         password = request.form.get('password')
         
-        succes = keycloak_login(email, password)
-        if succes:
+        success = keycloak_login(email, password)
+        if success:
             next_page = request.args.get('next')
             return redirect(next_page if next_page else url_for('dashboard.index'))
         else:
