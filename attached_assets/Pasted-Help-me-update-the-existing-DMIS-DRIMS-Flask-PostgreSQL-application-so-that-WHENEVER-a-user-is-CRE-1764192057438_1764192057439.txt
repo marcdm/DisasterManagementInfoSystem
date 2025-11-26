@@ -1,0 +1,103 @@
+Help me update the existing DMIS/DRIMS Flask + PostgreSQL application so that WHENEVER a user is CREATING a relief request, the selectable items are restricted to ONLY category type "GOODS". Items with category type "FUNDS" must never appear in the item filter/list for relief requests.
+
+IMPORTANT CONSTRAINTS
+- DO NOT change any database tables, columns, constraints, indexes, or triggers.
+- DO NOT change any existing status codes, workflows, or business logic outside this specific requirement.
+- DO NOT break or modify existing donation workflows or any screens that legitimately use FUNDS.
+- DO NOT change any existing routes, blueprints, templates, or navigation structure names.
+- DO NOT weaken any security controls (CSP, CSRF, auth, role checks, permissions).
+
+Your ONLY job is to adjust the item selection/filtering logic on relief request CREATION so that:
+- LO (Logistics Officer),
+- LM (Logistics Manager),
+- Agency users
+see ONLY "GOODS" items in the item dropdowns/search filters when they are creating a relief request.
+
+CONTEXT / EXISTING SCHEMA (ASSUMED)
+- There is an `item` table that stores items.
+- There is an `itemcatg` (item category) table with at least:
+    - category_id
+    - category_type (char(5) with values 'GOODS' or 'FUNDS')
+- The `item` table is linked to `itemcatg` via a category_id / FK (or equivalent).
+- Relief requests use existing pages/routes such as:
+    - Agency creates relief request
+    - LO/LM creates or edits relief request items
+  and these pages currently allow the user to select any item.
+
+REQUIREMENT (WHAT MUST CHANGE)
+1. For ALL relief request creation flows (for Agency, LO, and LM):
+   - Any UI element that allows selecting an item (dropdown, typeahead, search results, etc.)
+     MUST ONLY show items whose related category has:
+       itemcatg.category_type = 'GOODS'
+
+2. NO FUNDS items (category_type = 'FUNDS') must appear in:
+   - Item dropdowns
+   - Item search/autocomplete boxes
+   - Any item listing used strictly for picking items to include in a relief request
+
+3. This restriction applies ONLY to:
+   - Relief request creation and relief request item selection.
+   - It must NOT affect donation intake, donation item management, inventory screens, or any other part of the system that legitimately needs to show FUNDS.
+
+IMPLEMENTATION DETAILS
+A. SERVER-SIDE FILTERING
+- Find the backend code (Flask view functions, services, or repository/DAO functions) responsible for:
+  - Loading the item list for relief request creation pages.
+  - Serving any item search APIs used by those pages (e.g., `/api/items/search` used by relief requests).
+
+- Modify these queries so they JOIN with itemcatg and filter by category_type = 'GOODS'.
+
+For example (pseudocode / SQL-style):
+
+Instead of something like:
+    SELECT i.*
+    FROM   item i
+    WHERE  i.status_code = 'A'
+    ORDER BY i.item_desc;
+
+Use:
+    SELECT i.*
+    FROM   item i
+    JOIN   itemcatg c ON c.category_id = i.category_id
+    WHERE  i.status_code = 'A'
+      AND  c.category_type = 'GOODS'
+    ORDER BY i.item_desc;
+
+- Apply this pattern to:
+  - Any endpoint that is used to populate item dropdowns for relief request creation.
+  - Any search/filter logic that returns items to be added to a relief request.
+
+B. SCOPE THE CHANGE TO RELIEF REQUEST USE CASES ONLY
+- If the same item search or dropdown is used in multiple places (e.g., donations + relief requests), do NOT blindly restrict all of them.
+- Either:
+  - Introduce a parameter or flag in the service/repository call that indicates "for relief request", and then apply the category_type = 'GOODS' filter only in that case,
+  OR
+  - Create a dedicated "relief-request item lookup" function/endpoint that always filters by category_type = 'GOODS' and use this only on relief request screens.
+
+C. FRONTEND / TEMPLATE USAGE
+- Ensure that the relief request creation templates (for Agency, LO, LM) are wired to the updated endpoint(s) that return only GOODS items.
+- Do NOT change the visual design or labels; just ensure the data source for item lists is now GOODS-only for relief requests.
+
+D. PERMISSIONS
+- All existing role/permission checks (Agency, LO, LM) MUST remain unchanged.
+- Only modify the data returned for item selection, not which users can access the screen.
+
+E. NO CHANGE TO EXISTING DATA OR CATEGORIES
+- Do NOT modify existing item or itemcatg rows.
+- Do NOT change category_type values.
+- Do NOT migrate or re-tag any data.
+- Simply filter at query level to exclude FUNDS items from relief request item selection.
+
+TESTING & VALIDATION
+- Confirm that:
+  - Agency, LO, LM users can still create relief requests normally.
+  - Item dropdowns/search controls on relief request creation pages only show GOODS items.
+  - FUNDS items are never presented as selectable in any relief request creation flow.
+- Confirm that:
+  - Donation workflows, inventory screens, and any FUNDS-related views still behave exactly as before (FUNDS remain visible where they were previously visible and valid).
+- Ensure that no errors occur and all existing tests still pass.
+
+SUMMARY
+- Implement server-side item filtering so that, when creating a relief request (for Agency, LO, or LM roles), only items with itemcatg.category_type = 'GOODS' appear.
+- Do not change workflows A or B, donation flows, or any database schema.
+- Keep the rest of the system behaviour unchanged.
