@@ -9,7 +9,6 @@ from io import StringIO
 import logging
 from app.utils.timezone import now as jamaica_now
 from app.core.rbac import executive_required
-from app.services.currency_service import CurrencyService
 
 logger = logging.getLogger(__name__)
 
@@ -199,71 +198,6 @@ def funds_donations():
         DonationItem.donation_type == 'FUNDS'
     ).distinct().order_by(Currency.currency_name).all()
     
-    all_funds_query = db.session.query(
-        DonationItem.item_cost,
-        DonationItem.currency_code,
-        Donation.received_date
-    ).join(
-        Donation, DonationItem.donation_id == Donation.donation_id
-    ).filter(
-        DonationItem.donation_type == 'FUNDS'
-    )
-    
-    if country_filter:
-        try:
-            all_funds_query = all_funds_query.filter(Donation.origin_country_id == int(country_filter))
-        except ValueError:
-            pass
-    
-    if date_from:
-        try:
-            from_date = datetime.strptime(date_from, '%Y-%m-%d').date()
-            all_funds_query = all_funds_query.filter(Donation.received_date >= from_date)
-        except ValueError:
-            pass
-    
-    if date_to:
-        try:
-            to_date = datetime.strptime(date_to, '%Y-%m-%d').date()
-            all_funds_query = all_funds_query.filter(Donation.received_date <= to_date)
-        except ValueError:
-            pass
-    
-    if currency_filter:
-        all_funds_query = all_funds_query.filter(DonationItem.currency_code == currency_filter)
-    
-    all_funds = all_funds_query.all()
-    
-    total_jmd_value = Decimal('0')
-    conversion_errors = []
-    today = date.today()
-    
-    for fund in all_funds:
-        if fund.item_cost is None:
-            continue
-        
-        amount = Decimal(str(fund.item_cost))
-        currency_code = fund.currency_code
-        rate_date = fund.received_date if fund.received_date else today
-        
-        if currency_code and currency_code.upper() == 'JMD':
-            total_jmd_value += amount
-        else:
-            try:
-                jmd_amount = CurrencyService.convert_to_jmd(amount, currency_code, rate_date)
-                if jmd_amount is not None:
-                    total_jmd_value += jmd_amount
-                else:
-                    conversion_errors.append(currency_code)
-            except Exception as e:
-                logger.warning(f"Error converting {currency_code} to JMD: {e}")
-                conversion_errors.append(currency_code)
-    
-    conversion_warning = None
-    if conversion_errors:
-        unique_errors = list(set(conversion_errors))
-        conversion_warning = f"Exchange rates unavailable for: {', '.join(unique_errors)}. Some amounts not included in JMD total."
-    
     return render_template(
         'reports/funds_donations.html',
         donations=funds_donations_list,
@@ -273,8 +207,6 @@ def funds_donations():
         total_donations=total_donations,
         unique_countries=unique_countries,
         unique_currencies=unique_currencies,
-        total_jmd_value=total_jmd_value,
-        conversion_warning=conversion_warning,
         filters={
             'country_id': country_filter,
             'date_from': date_from,
