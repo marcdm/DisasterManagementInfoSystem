@@ -3,10 +3,11 @@ DRIMS - Disaster Relief Inventory Management System
 Main Flask Application
 """
 import os
-from flask import Flask, render_template, redirect, url_for, flash, request
+from flask import Flask, abort, render_template, redirect, url_for, flash, request, session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from authlib.integrations.flask_client import OAuth
-from werkzeug.security import check_password_hash
+from keycloak import KeycloakOpenID, KeycloakAuthenticationError
+from keycloak.exceptions import KeycloakAuthenticationError, KeycloakConnectionError
+
 
 from app.db import db, init_db
 from app.db.models import User, Role, Event, Warehouse, Item, Inventory, Agency, ReliefRqst
@@ -31,16 +32,44 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-# configure OIDC
-oauth = OAuth(app)
-oauth.register(
-    name='keycloak',
-    **app.config['KEYCLOAK_REG']
-)
+def get_keycloak_client():
+    # ToDo: Handle Connection error
+    kc_client = KeycloakOpenID(**app.config['KEYCLOAK_CONF'])
+    return kc_client
+
+def trim_keycloak_token(token):
+    '''returns a slimmed down token dict for storing in the session'''
+    keys_to_keep = ['refresh_token', 'expires_in', 'refresh_expires_in']
+    return dict([(x, token.get(x, None)) for x in keys_to_keep])
 
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.get(User, int(user_id))
+    ''' use the token refresh process to determine if the user is still
+    signed in. But, we will only refresh if the access token has expired
+    If the refresh token has expired, the user will be signed out.
+    '''
+    token = session.get('_user_token')
+    token_time = session.get('_token_time')
+    if token and token_time:
+        token_age = now().timestamp() - token_time
+        print(f'Is {token["expires_in"]} (time) > {token_age} (age)?')
+        if token_age > (token['expires_in']*0.95):
+            # try refresh token if it expire or soon expire
+            if token_age > token['refresh_expires_in']:
+                # refresh token expired. Logout any user and return none
+                keycloak_logout()
+                return None
+
+            kc = get_keycloak_client()
+            token = kc.refresh_token(token['refresh_token'])
+            print(f'refreshing token to get \n\n{token}')
+            session['_user_token'] = trim_keycloak_token(token)
+            session['_token_time'] = now().timestamp()
+            
+        user_q = User.query.filter_by(user_uuid=user_id)
+        return user_q.first()
+    return None
+
 
 from app.features.events import events_bp
 from app.features.warehouses import warehouses_bp
@@ -147,7 +176,7 @@ def inject_now():
     return {'now': now()}
 
 # Register timezone-aware Jinja filters
-from app.utils.timezone import format_datetime, datetime_to_jamaica
+from app.utils.timezone import format_datetime, datetime_to_jamaica, now
 
 @app.template_filter('format_datetime')
 def format_datetime_filter(dt, format_str='%Y-%m-%d %H:%M:%S'):
@@ -172,16 +201,53 @@ def block_static_directory():
     Returns 404 to hide directory existence for security
     Individual static files are still accessible via Flask's built-in static serving
     """
-    from flask import abort
     abort(404)
 
 @app.route('/')
 @login_required
 def index():
     """Redirect to role-based dashboard"""
-    return redirect(url_for('dashboard.index'))
+   
+def keycloak_login(email, pwd, totp=None):
+    """Handles authentication by passing un/pw to keycloak and processing
+    the response
 
-@app.route('/login-local', methods=['GET', 'POST'])
+    Args:
+        email (string): user email as username
+        pwd (string): password
+        totp (string, optional): Temporary 1-time password if any. Defaults to None.
+
+    Returns:
+        dict: user info from keycloak or None
+    """
+    keycloak_openid = get_keycloak_client()
+    try:
+        if (totp is None):
+            token = keycloak_openid.token(email, pwd)
+        else:
+            token = keycloak_openid.token(email, pwd, totp=totp)
+    except KeycloakAuthenticationError:
+        # ToDo: Log authentication failure
+        return False
+    # token has keys: access_token, refresh_token, id_token, session_state, scope
+    user_info = keycloak_openid.userinfo(token['access_token'])
+    user = User.query.filter_by(email=user_info.get('email', '@fake-email')).first()
+    # ToDo: remove this before production??
+    # if user.user_uuid is None:
+    #     user.user_uuid = user_info['sub']
+    session_token = trim_keycloak_token(token)
+    session['_user_token'] = session_token
+    session['_token_time'] = now().timestamp()
+    login_user(user)
+    return True
+
+def keycloak_logout():
+    '''Logout user and delete custom session values'''
+    session.pop('_user_token', None)
+    session.pop('_token_time', None)
+    logout_user()
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     """User login"""
     if current_user.is_authenticated:
@@ -191,30 +257,14 @@ def login():
         email = request.form.get('email')
         password = request.form.get('password')
         
-        user = User.query.filter_by(email=email).first()
-        
-        if user and password and check_password_hash(user.password_hash, password):
-            login_user(user)
+        succes = keycloak_login(email, password)
+        if succes:
             next_page = request.args.get('next')
             return redirect(next_page if next_page else url_for('dashboard.index'))
         else:
             flash('Invalid email or password', 'danger')
     
     return render_template('login.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def oidc_login():
-    redir_url = url_for('oidc_continue', _external=True)
-    return oauth.keycloak.authorize_redirect(redirect_uri)
-
-
-@app.route('/login/continue')
-def oidc_continue():
-    token = oauth.keycloak.authorize_access_token()
-    kc_user = oauth.keycloak.parse_id_token(token)
-    print(f"Received token {token}\n\nUser = {kc_user}")
-    # user = User.query.filter_by(email=email).first()
-    return redirect("/")
 
 @app.route('/test-feature-components')
 @login_required
@@ -226,7 +276,7 @@ def test_feature_components():
 @login_required
 def logout():
     """User logout"""
-    logout_user()
+    keycloak_logout()
     flash('You have been logged out', 'info')
     return redirect(url_for('login'))
 

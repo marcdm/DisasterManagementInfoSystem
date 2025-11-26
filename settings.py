@@ -50,3 +50,11 @@ class Config:
         'server_metadata_url': _keycloak['metadata_url'],
         'client_kwargs':{'scope': 'openid profile email'}
     }
+    
+    KEYCLOAK_CONF = {
+        'server_url': _keycloak['server_url'],
+        'client_id': _keycloak['client_id'],
+        'realm_name': _keycloak['realm'],
+        'client_secret_key': _keycloak['client_secret']
+        
+    }

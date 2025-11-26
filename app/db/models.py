@@ -11,7 +11,7 @@ from app.utils.timezone import now as jamaica_now
 class User(UserMixin, db.Model):
     """User authentication model with MFA and lockout support"""
     __tablename__ = 'user'
-    
+    user_uuid = db.Column(db.Uuid, nullable=False, unique=True)
     user_id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(200), unique=True, nullable=False)
     username = db.Column(db.String(60), unique=True)
@@ -57,7 +57,7 @@ class User(UserMixin, db.Model):
     
     def get_id(self):
         """Override UserMixin get_id to use user_id instead of id"""
-        return str(self.user_id)
+        return str(self.user_uuid or self.user_id)
     
     @property
     def is_locked(self):
