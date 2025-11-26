@@ -71,14 +71,19 @@ def keycloak_login(email, pwd, totp=None):
         # ToDo: Log authentication failure
         return None
     # token has keys: access_token, refresh_token, id_token, session_state, scope
+    login_time = now()
     user_info = keycloak_openid.userinfo(token['access_token'])
     user = User.query.filter_by(email=user_info.get('email', '@fake-email')).first()
+    user.last_login_at = login_time
+    user.failed_login_count = 0
     # ToDo: remove this before production??
-    # if user.user_uuid is None:
-    #     user.user_uuid = user_info['sub']
+    if user.user_uuid is None:
+        user.user_uuid = user_info['sub']
+    # /this
+    db.session.commit()    
     session_token = trim_keycloak_token(token)
     session['_user_token'] = session_token
-    session['_token_time'] = now().timestamp()
+    session['_token_time'] = login_time.timestamp()
     login_user(user)
     return user_info
 

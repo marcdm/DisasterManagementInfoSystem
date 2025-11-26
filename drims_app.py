@@ -43,12 +43,20 @@ login_manager.login_view = 'login'
 
 
 def is_safe_url(target):
-    """Validate that a redirect target stays within the same host (prevents open redirects)."""
+    """Validate that a redirect target stays within the same host."""
+    if not target:
+        return False
+
+    normalized_target = target.strip()
+    if not normalized_target:
+        return False
+
     ref_url = urlparse(request.host_url)
-    test_url = urlparse(urljoin(request.host_url, target))
+    test_url = urlparse(urljoin(request.host_url, normalized_target))
     return (
         test_url.scheme in ('http', 'https')
         and ref_url.netloc == test_url.netloc
+        and not normalized_target.startswith('//')
     )
 
 

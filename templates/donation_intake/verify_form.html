@@ -179,11 +179,11 @@ input[type=number] {
                                         <div class="field-label">Intake Qty</div>
                                         {% set donation_item = namespace(qty=0, uom_code='', item_cost=0) %}
                                         {% for di in donation.items if di.item_id == ii.item_id %}
-                                            {% set donation_item.qty = di.item_qty %}
+                                            {% set donation_item.qty = di.item_qty or 0 %}
                                             {% set donation_item.uom_code = di.uom_code %}
                                             {% set donation_item.item_cost = di.item_cost %}
                                         {% endfor %}
-                                        {% set intake_total = (ii.usable_qty + ii.defective_qty + ii.expired_qty)|float %}
+                                        {% set intake_total = ((ii.usable_qty or 0) + (ii.defective_qty or 0) + (ii.expired_qty or 0))|float %}
                                         <div class="donated-qty-box">
                                             <strong class="text-primary fs-6">{{ "%.2f"|format(intake_total) }}</strong>
                                         </div>
@@ -243,7 +243,7 @@ input[type=number] {
                                                class="form-control form-control-sm qty-input bg-light" 
                                                id="usable_qty_{{ ii.item_id }}"
                                                name="usable_qty_{{ ii.item_id }}" 
-                                               value="{{ ii.usable_qty }}"
+                                               value="{{ ii.usable_qty or 0 }}"
                                                data-intake-total="{{ intake_total }}"
                                                data-item-id="{{ ii.item_id }}"
                                                readonly>
@@ -256,7 +256,7 @@ input[type=number] {
                                                name="defective_qty_{{ ii.item_id }}" 
                                                step="0.01" 
                                                min="0"
-                                               value="{{ ii.defective_qty }}"
+                                               value="{{ ii.defective_qty or 0 }}"
                                                data-item-id="{{ ii.item_id }}"
                                                data-intake-total="{{ intake_total }}">
                                     </div>
@@ -268,7 +268,7 @@ input[type=number] {
                                                name="expired_qty_{{ ii.item_id }}" 
                                                step="0.01" 
                                                min="0"
-                                               value="{{ ii.expired_qty }}"
+                                               value="{{ ii.expired_qty or 0 }}"
                                                data-item-id="{{ ii.item_id }}"
                                                data-intake-total="{{ intake_total }}">
                                     </div>
@@ -291,7 +291,7 @@ input[type=number] {
                                     <div class="col-12">
                                         <div class="invalid-feedback d-block qty-error-{{ ii.item_id }} d-none">
                                             <i class="bi bi-exclamation-circle"></i>
-                                            <span class="qty-error-text-{{ ii.item_id }}"></span>
+                                            <span class="qty-error-text qty-error-text-{{ ii.item_id }}"></span>
                                         </div>
                                     </div>
                                 </div>

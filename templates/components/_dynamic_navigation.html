@@ -64,17 +64,4 @@ Renders clean sidebar with MAIN, INVENTORY, OPERATIONS, MANAGEMENT sections
     {% endif %}
 {% endfor %}
 
-{# Render any uncategorized features under OTHER #}
-{% if uncategorized_features|length > 0 %}
-    <div class="sidebar-section-header">OTHER</div>
-    {% for feature in uncategorized_features %}
-        <a href="{{ url_for(feature.route) }}" 
-           class="sidebar-nav-item {% if active_page == feature.id %}active{% endif %}"
-           title="{{ feature.description }}">
-            <i class="bi {{ feature.icon }}"></i>
-            <span>{{ feature.name }}</span>
-        </a>
-    {% endfor %}
-{% endif %}
-
 {% endmacro %}
