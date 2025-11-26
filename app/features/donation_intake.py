@@ -427,7 +427,7 @@ def _process_entry_submission(donation, warehouse, existing_intake, action):
             errors.append(f'{item.item_name}: Invalid unit cost value')
             continue
         
-        ext_item_cost = usable_qty * avg_unit_value
+        ext_item_cost = total_qty * avg_unit_value
         
         if item_id not in item_totals:
             item_totals[item_id] = Decimal('0')
