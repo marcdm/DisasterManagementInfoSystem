@@ -9,7 +9,7 @@ from decimal import Decimal
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.db import db
-from app.db.models import ReliefRqst, ReliefRqstItem, Agency, Item, Event, UnitOfMeasure
+from app.db.models import ReliefRqst, ReliefRqstItem, Agency, Item, Event, UnitOfMeasure, ItemCategory
 from app.core.rbac import agency_user_required, is_admin, is_logistics_manager, is_logistics_officer, can_access_relief_request, is_director_level
 from app.core.decorators import feature_required
 from app.core.exceptions import OptimisticLockError
@@ -372,10 +372,17 @@ def edit_items(request_id):
                     flash('Invalid date format. Please use YYYY-MM-DD format.', 'danger')
                     return redirect(url_for('requests.edit_items', request_id=request_id))
             
-            # Validate item is active
-            item = Item.query.get_or_404(item_id)
+            # Validate item is active and is a GOODS item (not FUNDS)
+            item = Item.query.options(
+                db.joinedload(Item.category)
+            ).get_or_404(item_id)
             if item.status_code != 'A':
                 flash('Cannot add inactive items to request', 'danger')
+                return redirect(url_for('requests.edit_items', request_id=request_id))
+            
+            # Server-side validation: Only GOODS items allowed in relief requests
+            if item.category and item.category.category_type != 'GOODS':
+                flash('Only GOODS items can be added to relief requests. FUNDS items are not allowed.', 'danger')
                 return redirect(url_for('requests.edit_items', request_id=request_id))
             
             if request_qty <= 0:
@@ -411,7 +418,13 @@ def edit_items(request_id):
             flash(f'Error adding item: {str(e)}', 'danger')
     
     # GET request - show items and add form
-    active_items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
+    # Only show GOODS items for relief requests (exclude FUNDS items)
+    active_items = Item.query.join(
+        ItemCategory, Item.category_id == ItemCategory.category_id
+    ).filter(
+        Item.status_code == 'A',
+        ItemCategory.category_type == 'GOODS'
+    ).order_by(Item.item_name).all()
     
     return render_template('requests/edit_items.html',
                          request=relief_request,

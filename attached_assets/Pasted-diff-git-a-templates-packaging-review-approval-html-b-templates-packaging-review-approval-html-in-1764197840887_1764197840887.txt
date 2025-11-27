@@ -1,0 +1,127 @@
+diff --git a/templates/packaging/review_approval.html b/templates/packaging/review_approval.html
+index 1538edcf4f009157a5efd97eca97a08902b1156e..58681c907b47274ae2dcb32bab55845a2c44ddfa 100644
+--- a/templates/packaging/review_approval.html
++++ b/templates/packaging/review_approval.html
+@@ -150,51 +150,52 @@
+ {% block content %}
+ <div class="container-fluid py-4">
+     <!-- Page Header -->
+     <div class="d-flex justify-content-between align-items-start mb-4">
+         <div class="page-header">
+             <h1 class="page-title">
+                 <i class="bi bi-clipboard-check page-title-icon"></i>
+                 Review & Approve Package
+             </h1>
+             <p class="page-subtitle">Request RR-{{ '%06d'|format(relief_request.reliefrqst_id) }} from {{ relief_request.agency.agency_name if relief_request.agency else 'Unknown Agency' }}</p>
+         </div>
+         <a href="{{ url_for('packaging.pending_approval') }}" class="btn btn-outline-secondary">
+             <i class="bi bi-arrow-left"></i> Back to Queue
+         </a>
+     </div>
+ 
+     <div class="row">
+         <!-- Main Content -->
+         <div class="col-lg-9 col-xl-9">
+             <!-- Summary Metric Cards -->
+             <div class="metric-cards">
+                 {% set total_items = relief_request.items|length %}
+                 {% set ns = namespace(fully_filled=0, partially_filled=0, not_allocated=0) %}
+                 {% for item in relief_request.items %}
+                     {% set issue = item.issue_qty or 0 %}
+-                    {% if issue >= item.request_qty %}
++                    {% set requested = item.request_qty or 0 %}
++                    {% if issue >= requested %}
+                         {% set ns.fully_filled = ns.fully_filled + 1 %}
+                     {% elif issue > 0 %}
+                         {% set ns.partially_filled = ns.partially_filled + 1 %}
+                     {% else %}
+                         {% set ns.not_allocated = ns.not_allocated + 1 %}
+                     {% endif %}
+                 {% endfor %}
+                 
+                 <div class="metric-card">
+                     <div class="metric-icon total">
+                         <i class="bi bi-list-ul"></i>
+                     </div>
+                     <div class="metric-content">
+                         <h6>Total Items</h6>
+                         <p class="metric-value">{{ total_items }}</p>
+                     </div>
+                 </div>
+                 
+                 <div class="metric-card">
+                     <div class="metric-icon filled">
+                         <i class="bi bi-check-circle-fill"></i>
+                     </div>
+                     <div class="metric-content">
+                         <h6>Fully Allocated</h6>
+                         <p class="metric-value">{{ ns.fully_filled }}</p>
+@@ -257,63 +258,65 @@
+                 {% endif %}
+             </div>
+ 
+             <!-- Prepared Allocations -->
+             <div class="drims-card">
+                 <div class="review-badge">
+                     <i class="bi bi-eye"></i> Read-Only Review Mode - Logistics Officer has prepared these allocations
+                 </div>
+                 
+                 <h5 class="card-subtitle"><i class="bi bi-box-seam"></i> Prepared Allocations</h5>
+                 
+                 <div class="table-responsive">
+                     <table class="table relief-requests-table">
+                         <thead>
+                             <tr>
+                                 <th class="w-35">Item</th>
+                                 <th class="w-12 text-center">Requested</th>
+                                 <th class="w-12 text-center">Allocated</th>
+                                 <th class="w-15 text-center">Status</th>
+                                 <th class="w-26">Warehouse Allocations</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+                             {% for item in relief_request.items %}
+                             <tr>
++                                {% set requested_qty = item.request_qty or 0 %}
++                                {% set issue_qty = item.issue_qty or 0 %}
+                                 <td>
+                                     <strong>{{ item.item.item_name if item.item else 'Unknown' }}</strong>
+                                     {% if item.item and item.item.category %}
+                                     <div class="table-sku">{{ item.item.category.category_name }}</div>
+                                     {% endif %}
+                                 </td>
+                                 <td class="text-center">
+-                                    <strong>{{ item.request_qty }}</strong>
++                                    <strong>{{ requested_qty }}</strong>
+                                     <div class="table-sku">{{ item.item.default_uom.uom_name if item.item and item.item.default_uom else 'EA' }}</div>
+                                 </td>
+                                 <td class="text-center">
+-                                    <strong class="{% if item.issue_qty >= item.request_qty %}text-success{% elif item.issue_qty > 0 %}text-warning{% else %}text-danger{% endif %}">
+-                                        {{ item.issue_qty if item.issue_qty else 0 }}
++                                    <strong class="{% if issue_qty >= requested_qty %}text-success{% elif issue_qty > 0 %}text-warning{% else %}text-danger{% endif %}">
++                                        {{ issue_qty }}
+                                     </strong>
+                                     <div class="table-sku">{{ item.item.default_uom.uom_name if item.item and item.item.default_uom else 'EA' }}</div>
+                                 </td>
+                                 <td class="text-center">
+                                     {% if item.status_code == 'F' %}
+                                     {{ status_badge('filled', 'Filled') }}
+                                     {% elif item.status_code == 'P' %}
+                                     {{ status_badge('partial', 'Partly Filled') }}
+                                     {% elif item.status_code == 'L' %}
+                                     <div class="d-flex align-items-center justify-content-center gap-1">
+                                         {{ status_badge('limit', 'Limit Allowed') }}
+                                         {% if item.status_reason_desc %}
+                                         <i class="bi bi-info-circle text-primary cursor-help fs-6" 
+                                            title="Reason: {{ item.status_reason_desc }}"></i>
+                                         {% endif %}
+                                     </div>
+                                     {% elif item.status_code == 'D' %}
+                                     <div class="d-flex align-items-center justify-content-center gap-1">
+                                         {{ status_badge('denied', 'Denied') }}
+                                         {% if item.status_reason_desc %}
+                                         <i class="bi bi-info-circle text-danger cursor-help fs-6" 
+                                            title="Reason: {{ item.status_reason_desc }}"></i>
+                                         {% endif %}
+                                     </div>
+                                     {% elif item.status_code == 'U' %}

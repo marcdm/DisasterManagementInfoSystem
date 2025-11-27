@@ -83,16 +83,8 @@ document.addEventListener('DOMContentLoaded', function() {
         jumpBtn.addEventListener('click', jumpToFirstUnallocated);
     }
     
-    // Select batches buttons (event delegation)
-    document.addEventListener('click', function(e) {
-        const btn = e.target.closest('.select-batches-btn');
-        if (btn) {
-            const itemId = btn.dataset.itemId;
-            const itemName = btn.dataset.itemName;
-            const requestQty = btn.dataset.requestQty;
-            openBatchDrawer(itemId, itemName, requestQty);
-        }
-    });
+    // NOTE: Select batches button event listener is handled by batch-allocation.js
+    // Do NOT add a duplicate listener here - it causes double API calls
 });
 
 function loadAllInventory() {

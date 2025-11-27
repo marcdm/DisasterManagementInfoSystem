@@ -1,0 +1,120 @@
+Update the existing DMIS currency configuration so that the Frankfurter API is fully removed from the application without breaking ANY existing workflows, logic, behaviour, security fixes, or database structures.
+
+IMPORTANT:
+- DO NOT remove or modify the currency_rate table.
+- DO NOT remove or break currency conversion service code.
+- DO NOT delete helper functions such as get_cached_rate(), store_rate(), get_or_update_rate_to_jmd(), or any currency utility functions.
+- DO NOT delete or change any Flask routes, blueprints, templates, or business logic that reference the currency service in a read-only manner.
+- DO NOT break or change any code paths in donation entry, reporting, or cost breakdown.
+- The system must continue to run exactly as before but WITHOUT any active external API calls.
+
+CHANGES REQUIRED:
+========================================
+1. REMOVE FRANKFURTER CONFIG
+========================================
+- Delete or comment out ONLY the Frankfurter-specific configuration keys, e.g.:
+    FRANKFURTER_BASE_URL
+    FRANKFURTER_TIMEOUT
+    FRANKFURTER_ENABLED
+- Remove them from:
+  - config.py (or equivalent)
+  - .env or environment variable references
+- If there is a "SOURCE_FRANKFURTER" constant, remove it.
+
+DO NOT remove any general CURRENCY_* config values unrelated to Frankfurter.
+
+========================================
+2. UPDATE currency_rate SOURCE FIELD DEFAULT
+========================================
+The existing currency_rate table has a column such as:
+
+    source varchar(50) not null default 'FRANKFURTER_ECB'
+
+This must be changed so that:
+- The DEFAULT is NOT 'FRANKFURTER_ECB'
+- Use a neutral placeholder name such as 'UNCONFIGURED' or 'MANUAL'
+
+Safely apply:
+
+    ALTER TABLE currency_rate
+    ALTER COLUMN source SET DEFAULT 'UNCONFIGURED';
+
+Do NOT drop the column.
+Do NOT rename the column.
+Do NOT change constraints.
+Keep the PK (currency_code, rate_date) exactly as is.
+
+========================================
+3. DISABLE ALL OUTBOUND API CALLS
+========================================
+Inside the currency_service module:
+
+A. Remove or comment out ONLY the parts that call Frankfurter URLs
+   (e.g., requests.get(f"{FRANKFURTER_BASE_URL}/latest?...").
+
+B. Replace those sections with a controlled placeholder:
+
+    raise RuntimeError(
+        "No external currency API is configured. "
+        "Please add an exchange-rate provider to enable automatic rates."
+    )
+
+This must not break any existing functionality because:
+- get_cached_rate() still works for previously stored or manually inserted rows.
+- store_rate() still works as-is.
+- All donation workflows already rely on user-entered JMD values.
+
+C. Do NOT change:
+- get_cached_rate()
+- store_rate()
+- get_or_update_rate_to_jmd() structure — ONLY replace the external fetch logic with the placeholder error.
+
+========================================
+4. LEAVE SYSTEM FULLY OPERATIONAL WITH MANUAL RATES ONLY
+========================================
+After changes:
+- Developers can manually INSERT rows into currency_rate if needed.
+- The currency conversion feature continues to operate using cached/manual data.
+- The system must not attempt ANY external call unless developers add a new API provider.
+
+========================================
+5. UPDATE COMMENTS / DOCSTRINGS FOR DEVELOPERS
+========================================
+Add a clear comment block at the top of currency_service.py:
+
+    """
+    NOTE FOR DEVELOPERS:
+    External currency API integration is currently disabled.
+    The system retains currency conversion capability using
+    cached/manual values in currency_rate.
+
+    To add a new provider:
+    - Implement fetch_rate_from_provider()
+    - Configure the provider’s base URL & API key in config.py
+    - Insert a new value for 'source' in currency_rate as needed
+    """
+
+Do NOT change any logic outside this file.
+
+========================================
+6. ENSURE NOTHING ELSE IS MODIFIED
+========================================
+Verify that:
+- No other workflows (donations, requests, packaging, dispatch, inventory, reporting) are touched.
+- No routes are renamed.
+- No templates are changed.
+- No database schema besides the DEFAULT value on currency_rate.source is changed.
+- No permissions are affected.
+
+The system should continue to operate 100% normally, simply without an active exchange-rate API.
+
+========================================
+FINAL OUTCOME
+========================================
+- Frankfurter API is fully removed.
+- currency_rate remains intact.
+- currency conversion logic remains intact.
+- The system gracefully handles “no provider configured.”
+- Developers can later plug in ANY exchange-rate API with minimal changes.
+
+Perform ONLY the above modifications.
