@@ -24,5 +24,15 @@
             </div>
         </div>
     </div>
+
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-currency-dollar"></i> Funds Donations</h5>
+                <p class="card-text">Read-only monetary donations report with filters for country, date, and currency.</p>
+                <a href="{{ url_for('reports.funds_donations') }}" class="btn btn-primary">View Report</a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
