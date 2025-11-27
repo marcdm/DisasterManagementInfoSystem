@@ -56,3 +56,12 @@ class Config:
         'client_secret_key': _keycloak['client_secret']
         
     }
+    
+    KEYCLOAK_ADMIN = {
+        'server_url': _keycloak['server_url'],
+        'username': _keycloak['admin_client'],
+        'password': _keycloak['admin_secret'],
+        'realm_name': _keycloak['realm'],
+        'client_id': 'admin-cli',
+        'verify': False        
+    }

@@ -2,8 +2,11 @@
 from flask import current_app
 from flask import session
 from flask_login import login_user, logout_user
-from keycloak import KeycloakOpenID, KeycloakAuthenticationError
-from keycloak.exceptions import KeycloakAuthenticationError, KeycloakConnectionError
+from keycloak import KeycloakOpenID, KeycloakAdmin
+from keycloak.exceptions import (
+    KeycloakAuthenticationError, KeycloakConnectionError, KeycloakGetError,
+    KeycloakPostError
+)
 from ..db.models import User
 from .timezone import now
 
@@ -12,10 +15,14 @@ __all__ = [
     'create_keycloak_user'
 ]
 
-def get_keycloak_client():
+
+def get_keycloak_client(as_admin=False):
     # ToDo: Handle Connection error
     app_conf = current_app.config
-    kc_client = KeycloakOpenID(**app_conf['KEYCLOAK_CONF'])
+    if as_admin:
+        kc_client = KeycloakAdmin(**app_conf['KEYCLOAK_ADMIN'])
+    else:
+        kc_client = KeycloakOpenID(**app_conf['KEYCLOAK_CONF'])
     return kc_client
 
 def trim_keycloak_token(token):
@@ -93,9 +100,38 @@ def keycloak_logout():
     session.pop('_token_time', None)
     logout_user()
 
-def create_keycloak_user(new_user):
+
+class DuplicateUserException(Exception):
+    """Exception raised for user creation if duplicate email.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.message = "User exists with same email"
+        super().__init__(self.message)
+
+
+def create_keycloak_user(new_user, password=None):
     '''
     Creates a user in keycloak using the admin account then returns a
     dict with user details as returned by the login 
     '''
-    return True
+    kc_admin = get_keycloak_client(True)
+    user_payload = {
+        'email': new_user.email,
+        'username': new_user.user_name,
+        'enabled': True,
+        'firstName': new_user.first_name,
+        'lastName': new_user.last_name
+    }
+    if password:
+        user_payload.update(credentials=[{'type': 'password',
+                                          'value': password}])
+    try:
+        new_user_id = kc_admin.create_user(user_payload, exist_ok=False)
+    except (KeycloakGetError, KeycloakPostError)  as e:
+        # ToDo: Log exception, maybe report to user
+        msg = e.error_message.decode()
+        if ('same email' in msg):
+            raise DuplicateUserException() from e
+        raise e
+    return new_user_id
