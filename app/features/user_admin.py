@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash
 from app.db.models import db, User, Role, UserRole, UserWarehouse, Warehouse, Agency, Custodian
 from app.core.rbac import role_required
+from ..utils.keycloak import create_keycloak_user, DuplicateUserException
 
 user_admin_bp = Blueprint('user_admin', __name__)
 
@@ -92,7 +93,7 @@ def index():
 @login_required
 @role_required('SYSTEM_ADMINISTRATOR', 'SYS_ADMIN', 'CUSTODIAN')
 def create():
-    
+    form_valid = True
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
         user_name = request.form.get('user_name', '').strip().upper()[:20]
@@ -106,156 +107,106 @@ def create():
         
         if not email or not password or not user_name:
             flash('Email, user name, and password are required.', 'danger')
-            agencies = Agency.query.filter_by(status_code='A').order_by(Agency.agency_name).all()
-            custodians = Custodian.query.order_by(Custodian.custodian_name).all()
-            return render_template('user_admin/create.html', 
-                                 roles=get_assignable_roles(current_user),
-                                 warehouses=Warehouse.query.filter_by(status_code='A').all(),
-                                 agencies=agencies,
-                                 custodians=custodians)
+            form_valid = False
         
-        if User.query.filter_by(email=email).first():
+        if form_valid and User.query.filter_by(email=email).exists():
             flash('A user with this email already exists.', 'danger')
-            agencies = Agency.query.filter_by(status_code='A').order_by(Agency.agency_name).all()
-            custodians = Custodian.query.order_by(Custodian.custodian_name).all()
-            return render_template('user_admin/create.html',
-                                 roles=get_assignable_roles(current_user),
-                                 warehouses=Warehouse.query.filter_by(status_code='A').all(),
-                                 agencies=agencies,
-                                 custodians=custodians)
+            form_valid = False
         
         organization_name = None
         agency_id = None
         
-        if organization_value:
-            if ':' not in organization_value:
-                flash('Invalid organization format. Please select from the dropdown.', 'danger')
-                agencies = Agency.query.filter_by(status_code='A').order_by(Agency.agency_name).all()
-                custodians = Custodian.query.order_by(Custodian.custodian_name).all()
-                return render_template('user_admin/create.html',
-                                     roles=get_assignable_roles(current_user),
-                                     warehouses=Warehouse.query.filter_by(status_code='A').all(),
-                                     agencies=agencies,
-                                     custodians=custodians)
-            
-            org_type, org_id = organization_value.split(':', 1)
-            
-            if org_type not in ['AGENCY', 'CUSTODIAN']:
-                flash('Invalid organization type. Must be AGENCY or CUSTODIAN.', 'danger')
-                agencies = Agency.query.filter_by(status_code='A').order_by(Agency.agency_name).all()
-                custodians = Custodian.query.order_by(Custodian.custodian_name).all()
-                return render_template('user_admin/create.html',
-                                     roles=get_assignable_roles(current_user),
-                                     warehouses=Warehouse.query.filter_by(status_code='A').all(),
-                                     agencies=agencies,
-                                     custodians=custodians)
-            
-            if not org_id.isdigit():
-                flash('Invalid organization ID format.', 'danger')
-                agencies = Agency.query.filter_by(status_code='A').order_by(Agency.agency_name).all()
-                custodians = Custodian.query.order_by(Custodian.custodian_name).all()
-                return render_template('user_admin/create.html',
-                                     roles=get_assignable_roles(current_user),
-                                     warehouses=Warehouse.query.filter_by(status_code='A').all(),
-                                     agencies=agencies,
-                                     custodians=custodians)
-            
-            if org_type == 'AGENCY':
-                agency = Agency.query.filter_by(agency_id=int(org_id), status_code='A').first()
-                if agency:
-                    organization_name = agency.agency_name
-                    agency_id = agency.agency_id
-                else:
-                    flash('Invalid agency selected.', 'danger')
-                    agencies = Agency.query.filter_by(status_code='A').order_by(Agency.agency_name).all()
-                    custodians = Custodian.query.order_by(Custodian.custodian_name).all()
-                    return render_template('user_admin/create.html',
-                                         roles=get_assignable_roles(current_user),
-                                         warehouses=Warehouse.query.filter_by(status_code='A').all(),
-                                         agencies=agencies,
-                                         custodians=custodians)
-            
+        if form_valid and organization_value:
+            if ':' in organization_value:
+                org_type, org_id = organization_value.split(':', 1)
+
+                if org_type not in ['AGENCY', 'CUSTODIAN']:
+                    flash('Invalid organization type. Must be AGENCY or CUSTODIAN.', 'danger')
+                    form_valid = False
+                
+                if form_valid and  not org_id.isdigit():
+                    flash('Invalid organization ID format.', 'danger')
+                    form_valid = False
+                
+                if form_valid and org_type == 'AGENCY':
+                    agency = Agency.query.filter_by(agency_id=int(org_id), status_code='A').first()
+                    if agency:
+                        organization_name = agency.agency_name
+                        agency_id = agency.agency_id
+                    else:
+                        flash('Invalid agency selected.', 'danger')
+                        form_valid = False
+                
+                elif form_valid: # i.e. not org_type == AGENCY
+                    custodian = Custodian.query.filter_by(custodian_id=int(org_id)).first()
+                    if custodian:
+                        organization_name = custodian.custodian_name
+                        agency_id = None
+                    else:
+                        flash('Invalid custodian selected.', 'danger')
+                        form_valid = False            
             else:
-                custodian = Custodian.query.filter_by(custodian_id=int(org_id)).first()
-                if custodian:
-                    organization_name = custodian.custodian_name
-                    agency_id = None
-                else:
-                    flash('Invalid custodian selected.', 'danger')
-                    agencies = Agency.query.filter_by(status_code='A').order_by(Agency.agency_name).all()
-                    custodians = Custodian.query.order_by(Custodian.custodian_name).all()
-                    return render_template('user_admin/create.html',
-                                         roles=get_assignable_roles(current_user),
-                                         warehouses=Warehouse.query.filter_by(status_code='A').all(),
-                                         agencies=agencies,
-                                         custodians=custodians)
-        
-        full_name = f"{first_name} {last_name}".strip()
-        
-        try:
-            new_user = User(
-                email=email,
-                user_name=user_name,
-                password_hash=generate_password_hash(password),
-                first_name=first_name,
-                last_name=last_name,
-                full_name=full_name if full_name else None,
-                organization=organization_name,
-                agency_id=agency_id,
-                job_title=job_title if job_title else None,
-                phone=phone if phone else None,
-                is_active=is_active
-            )
+                flash('Invalid organization format. Please select from the dropdown.', 'danger')
+                form_valid = False
+
+        role_ids = request.form.getlist('roles')
+        if form_valid and role_ids:
+            role_ids = map(int, role_ids)
+            is_valid, error_msg = validate_role_assignment(current_user, role_ids)
+            if not is_valid:
+                flash(error_msg, 'danger')
+                form_valid = False
+
+        if form_valid:
+            full_name = f"{first_name.strip()} {last_name.strip()}".strip()
             
-            db.session.add(new_user)
-            db.session.flush()
-            
-            role_ids = request.form.getlist('roles')
-            if role_ids:
-                role_ids_int = [int(r) for r in role_ids]
-                is_valid, error_msg = validate_role_assignment(current_user, role_ids_int)
-                if not is_valid:
-                    db.session.rollback()
-                    flash(error_msg, 'danger')
-                    agencies = Agency.query.filter_by(status_code='A').order_by(Agency.agency_name).all()
-                    custodians = Custodian.query.order_by(Custodian.custodian_name).all()
-                    return render_template('user_admin/create.html',
-                                         roles=get_assignable_roles(current_user),
-                                         warehouses=Warehouse.query.filter_by(status_code='A').all(),
-                                         agencies=agencies,
-                                         custodians=custodians)
-            
-            for role_id in role_ids:
-                user_role = UserRole(user_id=new_user.user_id, role_id=int(role_id))
-                db.session.add(user_role)
-            
-            warehouse_ids = request.form.getlist('warehouses')
-            for warehouse_id in warehouse_ids:
-                user_warehouse = UserWarehouse(user_id=new_user.user_id, warehouse_id=int(warehouse_id))
-                db.session.add(user_warehouse)
-            
-            db.session.commit()
-            flash(f'User {email} created successfully.', 'success')
-            return redirect(url_for('user_admin.index'))
-        
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error creating user: {str(e)}', 'danger')
-            agencies = Agency.query.filter_by(status_code='A').order_by(Agency.agency_name).all()
-            custodians = Custodian.query.order_by(Custodian.custodian_name).all()
-            return render_template('user_admin/create.html',
-                                 roles=get_assignable_roles(current_user),
-                                 warehouses=Warehouse.query.filter_by(status_code='A').all(),
-                                 agencies=agencies,
-                                 custodians=custodians)
+            try:
+                new_user = User(
+                    email=email,
+                    user_name=user_name,
+                    # password_hash=generate_password_hash(password),
+                    first_name=first_name,
+                    last_name=last_name,
+                    full_name=full_name if full_name else None,
+                    organization=organization_name,
+                    agency_id=agency_id,
+                    job_title=job_title if job_title else None,
+                    phone=phone if phone else None,
+                    is_active=is_active
+                )
+                kc_user_uuid = create_keycloak_user(new_user, password=password)
+                new_user.user_uuid = kc_user_uuid
+                
+                db.session.add(new_user)
+                db.session.flush()
+                
+                for role_id in role_ids:
+                    user_role = UserRole(user_id=new_user.user_id, role_id=int(role_id))
+                    db.session.add(user_role)
+                
+                warehouse_ids = request.form.getlist('warehouses')
+                for warehouse_id in warehouse_ids:
+                    user_warehouse = UserWarehouse(user_id=new_user.user_id, warehouse_id=int(warehouse_id))
+                    db.session.add(user_warehouse)
+                
+                db.session.commit()
+                flash(f'User {email} created successfully.', 'success')
+                return redirect(url_for('user_admin.index'))
+            except DuplicateUserException:
+                flash('A user with this email already exists.', 'danger')
+                form_valid = False
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error creating user: {str(e)}', 'danger')
+                form_valid = False
     
     roles = get_assignable_roles(current_user)
     warehouses = Warehouse.query.filter_by(status_code='A').all()
     agencies = Agency.query.filter_by(status_code='A').order_by(Agency.agency_name).all()
     custodians = Custodian.query.order_by(Custodian.custodian_name).all()
     
-    return render_template('user_admin/create.html', 
-                         roles=roles, 
+    return render_template('user_admin/create.html',
+                         roles=roles,
                          warehouses=warehouses,
                          agencies=agencies,
                          custodians=custodians)
