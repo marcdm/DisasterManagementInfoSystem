@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict WMyBeEE50EOsIac2rCD6OAwS3Kq4C7YdgM1XUIi4iYbH5VFSVgTDurOBgGYqade
+\restrict td4xpXJ9n98OWl2z9eEagudDWxdaWFieVk9XBcOa5U3flt4t3EeGCL5hSoH1aJA
 
 -- Dumped from database version 16.9 (415ebe8)
 -- Dumped by pg_dump version 16.10
@@ -194,8 +194,93 @@ CREATE TABLE public.batchlocation (
 
 CREATE TABLE public.country (
     country_id smallint NOT NULL,
-    country_name character varying(80) NOT NULL
+    country_name public.citext NOT NULL,
+    currency_code character varying(10) NOT NULL,
+    status_code character(1) NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    CONSTRAINT c_country_1 CHECK ((length((country_name)::text) <= 120)),
+    CONSTRAINT c_country_2 CHECK ((status_code = ANY (ARRAY['A'::bpchar, 'I'::bpchar])))
 );
+
+
+--
+-- Name: currency; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.currency (
+    currency_code character varying(10) NOT NULL,
+    currency_name public.citext NOT NULL,
+    currency_sign character varying(6) NOT NULL,
+    status_code character(1) NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    CONSTRAINT c_currency_1 CHECK ((status_code = ANY (ARRAY['A'::bpchar, 'I'::bpchar]))),
+    CONSTRAINT c_currency_1a CHECK ((length((currency_name)::text) <= 130))
+);
+
+
+--
+-- Name: currency_rate; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.currency_rate (
+    currency_code character varying(3) NOT NULL,
+    rate_to_jmd numeric(18,8) NOT NULL,
+    source character varying(50) DEFAULT 'UNCONFIGURED'::character varying NOT NULL,
+    rate_date date NOT NULL,
+    create_dtime timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT c_currency_rate_code_upper CHECK (((currency_code)::text = upper((currency_code)::text))),
+    CONSTRAINT c_currency_rate_positive CHECK ((rate_to_jmd > (0)::numeric))
+);
+
+
+--
+-- Name: TABLE currency_rate; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.currency_rate IS 'Cached exchange rates to JMD from Frankfurter.app (ECB-backed). Used for display-only currency conversion.';
+
+
+--
+-- Name: COLUMN currency_rate.currency_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.currency_rate.currency_code IS 'ISO 4217 currency code (uppercase), e.g., USD, EUR, GBP';
+
+
+--
+-- Name: COLUMN currency_rate.rate_to_jmd; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.currency_rate.rate_to_jmd IS 'Exchange rate: how many JMD for 1 unit of the currency';
+
+
+--
+-- Name: COLUMN currency_rate.source; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.currency_rate.source IS 'Rate source identifier, default is FRANKFURTER_ECB';
+
+
+--
+-- Name: COLUMN currency_rate.rate_date; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.currency_rate.rate_date IS 'The date the rate applies to';
+
+
+--
+-- Name: COLUMN currency_rate.create_dtime; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.currency_rate.create_dtime IS 'Timestamp when the rate was cached';
 
 
 --
@@ -372,17 +457,59 @@ CREATE TABLE public.dnintake (
     inventory_id integer NOT NULL,
     intake_date date NOT NULL,
     comments_text character varying(255),
-    status_code character(1) NOT NULL,
+    status_code character(1) DEFAULT 'I'::bpchar NOT NULL,
     create_by_id character varying(20) NOT NULL,
     create_dtime timestamp(0) without time zone NOT NULL,
     update_by_id character varying(20) NOT NULL,
-    update_dtime timestamp(0) without time zone NOT NULL,
+    update_dtime timestamp(0) without time zone,
     verify_by_id character varying(20) NOT NULL,
-    verify_dtime timestamp(0) without time zone NOT NULL,
-    version_nbr integer NOT NULL,
-    CONSTRAINT dnintake_intake_date_check CHECK ((intake_date <= CURRENT_DATE)),
-    CONSTRAINT dnintake_status_code_check CHECK ((status_code = ANY (ARRAY['I'::bpchar, 'C'::bpchar, 'V'::bpchar])))
+    verify_dtime timestamp(0) without time zone,
+    version_nbr integer DEFAULT 1 NOT NULL,
+    CONSTRAINT c_dnintake_1 CHECK ((intake_date <= CURRENT_DATE)),
+    CONSTRAINT c_dnintake_2 CHECK ((status_code = ANY (ARRAY['I'::bpchar, 'C'::bpchar, 'V'::bpchar])))
 );
+
+
+--
+-- Name: TABLE dnintake; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.dnintake IS 'Donation intake records - tracks when donations are received at warehouses';
+
+
+--
+-- Name: COLUMN dnintake.donation_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.dnintake.donation_id IS 'FK to donation being received';
+
+
+--
+-- Name: COLUMN dnintake.inventory_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.dnintake.inventory_id IS 'FK to warehouse where donation is received (warehouse_id)';
+
+
+--
+-- Name: COLUMN dnintake.intake_date; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.dnintake.intake_date IS 'Date donation was received at warehouse';
+
+
+--
+-- Name: COLUMN dnintake.comments_text; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.dnintake.comments_text IS 'Optional comments about the intake';
+
+
+--
+-- Name: COLUMN dnintake.status_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.dnintake.status_code IS 'I=Incomplete, C=Completed, V=Verified';
 
 
 --
@@ -393,26 +520,27 @@ CREATE TABLE public.dnintake_item (
     donation_id integer NOT NULL,
     inventory_id integer NOT NULL,
     item_id integer NOT NULL,
-    batch_no character varying(20),
+    batch_no character varying(20) NOT NULL,
     batch_date date,
     expiry_date date,
     uom_code character varying(25) NOT NULL,
     avg_unit_value numeric(10,2) NOT NULL,
-    usable_qty numeric(12,2) NOT NULL,
-    defective_qty numeric(12,2) NOT NULL,
-    expired_qty numeric(12,2) NOT NULL,
-    status_code character(1) NOT NULL,
+    usable_qty numeric(12,2) DEFAULT 0.00 NOT NULL,
+    defective_qty numeric(12,2) DEFAULT 0.00 NOT NULL,
+    expired_qty numeric(12,2) DEFAULT 0.00 NOT NULL,
+    ext_item_cost numeric(12,2) DEFAULT 0.00 NOT NULL,
+    status_code character(1) DEFAULT 'P'::bpchar NOT NULL,
     comments_text character varying(255),
     create_by_id character varying(20) NOT NULL,
     create_dtime timestamp(0) without time zone NOT NULL,
     update_by_id character varying(20) NOT NULL,
     update_dtime timestamp(0) without time zone NOT NULL,
-    version_nbr integer NOT NULL,
-    intake_item_id integer NOT NULL,
-    CONSTRAINT c_dnintake_item_1a CHECK (((batch_no IS NULL) OR ((batch_no)::text = upper((batch_no)::text)))),
-    CONSTRAINT c_dnintake_item_1b CHECK (((batch_date IS NULL) OR (batch_date <= CURRENT_DATE))),
-    CONSTRAINT c_dnintake_item_1c CHECK (((expiry_date >= CURRENT_DATE) OR (expiry_date IS NULL))),
+    version_nbr integer DEFAULT 1 NOT NULL,
+    CONSTRAINT c_dnintake_item_1a CHECK (((batch_no)::text = upper((batch_no)::text))),
+    CONSTRAINT c_dnintake_item_1b CHECK ((batch_date <= CURRENT_DATE)),
+    CONSTRAINT c_dnintake_item_1c CHECK ((expiry_date >= batch_date)),
     CONSTRAINT c_dnintake_item_1d CHECK ((avg_unit_value > 0.00)),
+    CONSTRAINT c_dnintake_item_1e CHECK ((ext_item_cost = (((COALESCE(usable_qty, (0)::numeric) + COALESCE(defective_qty, (0)::numeric)) + COALESCE(expired_qty, (0)::numeric)) * avg_unit_value))),
     CONSTRAINT c_dnintake_item_2 CHECK ((usable_qty >= 0.00)),
     CONSTRAINT c_dnintake_item_3 CHECK ((defective_qty >= 0.00)),
     CONSTRAINT c_dnintake_item_4 CHECK ((expired_qty >= 0.00)),
@@ -421,23 +549,101 @@ CREATE TABLE public.dnintake_item (
 
 
 --
--- Name: dnintake_item_intake_item_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- Name: TABLE dnintake_item; Type: COMMENT; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE public.dnintake_item_intake_item_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
+COMMENT ON TABLE public.dnintake_item IS 'Donation intake items - batch-level tracking of items received in donation intakes';
 
 
 --
--- Name: dnintake_item_intake_item_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+-- Name: COLUMN dnintake_item.donation_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE public.dnintake_item_intake_item_id_seq OWNED BY public.dnintake_item.intake_item_id;
+COMMENT ON COLUMN public.dnintake_item.donation_id IS 'FK to donation via dnintake';
+
+
+--
+-- Name: COLUMN dnintake_item.inventory_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.dnintake_item.inventory_id IS 'FK to warehouse via dnintake';
+
+
+--
+-- Name: COLUMN dnintake_item.item_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.dnintake_item.item_id IS 'FK to item via donation_item';
+
+
+--
+-- Name: COLUMN dnintake_item.batch_no; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.dnintake_item.batch_no IS 'Manufacturer batch number or item code if none exists';
+
+
+--
+-- Name: COLUMN dnintake_item.batch_date; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.dnintake_item.batch_date IS 'Manufacturing/batch date';
+
+
+--
+-- Name: COLUMN dnintake_item.expiry_date; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.dnintake_item.expiry_date IS 'Expiry date (must be >= batch_date)';
+
+
+--
+-- Name: COLUMN dnintake_item.uom_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.dnintake_item.uom_code IS 'Unit of measure for quantities';
+
+
+--
+-- Name: COLUMN dnintake_item.avg_unit_value; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.dnintake_item.avg_unit_value IS 'Average value per unit (must be > 0)';
+
+
+--
+-- Name: COLUMN dnintake_item.usable_qty; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.dnintake_item.usable_qty IS 'Quantity of usable/good items';
+
+
+--
+-- Name: COLUMN dnintake_item.defective_qty; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.dnintake_item.defective_qty IS 'Quantity of defective items';
+
+
+--
+-- Name: COLUMN dnintake_item.expired_qty; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.dnintake_item.expired_qty IS 'Quantity of expired items';
+
+
+--
+-- Name: COLUMN dnintake_item.ext_item_cost; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.dnintake_item.ext_item_cost IS 'Extended cost: (usable + defective + expired) * avg_unit_value';
+
+
+--
+-- Name: COLUMN dnintake_item.status_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.dnintake_item.status_code IS 'P=Pending verification, V=Verified';
 
 
 --
@@ -448,20 +654,228 @@ CREATE TABLE public.donation (
     donation_id integer NOT NULL,
     donor_id integer NOT NULL,
     donation_desc text NOT NULL,
+    origin_country_id smallint NOT NULL,
+    origin_address1_text character varying(255),
+    origin_address2_text character varying(255),
     event_id integer NOT NULL,
     custodian_id integer NOT NULL,
     received_date date NOT NULL,
-    status_code character(1) NOT NULL,
+    tot_item_cost numeric(12,2) NOT NULL,
+    storage_cost numeric(12,2) NOT NULL,
+    haulage_cost numeric(12,2) NOT NULL,
+    other_cost numeric(12,2) NOT NULL,
+    other_cost_desc character varying(255),
+    status_code character(1) DEFAULT 'E'::bpchar NOT NULL,
     comments_text text,
     create_by_id character varying(20) NOT NULL,
     create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
     verify_by_id character varying(20),
     verify_dtime timestamp(0) without time zone,
-    version_nbr integer NOT NULL,
-    update_by_id character varying(20),
-    update_dtime timestamp without time zone,
+    version_nbr integer DEFAULT 1 NOT NULL,
     CONSTRAINT c_donation_1 CHECK ((received_date <= CURRENT_DATE)),
-    CONSTRAINT c_donation_2 CHECK ((status_code = ANY (ARRAY['E'::bpchar, 'V'::bpchar, 'P'::bpchar])))
+    CONSTRAINT c_donation_2 CHECK ((tot_item_cost >= 0.00)),
+    CONSTRAINT c_donation_2a CHECK ((storage_cost >= 0.00)),
+    CONSTRAINT c_donation_2b CHECK ((haulage_cost >= 0.00)),
+    CONSTRAINT c_donation_2c CHECK ((other_cost >= 0.00)),
+    CONSTRAINT c_donation_3 CHECK ((status_code = ANY (ARRAY['E'::bpchar, 'V'::bpchar, 'P'::bpchar])))
+);
+
+
+--
+-- Name: TABLE donation; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.donation IS 'Donations received from donors for disaster relief';
+
+
+--
+-- Name: COLUMN donation.donation_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation.donation_id IS 'Primary key - auto-generated identity';
+
+
+--
+-- Name: COLUMN donation.donor_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation.donor_id IS 'FK to donor who made the donation';
+
+
+--
+-- Name: COLUMN donation.donation_desc; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation.donation_desc IS 'Description of the donation';
+
+
+--
+-- Name: COLUMN donation.origin_country_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation.origin_country_id IS 'Country of origin for the donation';
+
+
+--
+-- Name: COLUMN donation.event_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation.event_id IS 'Event this donation is associated with (ADHOC for general)';
+
+
+--
+-- Name: COLUMN donation.custodian_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation.custodian_id IS 'Agency that collected/holds the donation';
+
+
+--
+-- Name: COLUMN donation.received_date; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation.received_date IS 'Date donation was received';
+
+
+--
+-- Name: COLUMN donation.tot_item_cost; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation.tot_item_cost IS 'Total value of all items/funds donated';
+
+
+--
+-- Name: COLUMN donation.storage_cost; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation.storage_cost IS 'Warehousing/storage costs';
+
+
+--
+-- Name: COLUMN donation.haulage_cost; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation.haulage_cost IS 'Transportation/shipping costs';
+
+
+--
+-- Name: COLUMN donation.other_cost; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation.other_cost IS 'Miscellaneous other costs';
+
+
+--
+-- Name: COLUMN donation.other_cost_desc; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation.other_cost_desc IS 'Description of other costs';
+
+
+--
+-- Name: COLUMN donation.status_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation.status_code IS 'E=Entered, V=Verified, P=Processed';
+
+
+--
+-- Name: donation_doc; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.donation_doc (
+    document_id integer NOT NULL,
+    donation_id integer NOT NULL,
+    document_type character varying(40) NOT NULL,
+    document_desc character varying(255) NOT NULL,
+    file_name character varying(80) NOT NULL,
+    file_type character varying(30) NOT NULL,
+    file_size character varying(20),
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    CONSTRAINT c_donation_doc_1 CHECK (((file_type)::text = ANY ((ARRAY['application/pdf'::character varying, 'image/jpeg'::character varying])::text[])))
+);
+
+
+--
+-- Name: TABLE donation_doc; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.donation_doc IS 'Document attachments for donations (receipts, manifests, delivery notices)';
+
+
+--
+-- Name: COLUMN donation_doc.document_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation_doc.document_id IS 'Primary key - auto-generated document identifier';
+
+
+--
+-- Name: COLUMN donation_doc.donation_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation_doc.donation_id IS 'Foreign key to donation table';
+
+
+--
+-- Name: COLUMN donation_doc.document_type; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation_doc.document_type IS 'Type of document (Receipt, Manifest, Bill of materials, Delivery notice, etc.)';
+
+
+--
+-- Name: COLUMN donation_doc.document_desc; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation_doc.document_desc IS 'Description of document purpose and content';
+
+
+--
+-- Name: COLUMN donation_doc.file_name; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation_doc.file_name IS 'Original name of the uploaded file';
+
+
+--
+-- Name: COLUMN donation_doc.file_type; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation_doc.file_type IS 'MIME type of file (application/pdf or image/jpeg)';
+
+
+--
+-- Name: COLUMN donation_doc.file_size; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation_doc.file_size IS 'Size of file in MB';
+
+
+--
+-- Name: COLUMN donation_doc.version_nbr; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation_doc.version_nbr IS 'Optimistic locking version number';
+
+
+--
+-- Name: donation_doc_document_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.donation_doc ALTER COLUMN document_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.donation_doc_document_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
 );
 
 
@@ -486,18 +900,26 @@ ALTER TABLE public.donation ALTER COLUMN donation_id ADD GENERATED BY DEFAULT AS
 CREATE TABLE public.donation_item (
     donation_id integer NOT NULL,
     item_id integer NOT NULL,
-    item_qty numeric(12,2) NOT NULL,
-    uom_code character varying(25) NOT NULL,
+    donation_type character(5) NOT NULL,
+    item_qty numeric(9,2) NOT NULL,
+    item_cost numeric(10,2) NOT NULL,
+    uom_code character varying(25),
+    currency_code character varying(10),
     location_name text NOT NULL,
     status_code character(1) DEFAULT 'V'::bpchar NOT NULL,
     comments_text text,
     create_by_id character varying(20) NOT NULL,
     create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
     verify_by_id character varying(20),
     verify_dtime timestamp(0) without time zone,
     version_nbr integer NOT NULL,
-    CONSTRAINT c_donation_item_1 CHECK ((item_qty >= 0.00)),
-    CONSTRAINT c_donation_item_2 CHECK ((status_code = ANY (ARRAY['P'::bpchar, 'V'::bpchar])))
+    CONSTRAINT c_donation_item_0 CHECK ((donation_type = ANY (ARRAY['GOODS'::bpchar, 'FUNDS'::bpchar]))),
+    CONSTRAINT c_donation_item_1a CHECK ((item_qty >= 0.00)),
+    CONSTRAINT c_donation_item_1b CHECK ((item_cost >= 0.00)),
+    CONSTRAINT c_donation_item_2 CHECK ((status_code = ANY (ARRAY['P'::bpchar, 'V'::bpchar]))),
+    CONSTRAINT c_donation_item_type_fields CHECK ((((donation_type = 'GOODS'::bpchar) AND (uom_code IS NOT NULL) AND (currency_code IS NULL)) OR ((donation_type = 'FUNDS'::bpchar) AND (currency_code IS NOT NULL) AND (uom_code IS NULL))))
 );
 
 
@@ -741,6 +1163,8 @@ CREATE TABLE public.itemcatg (
     update_by_id character varying(20) NOT NULL,
     update_dtime timestamp(0) without time zone NOT NULL,
     version_nbr integer NOT NULL,
+    category_type character(5) DEFAULT 'GOODS'::bpchar NOT NULL,
+    CONSTRAINT c_itemcatg_0 CHECK ((category_type = ANY (ARRAY['GOODS'::bpchar, 'FUNDS'::bpchar]))),
     CONSTRAINT c_itemcatg_1 CHECK (((category_code)::text = upper((category_code)::text))),
     CONSTRAINT c_itemcatg_2 CHECK ((status_code = ANY (ARRAY['A'::bpchar, 'I'::bpchar])))
 );
@@ -801,6 +1225,41 @@ COMMENT ON COLUMN public.itemcatg.version_nbr IS 'Optimistic locking version num
 
 ALTER TABLE public.itemcatg ALTER COLUMN category_id ADD GENERATED BY DEFAULT AS IDENTITY (
     SEQUENCE NAME public.itemcatg_category_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: itemcostdef; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.itemcostdef (
+    cost_id integer NOT NULL,
+    cost_name public.citext NOT NULL,
+    cost_desc character varying(255) NOT NULL,
+    cost_type character(16) NOT NULL,
+    status_code character(1) NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    CONSTRAINT c_itemcostdef_1 CHECK ((length((cost_name)::text) <= 50)),
+    CONSTRAINT c_itemcostdef_2 CHECK ((cost_type = ANY (ARRAY['PURCHASE'::bpchar, 'ADDITIONAL'::bpchar]))),
+    CONSTRAINT c_itemcostdef_3 CHECK ((status_code = ANY (ARRAY['A'::bpchar, 'I'::bpchar])))
+);
+
+
+--
+-- Name: itemcostdef_cost_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.itemcostdef ALTER COLUMN cost_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.itemcostdef_cost_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1501,7 +1960,7 @@ CREATE VIEW public.v_status4reliefrqst_processed AS
     status_desc,
     reason_rqrd_flag
    FROM public.reliefrqst_status
-  WHERE ((status_code = 9) AND (is_active_flag = true));
+  WHERE ((status_code = ANY (ARRAY[4, 6, 7, 8])) AND (is_active_flag = true));
 
 
 --
@@ -1629,13 +2088,6 @@ ALTER TABLE ONLY public.distribution_package_item ALTER COLUMN id SET DEFAULT ne
 
 
 --
--- Name: dnintake_item intake_item_id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.dnintake_item ALTER COLUMN intake_item_id SET DEFAULT nextval('public.dnintake_item_intake_item_id_seq'::regclass);
-
-
---
 -- Name: notification id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1675,6 +2127,494 @@ ALTER TABLE ONLY public."user" ALTER COLUMN user_id SET DEFAULT nextval('public.
 --
 
 ALTER TABLE ONLY public.xfreturn ALTER COLUMN xfreturn_id SET DEFAULT nextval('public.xfreturn_xfreturn_id_seq'::regclass);
+
+
+--
+-- Data for Name: agency; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: agency_account_request; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: agency_account_request_audit; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: batchlocation; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: country; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: currency; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: currency_rate; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: custodian; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: dbintake; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: dbintake_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: distribution_package; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: distribution_package_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: dnintake; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: dnintake_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: donation; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: donation_doc; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: donation_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: donor; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: event; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: inventory; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: item_location; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: itembatch; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: itemcatg; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: itemcostdef; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: location; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: notification; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: parish; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: permission; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: relief_request_fulfillment_lock; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: reliefpkg; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: reliefpkg_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: reliefrqst; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: reliefrqst_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: reliefrqst_status; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: reliefrqstitem_status; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: role; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: role_permission; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: rtintake; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: rtintake_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: transaction; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: transfer; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: transfer_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: transfer_request; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: unitofmeasure; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: user; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: user_role; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: user_warehouse; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: warehouse; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: xfreturn; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: xfreturn_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Name: agency_account_request_audit_audit_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.agency_account_request_audit_audit_id_seq', 1, false);
+
+
+--
+-- Name: agency_account_request_request_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.agency_account_request_request_id_seq', 1, false);
+
+
+--
+-- Name: agency_agency_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.agency_agency_id_seq', 1, true);
+
+
+--
+-- Name: custodian_custodian_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.custodian_custodian_id_seq', 1, true);
+
+
+--
+-- Name: distribution_package_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.distribution_package_id_seq', 1, false);
+
+
+--
+-- Name: distribution_package_item_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.distribution_package_item_id_seq', 1, false);
+
+
+--
+-- Name: donation_doc_document_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.donation_doc_document_id_seq', 4, true);
+
+
+--
+-- Name: donation_donation_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.donation_donation_id_seq', 19, true);
+
+
+--
+-- Name: donor_donor_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.donor_donor_id_seq', 1, true);
+
+
+--
+-- Name: event_event_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.event_event_id_seq', 1, true);
+
+
+--
+-- Name: item_new_item_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.item_new_item_id_seq', 35, true);
+
+
+--
+-- Name: itembatch_batch_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.itembatch_batch_id_seq', 9, true);
+
+
+--
+-- Name: itemcatg_category_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.itemcatg_category_id_seq', 9, true);
+
+
+--
+-- Name: itemcostdef_cost_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.itemcostdef_cost_id_seq', 1, false);
+
+
+--
+-- Name: location_location_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.location_location_id_seq', 1, false);
+
+
+--
+-- Name: notification_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.notification_id_seq', 4, true);
+
+
+--
+-- Name: permission_perm_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.permission_perm_id_seq', 5, true);
+
+
+--
+-- Name: reliefpkg_reliefpkg_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.reliefpkg_reliefpkg_id_seq', 1, false);
+
+
+--
+-- Name: reliefrqst_reliefrqst_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.reliefrqst_reliefrqst_id_seq', 3, true);
+
+
+--
+-- Name: role_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.role_id_seq', 12, true);
+
+
+--
+-- Name: transaction_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.transaction_id_seq', 1, false);
+
+
+--
+-- Name: transfer_request_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.transfer_request_id_seq', 1, false);
+
+
+--
+-- Name: transfer_transfer_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.transfer_transfer_id_seq', 1, false);
+
+
+--
+-- Name: user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.user_id_seq', 4, true);
+
+
+--
+-- Name: warehouse_warehouse_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.warehouse_warehouse_id_seq', 2, true);
+
+
+--
+-- Name: xfreturn_xfreturn_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.xfreturn_xfreturn_id_seq', 1, false);
 
 
 --
@@ -1750,22 +2690,6 @@ ALTER TABLE ONLY public.distribution_package
 
 
 --
--- Name: dnintake_item dnintake_item_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.dnintake_item
-    ADD CONSTRAINT dnintake_item_pkey PRIMARY KEY (intake_item_id);
-
-
---
--- Name: dnintake dnintake_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.dnintake
-    ADD CONSTRAINT dnintake_pkey PRIMARY KEY (donation_id, inventory_id);
-
-
---
 -- Name: donor donor_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1814,11 +2738,35 @@ ALTER TABLE ONLY public.permission
 
 
 --
+-- Name: itemcostdef pk_adnlitemcost; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.itemcostdef
+    ADD CONSTRAINT pk_adnlitemcost PRIMARY KEY (cost_id);
+
+
+--
 -- Name: batchlocation pk_batchlocation; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.batchlocation
     ADD CONSTRAINT pk_batchlocation PRIMARY KEY (inventory_id, location_id, batch_id);
+
+
+--
+-- Name: currency pk_currency; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.currency
+    ADD CONSTRAINT pk_currency PRIMARY KEY (currency_code);
+
+
+--
+-- Name: currency_rate pk_currency_rate; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.currency_rate
+    ADD CONSTRAINT pk_currency_rate PRIMARY KEY (currency_code, rate_date);
 
 
 --
@@ -1830,11 +2778,35 @@ ALTER TABLE ONLY public.custodian
 
 
 --
+-- Name: dnintake pk_dnintake; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dnintake
+    ADD CONSTRAINT pk_dnintake PRIMARY KEY (donation_id, inventory_id);
+
+
+--
+-- Name: dnintake_item pk_dnintake_item; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dnintake_item
+    ADD CONSTRAINT pk_dnintake_item PRIMARY KEY (donation_id, inventory_id, item_id, batch_no);
+
+
+--
 -- Name: donation pk_donation; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.donation
     ADD CONSTRAINT pk_donation PRIMARY KEY (donation_id);
+
+
+--
+-- Name: donation_doc pk_donation_doc; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.donation_doc
+    ADD CONSTRAINT pk_donation_doc PRIMARY KEY (document_id);
 
 
 --
@@ -2038,6 +3010,14 @@ ALTER TABLE ONLY public.agency
 
 
 --
+-- Name: currency uk_currency; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.currency
+    ADD CONSTRAINT uk_currency UNIQUE (currency_name);
+
+
+--
 -- Name: custodian uk_custodian_1; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2083,6 +3063,14 @@ ALTER TABLE ONLY public.item
 
 ALTER TABLE ONLY public.itemcatg
     ADD CONSTRAINT uk_itemcatg_1 UNIQUE (category_code);
+
+
+--
+-- Name: itemcostdef uk_itemcostdef_1; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.itemcostdef
+    ADD CONSTRAINT uk_itemcostdef_1 UNIQUE (cost_name);
 
 
 --
@@ -2160,6 +3148,13 @@ CREATE INDEX dk_aar_status_created ON public.agency_account_request USING btree 
 --
 
 CREATE INDEX dk_batchlocation_1 ON public.batchlocation USING btree (batch_id, location_id);
+
+
+--
+-- Name: dk_country; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_country ON public.country USING btree (currency_code);
 
 
 --
@@ -2387,6 +3382,20 @@ CREATE INDEX dk_xfreturn_3 ON public.xfreturn USING btree (to_inventory_id);
 
 
 --
+-- Name: idx_currency_rate_code; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_currency_rate_code ON public.currency_rate USING btree (currency_code);
+
+
+--
+-- Name: idx_currency_rate_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_currency_rate_date ON public.currency_rate USING btree (rate_date DESC);
+
+
+--
 -- Name: idx_distribution_package_agency; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2422,6 +3431,20 @@ CREATE INDEX idx_distribution_package_warehouse ON public.distribution_package U
 
 
 --
+-- Name: idx_donation_doc_donation_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_donation_doc_donation_id ON public.donation_doc USING btree (donation_id);
+
+
+--
+-- Name: idx_donation_doc_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_donation_doc_type ON public.donation_doc USING btree (document_type);
+
+
+--
 -- Name: idx_fulfillment_lock_expires; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2440,6 +3463,20 @@ CREATE INDEX idx_fulfillment_lock_user ON public.relief_request_fulfillment_lock
 --
 
 CREATE INDEX idx_itemcatg_status_code ON public.itemcatg USING btree (status_code);
+
+
+--
+-- Name: idx_itemcostdef_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_itemcostdef_status ON public.itemcostdef USING btree (status_code);
+
+
+--
+-- Name: idx_itemcostdef_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_itemcostdef_type ON public.itemcostdef USING btree (cost_type);
 
 
 --
@@ -2513,17 +3550,10 @@ CREATE UNIQUE INDEX uk_aar_active_email ON public.agency_account_request USING b
 
 
 --
--- Name: uk_dnintake_item_batch; Type: INDEX; Schema: public; Owner: -
+-- Name: uk_country; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX uk_dnintake_item_batch ON public.dnintake_item USING btree (donation_id, inventory_id, item_id, batch_no) WHERE (batch_no IS NOT NULL);
-
-
---
--- Name: uk_dnintake_item_null_batch; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX uk_dnintake_item_null_batch ON public.dnintake_item USING btree (donation_id, inventory_id, item_id) WHERE (batch_no IS NULL);
+CREATE UNIQUE INDEX uk_country ON public.country USING btree (country_name);
 
 
 --
@@ -2680,14 +3710,6 @@ ALTER TABLE ONLY public.distribution_package
 
 
 --
--- Name: dnintake dnintake_donation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.dnintake
-    ADD CONSTRAINT dnintake_donation_id_fkey FOREIGN KEY (donation_id) REFERENCES public.donation(donation_id);
-
-
---
 -- Name: donor donor_country_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2784,6 +3806,14 @@ ALTER TABLE ONLY public.batchlocation
 
 
 --
+-- Name: country fk_country_currency; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.country
+    ADD CONSTRAINT fk_country_currency FOREIGN KEY (currency_code) REFERENCES public.currency(currency_code);
+
+
+--
 -- Name: custodian fk_custodian_parish; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2797,6 +3827,14 @@ ALTER TABLE ONLY public.custodian
 
 ALTER TABLE ONLY public.dbintake
     ADD CONSTRAINT fk_dbintake_warehouse FOREIGN KEY (inventory_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: dnintake fk_dnintake_donation; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dnintake
+    ADD CONSTRAINT fk_dnintake_donation FOREIGN KEY (donation_id) REFERENCES public.donation(donation_id);
 
 
 --
@@ -2832,11 +3870,27 @@ ALTER TABLE ONLY public.dnintake
 
 
 --
+-- Name: donation fk_donation_country; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.donation
+    ADD CONSTRAINT fk_donation_country FOREIGN KEY (origin_country_id) REFERENCES public.country(country_id);
+
+
+--
 -- Name: donation fk_donation_custodian; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.donation
     ADD CONSTRAINT fk_donation_custodian FOREIGN KEY (custodian_id) REFERENCES public.custodian(custodian_id);
+
+
+--
+-- Name: donation_doc fk_donation_doc_donation; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.donation_doc
+    ADD CONSTRAINT fk_donation_doc_donation FOREIGN KEY (donation_id) REFERENCES public.donation(donation_id);
 
 
 --
@@ -2853,6 +3907,14 @@ ALTER TABLE ONLY public.donation
 
 ALTER TABLE ONLY public.donation
     ADD CONSTRAINT fk_donation_event FOREIGN KEY (event_id) REFERENCES public.event(event_id);
+
+
+--
+-- Name: donation_item fk_donation_item_currency; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.donation_item
+    ADD CONSTRAINT fk_donation_item_currency FOREIGN KEY (currency_code) REFERENCES public.currency(currency_code);
 
 
 --
@@ -3443,5 +4505,5 @@ ALTER TABLE ONLY public.xfreturn_item
 -- PostgreSQL database dump complete
 --
 
-\unrestrict WMyBeEE50EOsIac2rCD6OAwS3Kq4C7YdgM1XUIi4iYbH5VFSVgTDurOBgGYqade
+\unrestrict td4xpXJ9n98OWl2z9eEagudDWxdaWFieVk9XBcOa5U3flt4t3EeGCL5hSoH1aJA
 
